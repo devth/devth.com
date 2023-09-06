@@ -4,9 +4,8 @@ import { MDXRemote } from "next-mdx-remote";
 import { serialize } from "next-mdx-remote/serialize";
 import dynamic from "next/dynamic";
 import Head from "next/head";
-import Link from "next/link";
 import path from "path";
-import CustomLink from "../components/CustomLink";
+import { Link } from "../components/Link";
 import Layout from "../components/Layout";
 import { postFilePaths, POSTS_PATH } from "../utils/mdxUtils";
 
@@ -15,7 +14,7 @@ import { postFilePaths, POSTS_PATH } from "../utils/mdxUtils";
 // to handle import statements. Instead, you must include components in scope
 // here.
 const components = {
-  a: CustomLink,
+  a: Link,
   // It also works with dynamically-imported components, which is especially
   // useful for conditionally loading components for certain routes.
   // See the notes in README.md for more details.

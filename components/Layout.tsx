@@ -1,7 +1,7 @@
 import { Container, Stack } from "@mui/material";
+import NextLink from "next/link";
+import { Link } from "./Link";
 import { Logo } from "./Logo";
-import NextLink, { LinkProps as NextLinkProps } from "next/link";
-import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 
 const maxWidth = "lg";
 
@@ -15,9 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <NextLink href="/">
                 <Logo />
               </NextLink>
-              <MuiLink component={NextLink} href="/about">
-                About
-              </MuiLink>
+              <Link href="/about">About</Link>
             </Stack>
           </Container>
         </nav>

@@ -1,9 +1,10 @@
 import fs from "fs";
 import matter from "gray-matter";
-import Link from "next/link";
+import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import path from "path";
 import Layout from "../components/Layout";
 import { postFilePaths, POSTS_PATH } from "../utils/mdxUtils";
+import { Link } from "../components/Link";
 
 type Post = {
   content: string;
@@ -23,6 +24,7 @@ export default function Index({ posts }: { posts: Post[] }) {
               as={`/${post.filePath.replace(/\.mdx?$/, "")}`}
               href={`/[slug]`}
             >
+              {post.data.date ? `${post.data.date} - ` : ""}
               {post.data.title}
             </Link>
           </li>
