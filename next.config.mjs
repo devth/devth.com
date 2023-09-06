@@ -5,11 +5,11 @@ const nextConfig = {
   /* config options here */
   async redirects() {
     return [
-      {
-        source: "/:year/:path*",
-        destination: "/:path*",
-        permanent: true,
-      },
+      // {
+      //   source: "/:year/:path*",
+      //   destination: "/:path*",
+      //   permanent: true,
+      // },
     ];
   },
 };
