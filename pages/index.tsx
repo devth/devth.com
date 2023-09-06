@@ -17,14 +17,14 @@ type Post = {
 export default function Index({ posts }: { posts: Post[] }) {
   return (
     <Layout>
-      <ul>
+      <ul style={{ fontFamily: "monospace" }}>
         {posts.map((post) => (
           <li key={post.filePath}>
+            {post.data.date ? `${post.data.date} - ` : ""}
             <Link
               as={`/${post.filePath.replace(/\.mdx?$/, "")}`}
               href={`/[slug]`}
             >
-              {post.data.date ? `${post.data.date} - ` : ""}
               {post.data.title}
             </Link>
           </li>
