@@ -13,12 +13,19 @@ export const Logo = () => (
       component="span"
       sx={{
         display: "inline-block",
-        fontSize: "2rem",
+        fontSize: "4rem",
+        transition: "color .3s ease-in-out, box-shadow .3s ease-in-out",
+        color: "#333",
+        "&:hover": {
+          color: "#FFFFFF",
+          boxShadow: "inset 200px 0 0 0 #FFCC00",
+        },
+
         "&:before": {
           content: '" "',
           display: "block",
           height: "100%",
-          width: "110%",
+          width: "100%",
           marginLeft: "-3px",
           marginRight: "-3px",
           position: "absolute",
@@ -27,10 +34,10 @@ export const Logo = () => (
           // background: "#ffd500",
           // background: "yellow",
           backgroundBlendMode: "multiply",
-          transform: "rotate(2deg)",
-          top: "-3px",
+          transform: "rotate(-3deg)",
+          top: "-1px",
           left: "-1px",
-          borderRadius: "28% 25% 20% 24%",
+          borderRadius: "78% 25% 20% 24%",
           padding: "6px 3px 3px 8px",
         },
       }}

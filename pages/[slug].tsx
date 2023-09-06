@@ -8,6 +8,7 @@ import path from "path";
 import { Link } from "../components/Link";
 import Layout from "../components/Layout";
 import { postFilePaths, POSTS_PATH } from "../utils/mdxUtils";
+import { Grid } from "@mui/material";
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
@@ -32,7 +33,11 @@ export default function PostPage({ source, frontMatter }) {
         )}
       </div>
       <main>
-        <MDXRemote {...source} components={components} />
+        <Grid container>
+          <Grid item xs={8}>
+            <MDXRemote {...source} components={components} />
+          </Grid>
+        </Grid>
       </main>
     </Layout>
   );

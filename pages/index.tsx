@@ -17,7 +17,13 @@ type Post = {
 export default function Index({ posts }: { posts: Post[] }) {
   return (
     <Layout>
-      <ul style={{ fontFamily: "monospace" }}>
+      <ul
+        style={{
+          listStyle: "none",
+          padding: 0,
+          fontFamily: "monospace",
+        }}
+      >
         {posts.map((post) => (
           <li key={post.filePath}>
             {post.data.date ? `${post.data.date} - ` : ""}

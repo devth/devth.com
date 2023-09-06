@@ -12,7 +12,15 @@ export function Link({
     <>
       <NextLink as={as} href={href} legacyBehavior>
         <MuiLink
-          sx={{ cursor: "pointer", textDecoration: "none" }}
+          sx={{
+            cursor: "pointer",
+            textDecoration: "none",
+            transition: "all 2s ease-in-out",
+            "&:hover": {
+              boxShadow: "inset 200px 0 0 0 #FFCC00",
+              transition: "all .5s ease-out",
+            },
+          }}
           {...otherProps}
         />
       </NextLink>
