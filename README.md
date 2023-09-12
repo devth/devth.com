@@ -2,6 +2,28 @@
 
 From https://github.com/vercel/next.js/tree/canary/examples/with-mdx-remote
 
+## Requirements
+
+These are the requirements I thought about when deciding to migrate off the old
+Jekyll-powered blog.
+
+- [x] Write posts in markdown. Solved via MDX.
+- [x] Ability to render React components in posts. Solved via MDX.
+- [x] Respect system dark / light mode. Solved via MUI.
+- [x] Server side rendering (or static export). Solved via Next.js.
+- [ ] Shift-K to nav to any page
+- [x] Super fast. Solved via Next.js client side routing and Vercel hosting.
+- [x] Default branch deploys to production automatically. Solved via Vercel. We
+      also get preview deploys for PRs!
+- [ ] Automatic ToC generation
+- [ ] Headers create hash links to auto link within posts
+- [ ] Animated page transitions
+- [x] Preserve the old blog routes which included year in the URL, e.g.
+      https://devth.com/2015/thrush-cond-is-not-a-monad. Solved via Next.js URL
+      redirects.
+
+## Generated docs
+
 This example shows how a simple blog might be built using the [next-mdx-remote](https://github.com/hashicorp/next-mdx-remote) library, which allows mdx content to be loaded via `getStaticProps` or `getServerSideProps`. The mdx content is loaded from a local folder, but it could be loaded from a database or anywhere else.
 
 The example also showcases [next-remote-watch](https://github.com/hashicorp/next-remote-watch), a library that allows next.js to watch files outside the `pages` folder that are not explicitly imported, which enables the mdx content here to trigger a live reload on change.

@@ -9,15 +9,19 @@ import Document, {
 } from "next/document";
 import createEmotionServer from "@emotion/server/create-instance";
 import { AppType } from "next/app";
-import theme from "../utils/theme";
 import createEmotionCache from "../utils/createEmotionCache";
 import { MyAppProps } from "./_app";
+import { useMediaQuery } from "@mui/material";
+import { createThemeForMode } from "../utils/theme";
 
 interface MyDocumentProps extends DocumentProps {
   emotionStyleTags: JSX.Element[];
 }
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const theme = createThemeForMode(prefersDarkMode ? "dark" : "light");
+
   return (
     <Html lang="en">
       <Head>

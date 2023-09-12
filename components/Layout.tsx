@@ -11,11 +11,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header>
         <nav>
           <Container maxWidth={maxWidth}>
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={2} alignItems="baseline">
               <NextLink href="/">
                 <Logo />
               </NextLink>
-              <Link href="/about">About</Link>
+              <Link
+                disableHover={true}
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "2rem",
+                  color: "gray",
+                }}
+                href="/about"
+              >
+                About
+              </Link>
             </Stack>
           </Container>
         </nav>

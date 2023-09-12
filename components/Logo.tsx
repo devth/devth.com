@@ -1,48 +1,55 @@
 import { Box, Typography } from "@mui/material";
+import { useState } from "react";
 
-export const Logo = () => (
-  <Typography
-    component="span"
-    sx={{
-      position: "relative",
-      mr: 2,
-      fontWeight: "bold",
-    }}
-  >
-    <Box
+const rand = (mm = 8) => -Math.random() * mm;
+
+export const Logo = () => {
+  const [[ml, mr, top, left]] = useState([rand(3), rand(3), rand(), rand()]);
+
+  return (
+    <Typography
       component="span"
       sx={{
-        display: "inline-block",
-        fontSize: "4rem",
-        transition: "color .3s ease-in-out, box-shadow .3s ease-in-out",
-        color: "#333",
-        "&:hover": {
-          color: "#FFFFFF",
-          boxShadow: "inset 200px 0 0 0 #FFCC00",
-        },
-
-        "&:before": {
-          content: '" "',
-          display: "block",
-          height: "100%",
-          width: "100%",
-          marginLeft: "-3px",
-          marginRight: "-3px",
-          position: "absolute",
-          zIndex: -1,
-          background: "#FFCC0066",
-          // background: "#ffd500",
-          // background: "yellow",
-          backgroundBlendMode: "multiply",
-          transform: "rotate(-3deg)",
-          top: "-1px",
-          left: "-1px",
-          borderRadius: "78% 25% 20% 24%",
-          padding: "6px 3px 3px 8px",
-        },
+        position: "relative",
+        mr: 2,
+        fontWeight: "bold",
       }}
     >
-      devth
-    </Box>
-  </Typography>
-);
+      <Box
+        component="span"
+        sx={{
+          display: "inline-block",
+          fontSize: "4rem",
+          transition: "color .3s ease-in-out, box-shadow 2s ease-out",
+          color: "#333",
+          "&:hover": {
+            // color: "#555",
+          },
+
+          // "&:before": {
+          //   content: '" "',
+          //   display: "block",
+          //   height: "190%",
+          //   width: "100%",
+          //   marginLeft: ml,
+          //   marginRight: mr,
+          //   position: "absolute",
+          //   zIndex: -1,
+          //   background:
+          //     "linear-gradient(to left, #ffffc433, #ffd50099, #ffffc433) ",
+          //   // background: "#ffd500",
+          //   // background: "yellow",
+          //   backgroundBlendMode: "multiply",
+          //   transform: "rotate(-3deg)",
+          //   top,
+          //   left,
+          //   borderRadius: "28% 25% 20% 24%",
+          //   padding: "6px 3px 3px 8px",
+          // },
+        }}
+      >
+        devth
+      </Box>
+    </Typography>
+  );
+};
