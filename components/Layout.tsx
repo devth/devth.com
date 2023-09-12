@@ -6,6 +6,7 @@ import { Logo } from "./Logo";
 const maxWidth = "lg";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
+  const linkColor = "#333";
   return (
     <>
       <header>
@@ -20,11 +21,33 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 style={{
                   fontWeight: "bold",
                   fontSize: "2rem",
-                  color: "gray",
+                  color: linkColor,
                 }}
                 href="/about"
               >
-                About
+                about
+              </Link>
+              <Link
+                disableHover={true}
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "2rem",
+                  color: linkColor,
+                }}
+                href="/overture"
+              >
+                overture
+              </Link>
+              <Link
+                disableHover={true}
+                style={{
+                  fontWeight: "bold",
+                  fontSize: "2rem",
+                  color: linkColor,
+                }}
+                href="/glossary"
+              >
+                glossary
               </Link>
             </Stack>
           </Container>

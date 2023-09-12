@@ -1,10 +1,13 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery } from "@mui/material";
 import { useState } from "react";
 
 const rand = (mm = 8) => -Math.random() * mm;
 
 export const Logo = () => {
   const [[ml, mr, top, left]] = useState([rand(3), rand(3), rand(), rand()]);
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+
+  const logoColor = prefersDarkMode ? "#999" : "#333";
 
   return (
     <Typography
@@ -21,7 +24,7 @@ export const Logo = () => {
           display: "inline-block",
           fontSize: "4rem",
           transition: "color .3s ease-in-out, box-shadow 2s ease-out",
-          color: "#333",
+          color: logoColor,
           "&:hover": {
             // color: "#555",
           },
