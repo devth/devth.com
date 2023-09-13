@@ -3,7 +3,7 @@ import { ReactElement } from "react";
 import Glossary from "../components/Glossary";
 import Layout from "../components/Layout";
 
-export default function (): ReactElement {
+export default function GlossaryPage(): ReactElement {
   return (
     <Layout>
       <Grid container>
