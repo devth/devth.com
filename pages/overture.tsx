@@ -2,7 +2,7 @@ import { Grid, Link } from "@mui/material";
 import { ReactElement } from "react";
 import Layout from "../components/Layout";
 
-export default function (): ReactElement {
+export default function Overture(): ReactElement {
   return (
     <Layout>
       <Grid container>
