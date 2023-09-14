@@ -157,17 +157,15 @@ r1({ i: Int => i * i }, 10)
 
       {/* Next section */}
       <h3>Parametricity</h3>
-      <p>
-        <blockquote>
-          captures the intuition that all instances of a polymorphic function
-          act the same way —{" "}
-          <cite>
-            <Link href="https://en.wikipedia.org/wiki/Parametricity">
-              Wikipedia
-            </Link>
-          </cite>
-        </blockquote>
-      </p>
+      <blockquote>
+        captures the intuition that all instances of a polymorphic function act
+        the same way —{" "}
+        <cite>
+          <Link href="https://en.wikipedia.org/wiki/Parametricity">
+            Wikipedia
+          </Link>
+        </cite>
+      </blockquote>
 
       {/* Next section */}
       <h3>Partial Function</h3>

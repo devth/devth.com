@@ -13,15 +13,39 @@ export function Link({
   const hover = disableHover
     ? {}
     : {
-        "&:hover": {
-          boxShadow: "inset 800px 0 0 0 #FFCC00",
+        position: "relative",
+        "&::before": {
+          content: '""',
+          backgroundColor: "#FFCC00",
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          width: "100%",
+          height: 0,
+          zIndex: -1,
+          transition: "all 1s ease-in-out",
+        },
+        "&:hover::before": {
+          bottom: 0,
+          height: "100%",
           transition: "all .2s ease-out",
+        },
+
+        "&:hover": {
+          color: "black",
+          // boxShadow: "inset 0 0 0 0 #FFCC00",
+          // transition: "all .2s ease-out",
         },
       };
 
   return (
     <>
-      <NextLink as={as} href={href} legacyBehavior>
+      <NextLink
+        style={{ display: "inline-block" }}
+        as={as}
+        href={href}
+        legacyBehavior
+      >
         <MuiLink
           sx={{
             cursor: "pointer",

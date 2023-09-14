@@ -29,11 +29,14 @@ const components = {
   Head,
 };
 
-export default function PostPage({ source, frontMatter }) {
+export default function PostPage({ segments, source, frontMatter }) {
+  const { year, month, day } = segments;
+  const date = new Date(`${year}-${month}-${day}`);
   return (
     <Layout>
       <div className="post-header">
         <h1>{frontMatter.title}</h1>
+        <p className="date">{date.toLocaleDateString("en-us")}</p>
         {frontMatter.description && (
           <p className="description">{frontMatter.description}</p>
         )}
@@ -51,6 +54,7 @@ export default function PostPage({ source, frontMatter }) {
 
 export const getStaticProps = async ({ params }) => {
   const filePath = findFilePath(params.slug);
+  const segments = matchFilePath(filePath);
   console.log("getStaticProps", { params, filePath });
   const postFilePath = path.join(POSTS_PATH, filePath);
   const source = fs.readFileSync(postFilePath);
@@ -68,6 +72,7 @@ export const getStaticProps = async ({ params }) => {
 
   return {
     props: {
+      segments,
       source: mdxSource,
       frontMatter: data,
     },

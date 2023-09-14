@@ -7,7 +7,7 @@ export const Logo = () => {
   const [[ml, mr, top, left]] = useState([rand(3), rand(3), rand(), rand()]);
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
-  const logoColor = prefersDarkMode ? "#999" : "#333";
+  const logoColor = prefersDarkMode ? "#999" : "lightgray";
 
   return (
     <Typography

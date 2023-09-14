@@ -60,7 +60,11 @@ export default function Index({ posts }: { posts: Post[] }) {
       >
         {postsWithDate.map((post) => (
           <li key={post.filePath} style={{ marginTop: 18 }}>
-            <Link as={`/${post.slug}`} href={`/[slug]`}>
+            <Link
+              style={{ display: "block" }}
+              as={`/${post.slug}`}
+              href={`/[slug]`}
+            >
               {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
               <Typography
                 sx={{
@@ -68,7 +72,6 @@ export default function Index({ posts }: { posts: Post[] }) {
                   fontSize: "4rem",
                   lineHeight: 1.1,
                   fontWeight: "bold",
-                  color: "lightgray",
                 }}
               >
                 {post.data.title}
