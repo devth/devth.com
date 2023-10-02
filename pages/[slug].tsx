@@ -1,26 +1,29 @@
+import { Grid, Typography } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
 import { serialize } from "next-mdx-remote/serialize";
+import { remarkCodeHike } from "@code-hike/mdx";
+import { CH } from "@code-hike/mdx/components";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import path from "path";
-import { Link } from "../components/Link";
 import Layout from "../components/Layout";
+import { Link } from "../components/Link";
 import {
-  filePathFromSegments,
   findFilePath,
   matchFilePath,
   postFilePaths,
   POSTS_PATH,
 } from "../utils/mdxUtils";
-import { Grid } from "@mui/material";
+// import rehypeHighlight from "rehype-highlight";
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
 // to handle import statements. Instead, you must include components in scope
 // here.
 const components = {
+  CH,
   a: Link,
   // It also works with dynamically-imported components, which is especially
   // useful for conditionally loading components for certain routes.
@@ -35,8 +38,9 @@ export default function PostPage({ segments, source, frontMatter }) {
   return (
     <Layout>
       <div className="post-header">
-        <h1>{frontMatter.title}</h1>
-        <p className="date">{date.toLocaleDateString("en-us")}</p>
+        <Typography variant="h1">{frontMatter.title}</Typography>
+
+        <Typography variant="h4">{date.toLocaleDateString("en-us")}</Typography>
         {frontMatter.description && (
           <p className="description">{frontMatter.description}</p>
         )}
@@ -54,6 +58,7 @@ export default function PostPage({ segments, source, frontMatter }) {
 
 export const getStaticProps = async ({ params }) => {
   const filePath = findFilePath(params.slug);
+
   const segments = matchFilePath(filePath);
   console.log("getStaticProps", { params, filePath });
   const postFilePath = path.join(POSTS_PATH, filePath);
@@ -61,13 +66,23 @@ export const getStaticProps = async ({ params }) => {
 
   const { content, data } = matter(source);
 
+  console.log("slug data", { data });
+
   const mdxSource = await serialize(content, {
     // Optionally pass remark/rehype plugins
     mdxOptions: {
-      remarkPlugins: [],
+      remarkPlugins: [[remarkCodeHike]],
       rehypePlugins: [],
     },
-    scope: data,
+    scope: {
+      ...data,
+      chCodeConfig: {
+        lineNumbers: true,
+        showCopyButton: true,
+        skipLanguages: [],
+        autoImport: false,
+      },
+    },
   });
 
   return {

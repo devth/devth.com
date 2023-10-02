@@ -77,7 +77,7 @@ A tree is a natural way to represent this syntax in abstract form:
 
 <img src="/images/querytree.svg" />
 
-In Scala, we can represent this with a Scalaz `Tree[String]`{:.language-scala}.
+In Scala, we can represent this with a Scalaz `Tree[String]`.
 
 ```scala
 type FilterExpr = Tree[String]
@@ -101,7 +101,7 @@ be included. Some caveats about limitations of this simple example:
 - I'm only going to implement a few of the most common operators.
 - The filter interpreter is doing its own projection, which may overlap with the
   projected fields requested by the user and create duplicate work.
-- I'm only supporting `Int`{:.language-scala} for comparison, and I'm doing some
+- I'm only supporting `Int` for comparison, and I'm doing some
   nasty type casting. IRL, we'd keep better track of the types with a full blown
   schema.
 
@@ -167,13 +167,13 @@ def query(projections: Seq[Int], filterExpr: FilterExpr): Seq[Seq[Any]] = {
 }
 ```
 
-*NB: we could use [ScalaBlitz](https://scala-blitz.github.io/) to optimize that
-`flatMap`{:.language-scala} if this was real and we were ultra-concerned about
-performance.*
+_NB: we could use [ScalaBlitz](https://scala-blitz.github.io/) to optimize that
+`flatMap` if this was real and we were ultra-concerned about
+performance._
 
 Notice how we return `Seq[Seq[Any]]`. At compile-time we don't know how to
 typefully represent a row so we have to resort to the lowest-common type,
-`Any`{:.language-scala}. This is another issue that we'll fixup later in the
+`Any`. This is another issue that we'll fixup later in the
 compiled version.
 
 With all this in place, let's run it:
@@ -237,9 +237,9 @@ can find out the meaning of these bytecode instructions:
   stack (might be void)
 - `return` — return void from method
 
-This is the generated constructor for `Foo`{:.language-scala}. Since nothing
+This is the generated constructor for `Foo`. Since nothing
 else is going on, it simply returns void after calling the constructor. Now
-what if we actually do something, like instantiate a `Foo`{:.language-scala}?
+what if we actually do something, like instantiate a `Foo`?
 
 ```scala
 class Foo
@@ -496,15 +496,15 @@ public class TupleFromJavaDump implements Opcodes {
 ```
 
 Not too bad. ASMifier helpfully wraps each logical chunk in blocks. The first
-block creates the `tup`{:.language-scala} field. The second block is our public
+block creates the `tup` field. The second block is our public
 constructor. It calls super, which invokes the constructor on the
-`java.lang.Object`{:.language-scala} superclass, then initializes the
-`tup`{:.language-scala} field, and finally returns void. The third block
-is the `getTup`{:.language-scala} getter.
+`java.lang.Object` superclass, then initializes the
+`tup` field, and finally returns void. The third block
+is the `getTup` getter.
 
-*NB: If you're having trouble following this, I recommend generating some ASM
+_NB: If you're having trouble following this, I recommend generating some ASM
 code with ASMifier, then annotating it yourself. It really helps to internalize
-the JVM bytecodes and how to work on a stack machine.*
+the JVM bytecodes and how to work on a stack machine._
 
 Inside a method, the parameters can be referenced by corresponding local
 variable indices. For example:
@@ -513,12 +513,12 @@ variable indices. For example:
 def add(x: Int, y: Int)
 ```
 
-In this case, `x`{:.language-scala} is available at `1`{:.language-scala} and
-`y`{:.language-scala} is available at `2`{:.language-scala}. To load and use
-these, we would use `visitVarInsn`{:.language-scala} which visits a local
-variable instruction.  Using ASM, this is how we'd add `x`{:.language-scala} and
-`y`{:.language-scala} and store the result in local variable
-`3`{:.language-scala}:
+In this case, `x` is available at `1` and
+`y` is available at `2`. To load and use
+these, we would use `visitVarInsn` which visits a local
+variable instruction. Using ASM, this is how we'd add `x` and
+`y` and store the result in local variable
+`3`:
 
 ```java
 mv.visitVarInsn(ILOAD, 1);  // Load x onto the stack
@@ -560,9 +560,9 @@ object StaticQuery {
 }
 ```
 
-This should be *much* faster than our interpreted query because it's running a
+This should be _much_ faster than our interpreted query because it's running a
 simple conditional instead of walking and evaluating a
-`FilterExpr`{:.language-scala} on every row.
+`FilterExpr` on every row.
 
 Let's construct a quick benchmark using
 [ScalaMeter](http://scalameter.github.io/) to verify our assumptions.
@@ -593,12 +593,12 @@ object QueryBenchmark extends PerformanceTest.Quickbenchmark {
 
 Results from the last result of each measurement:
 
-- `StaticQuery`{:.language-scala}: 1.329709ms
-- `InterpretedQuery`{:.language-scala}: 6.949921ms
+- `StaticQuery`: 1.329709ms
+- `InterpretedQuery`: 6.949921ms
 
 The static query is between 5 and 6 times faster than interpreting.
 
-Let's rewrite `StaticQuery`{:.language-scala} in Java and use it as a template
+Let's rewrite `StaticQuery` in Java and use it as a template
 for compiling queries. There are at least two reasons why I significantly
 dislike running ASMifier against Scala classes:
 
@@ -816,13 +816,13 @@ object CompiledQueryGen extends Opcodes {
 }
 ```
 
-Since we're using `ClassWriter.COMPUTE_FRAMES`{:.language-scala} I was able to
-remove all the `visitFrame`{:.language-scala} calls that ASMifier generated. I
-also deleted the generated `FieldVisitor`{:.language-scala} and
-`AnnotationVisitor`{:.language-scala} as they were both unused. I used `0` for
-all arguments to `visitMaxs`{:.language-scala} as
-`COMPUTE_FRAMES`{:.language-scala} implies `COMPUTE_MAXS`, which still requires
-calls to `visitMaxs`{:language-scala} but ignores the arguments.
+Since we're using `ClassWriter.COMPUTE_FRAMES` I was able to
+remove all the `visitFrame` calls that ASMifier generated. I
+also deleted the generated `FieldVisitor` and
+`AnnotationVisitor` as they were both unused. I used `0` for
+all arguments to `visitMaxs` as
+`COMPUTE_FRAMES` implies `COMPUTE_MAXS`, which still requires
+calls to `visitMaxs` but ignores the arguments.
 
 ## Scala Quasiquotes
 

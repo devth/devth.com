@@ -1,15 +1,10 @@
-import { Typography } from "@mui/material";
+import { Typography, darken, lighten, useMediaQuery } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
-import {
-  matchFilePath,
-  postFilePathPattern,
-  postFilePaths,
-  POSTS_PATH,
-} from "../utils/mdxUtils";
+import { matchFilePath, postFilePaths, POSTS_PATH } from "../utils/mdxUtils";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
@@ -49,6 +44,9 @@ export default function Index({ posts }: { posts: Post[] }) {
       return [p];
     })
     .sort((a, b) => b.date.getTime() - a.date.getTime());
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+
+  const gray = prefersDarkMode ? "#aaa" : "#555";
 
   return (
     <Layout>
@@ -59,9 +57,10 @@ export default function Index({ posts }: { posts: Post[] }) {
         }}
       >
         {postsWithDate.map((post) => (
-          <li key={post.filePath} style={{ marginTop: 18 }}>
+          <li key={post.filePath} style={{ marginTop: 0 }}>
             <Link
-              style={{ display: "block" }}
+              disableHover={false}
+              style={{ display: "block", padding: "20px 0" }}
               as={`/${post.slug}`}
               href={`/[slug]`}
             >
@@ -78,9 +77,16 @@ export default function Index({ posts }: { posts: Post[] }) {
               </Typography>
               <Typography
                 variant="subtitle1"
-                sx={{ fontSize: ".9rem", color: "gray" }}
+                sx={{ fontSize: ".9rem", color: gray }}
               >
-                <b style={{ color: "black" }}>{formatDate(post.date)}</b>{" "}
+                <b
+                  style={{
+                    fontSize: "1.2em",
+                    color: lighten(gray, 0.4),
+                  }}
+                >
+                  {formatDate(post.date)}
+                </b>{" "}
                 {post.data.excerpt}
               </Typography>
             </Link>

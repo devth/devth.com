@@ -13,12 +13,12 @@ image:
 Type classes provide a way of achieving [ad hoc
 polymorphism](https://en.wikipedia.org/wiki/Ad_hoc_polymorphism). We'll look at
 what they are, why they're useful, how they're typically encoded in Scala.
-We'll make our own `Simple`{:.language-scala} type class that has a single
-operation called `simplify`{:.language-scala} returning a
-`String`{:.language-scala}, and provide instances of it for Scala's
-`List`{:.language-scala} and `Int`{:.language-scala} classes, along with our own
-class `C`{:.language-scala}. Finally, we'll add convenient syntax in the Scalaz
-style to make it extremely easy to use the `simplify`{:.language-scala}
+We'll make our own `Simple` type class that has a single
+operation called `simplify` returning a
+`String`, and provide instances of it for Scala's
+`List` and `Int` classes, along with our own
+class `C`. Finally, we'll add convenient syntax in the Scalaz
+style to make it extremely easy to use the `simplify`
 operation. This might be the most hands-on, easy to understand explanation of
 type classes you've ever encountered!
 
@@ -27,8 +27,8 @@ type classes you've ever encountered!
 A common way to express polymorphism in Scala is inheritance. This is brittle
 because the polymorphic relationship between supertype and subtype must be
 defined where the subtype itself is defined. For example, if you have an
-`Animal`{:.language-scala} trait, your `Dog`{:.language-scala} class must
-declare its relationship as a subtype of `Animal`{:.language-scala} as part of
+`Animal` trait, your `Dog` class must
+declare its relationship as a subtype of `Animal` as part of
 its definition. This is problematic when you do not own potential subtypes (i.e.
 they're provided by a library). It also tightly couples the subtype to all of
 its implementations of its potential supertypes. A given subtype may already
@@ -36,15 +36,15 @@ have all the methods needed to implement the behavior of a given supertype but
 doesn't know or care about the supertype at definition time. Though less common,
 another problem is a subtype may be able to implement a supertype's operations
 in multiple, distinct ways (e.g. multiplication and addition implementations of
-a Monoid over `Int`{:.language-scala}). With inheritance this is impossible.
+a Monoid over `Int`). With inheritance this is impossible.
 
 ## Scalaz
 
 Let's start with one of the simplest type classes in Scalaz:
-`Equal`{:.language-scala}. `Equal`{:.language-scala} describes "a type safe
+`Equal`. `Equal` describes "a type safe
 alternative to universal equality" (if you're wondering why this is useful or
 necessary, ask me in the comments). Here's an example of providing an instance
-of `Equal`{:.language-scala} over our own class `C`{:.language-scala} that uses
+of `Equal` over our own class `C` that uses
 value equality to compare two instances.
 
 ```scala
@@ -55,10 +55,9 @@ implicit val equalC: Equal[C] = new Equal[C] {
 }
 ```
 
-Now let's say we want a `notEqual`{:language-scala} method that works on any
-`A`{:.language-scala} provided there is evidence of
-`Equal[A]`{:.language-scala}:
-
+Now let's say we want a `notEqual` method that works on any
+`A` provided there is evidence of
+`Equal[A]`:
 
 ```scala
 def notEqual[A: Equal](a1: A, a2: A): Boolean =
@@ -71,10 +70,10 @@ notEqual(c1, c2)
 //=> true
 ```
 
-Sidenote for those unfamiliar with *context bounds*: the context bound `[A:
-Equal]`{:.language-scala} is what ensures we have an implicit
-`Equal[C]`{:.language-scala} instance available when running `notEqual(c1,
-c2)`{:.language-scala}. An equivalent and perhaps more clear implementation
+Sidenote for those unfamiliar with _context bounds_: the context bound `[A:
+Equal]` is what ensures we have an implicit
+`Equal[C]` instance available when running `notEqual(c1,
+c2)`. An equivalent and perhaps more clear implementation
 without context bounds would look like this:
 
 ```scala
@@ -84,8 +83,8 @@ notEqual(c1, c2)
 ```
 
 However, there's an even more concise way of writing this using context bounds
-and Scalaz' `/==`{:.language-scala} operator for instances of
-`Equal`{:.language-scala}, or even its unicode `≠`{:.language-scala} alias:
+and Scalaz' `/==` operator for instances of
+`Equal`, or even its unicode `≠` alias:
 
 ```scala
 def notEqual[A: Equal](a1: A, a2: A): Boolean = a1 /== a2
@@ -93,13 +92,13 @@ def notEqual[A: Equal](a1: A, a2: A): Boolean = a1 /== a2
 def notEqual[A: Equal](a1: A, a2: A): Boolean = a1 ≠ a2
 ```
 
-Since Scalaz already provides these operators, `notEqual`{:.language-scala} is purely
+Since Scalaz already provides these operators, `notEqual` is purely
 didactic.
 
-Another common typelcass in Scalaz is `Show`{:.language-scala}. This corresponds
-to Haskell's `Show`{:.language-haskell} type class, and is used to indicate a
+Another common typelcass in Scalaz is `Show`. This corresponds
+to Haskell's `Show` type class, and is used to indicate a
 type that can be represented in some way as a string, e.g. for logging or
-printing in a REPL. Here's an instance for our `C`{:.language-scala} class
+printing in a REPL. Here's an instance for our `C` class
 example from before.
 
 ```scala
@@ -109,8 +108,8 @@ implicit val showC: Show[C] = new Show[C] {
 ```
 
 Scalaz provides syntax helpers that allow us to simply call
-`.show`{:.language-scala} on any type that provides evidence of
-`Show`{:.language-scala}. We'll look at how that works in detail toward the end.
+`.show` on any type that provides evidence of
+`Show`. We'll look at how that works in detail toward the end.
 
 ```scala
 new C("qux").show
@@ -129,9 +128,9 @@ trait Simple[F] {
 ```
 
 This is our type class definition. It defines a single operation
-`simplify`{:.language-scala} for a given `F`{:language-scala} and returns a
-`String`{:.language-scala}. Before we provide instances, let's define a method
-that expects a `Seq`{:.language-scala} of `Simple`{:.language-scala} instances
+`simplify` for a given `F` and returns a
+`String`. Before we provide instances, let's define a method
+that expects a `Seq` of `Simple` instances
 and outputs them separated by newlines.
 
 ```scala
@@ -140,7 +139,7 @@ def manySimple[A](simples: Seq[A])(implicit s: Simple[A]): String =
 ```
 
 We can use this to easily try out instances. Let's start with an instance of
-`C`{:.language-scala}:
+`C`:
 
 ```scala
 implicit def simpleC: Simple[C] = new Simple[C] {
@@ -149,13 +148,13 @@ implicit def simpleC: Simple[C] = new Simple[C] {
 ```
 
 We can manually call this by implicitly obtaining a
-`Simple[C]`{:.language-scala} then calling `simplify`{:.language-scala}:
+`Simple[C]` then calling `simplify`:
 
 ```scala
 implicitly[Simple[C]].simplify(new C("hello"))
 ```
 
-Or we can try out the `manySimple`{:.language-scala} method:
+Or we can try out the `manySimple` method:
 
 ```scala
 manySimple(Stream(new C("foo"), new C("bar"), new C("qux")))
@@ -165,7 +164,7 @@ manySimple(Stream(new C("foo"), new C("bar"), new C("qux")))
 //=>        Simplified: C[name=qux]
 ```
 
-Let's try another one: `Int`{:.language-scala}.
+Let's try another one: `Int`.
 
 ```scala
 implicit val simpleInt: Simple[Int] = new Simple[Int] {
@@ -180,9 +179,8 @@ implicitly[Simple[Int]].simplify(123)
 //=> Simplified Int with value of 123
 ```
 
-
-We can even provide an instance for `List[A]`{:.language-scala} but only if
-`A`{:.language-scala} itself has a `Simple`{:.language-scala} instance:
+We can even provide an instance for `List[A]` but only if
+`A` itself has a `Simple` instance:
 
 ```scala
 // Evidence for Simple[List[A]] given evidence of Simple[A]
@@ -207,16 +205,15 @@ implicitly[Simple[List[Int]]].simplify((1 to 5).toList)
 ```
 
 Hopefully you have a feel for how this works (ignoring how unuseful our
-`Simple`{:.language-scala} is IRL). Next, let's follow Scalaz lead and
+`Simple` is IRL). Next, let's follow Scalaz lead and
 provide some convenient syntax for working with our new type class; typing
-`implicitly[Simple[_]]`{:.language-scala} over and over again is starting to get
+`implicitly[Simple[_]]` over and over again is starting to get
 old.
-
 
 ## Syntax
 
 Wouldn't it be nice if we could just call `.simplify` on objects which provide
-evidence of a `Simple`{:.language-scala}? Well, we can via some neat implicit
+evidence of a `Simple`? Well, we can via some neat implicit
 tricks. Check it out:
 
 ```scala
@@ -247,7 +244,7 @@ trait Simple[F] { self =>
 ```
 
 Here we've provided two syntax operators as aliases to
-`simplify`{:.language-scala} (because no type class is legit without unicode
+`simplify` (because no type class is legit without unicode
 operator aliases).
 
 ```scala

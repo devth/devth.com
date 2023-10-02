@@ -1,13 +1,8 @@
 ---
-layout: article
 title: ThrushCond is not a Monad
 categories: scala
 comments: true
 excerpt: "Clojure has a useful macro called cond-> — let's explore a Scala equivalent"
-image:
-  feature: thrush_cond_feature.jpg
-  teaser: thrush_cond_teaser.jpg
-  caption: Singletrack sunrise, Billings, MT. October 2014
 ---
 
 Clojure has a useful macro called
@@ -155,7 +150,7 @@ def flatMap[A, B](f: A => F[B]): F[A] => F[B]
 We could make `guard`{:.language-scala} fit `flatMap`{:.language-scala}'s
 signature, but there's no point in doing so for the same reason it didn't make
 sense for Functor: the essense is not how a transformation is applied, it's
-*whether* the transformation is applied, and because of the signature, the
+_whether_ the transformation is applied, and because of the signature, the
 decision whether to perform a transformation must be embedded in the
 transformation itself, hence `guard`{:.language-scala}.
 
@@ -201,7 +196,7 @@ case object ThrushCond {
 ```
 
 We've defined a Semigroup over the set of all
-`ThrushCond[A]`{:.language-scala}s.  What does this give us? We can now combine
+`ThrushCond[A]`{:.language-scala}s. What does this give us? We can now combine
 any number of `ThrushCond`{:.language-scala}s using Semigroup's
 `|+|`{:.language-scala} operator. A simple example using
 `ThrushCond[Int]`{:.language-scala}:
@@ -224,7 +219,6 @@ multPipeline run 70 //=> 70 * 10 * 7 == 4900
 pipeline run 2 //=> (2 + 20) * 7 == 154
 pipeline run 12 //=> (12 + 2 + 20) * 7 == 238
 ```
-
 
 ## Monoid via PlusEmpty
 
@@ -334,5 +328,4 @@ be derived a Monoid**.
 
 [View the full code listing](https://gist.github.com/devth/308da859e5b584340f93).
 
-*Updated July 1, 2015: incorporated lmm's PlusEmpty suggestion.*
-
+_Updated July 1, 2015: incorporated lmm's PlusEmpty suggestion._

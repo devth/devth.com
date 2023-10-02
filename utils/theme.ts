@@ -1,22 +1,19 @@
 import { PaletteOptions, createTheme } from "@mui/material/styles";
 import { red } from "@mui/material/colors";
 
-const palette: PaletteOptions = {
+const palette = (mode: "dark" | "light"): PaletteOptions => ({
   primary: {
-    main: "#333",
+    main: mode === "light" ? "#333" : "#aaa",
   },
   secondary: {
     main: "#19857b",
   },
-  error: {
-    main: red.A400,
-  },
-};
+});
 
 export const createThemeForMode = (mode: "dark" | "light") => {
   return createTheme({
     palette: {
-      ...palette,
+      ...palette(mode),
       mode,
     },
     typography: {

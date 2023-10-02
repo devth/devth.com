@@ -7,6 +7,7 @@ import { CacheProvider, EmotionCache } from "@emotion/react";
 import createEmotionCache from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
 import { useMediaQuery } from "@mui/material";
+import "@code-hike/mdx/dist/index.css";
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -28,7 +29,7 @@ export default function MyApp(props: MyAppProps) {
       <ThemeProvider theme={theme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
-        <Component {...pageProps} />
+        <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />
       </ThemeProvider>
     </CacheProvider>
   );

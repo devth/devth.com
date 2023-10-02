@@ -1,4 +1,4 @@
-import { Container, Stack } from "@mui/material";
+import { Container, Stack, useMediaQuery } from "@mui/material";
 import NextLink from "next/link";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
@@ -6,7 +6,8 @@ import { Logo } from "./Logo";
 const maxWidth = "lg";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const linkColor = "red";
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const linkColor = prefersDarkMode ? "#3cc" : "#3cc";
   const linkFontSize = "1.2rem";
   return (
     <>
