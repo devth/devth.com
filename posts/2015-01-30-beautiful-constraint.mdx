@@ -38,7 +38,7 @@ You may say terminal is rudimentary. Well I agree, but that's part of what makes
 it so great. In my early days, it annoyed me greatly when I had to resort to
 using the terminal, but I eventually embraced it, moving all my tools and
 workflow into it because it's consistent, fast, reliable, and most importantly
-*automation is intrinsic*.
+_automation is intrinsic_.
 
 ## Keyboard
 
@@ -55,12 +55,11 @@ Emacs is also an excellent choice for the precise and thoughtful
 automation-and-productivity-minded developer. Many of the points regarding
 Terminal's simplicity and consistency also apply to these great editors,
 originally built by yesterday's technologists and finely tuned over the decades.
-`$EDITOR`{:.language-bash} only gets better with age. Vim's minimalism and
+`$EDITOR` only gets better with age. Vim's minimalism and
 simplicity give way to an uncluttered mind, allowing you to focus on the problem
 at hand rather than the tools—a framework for clear thinking.
 
 <img src="/images/vim_emacs.png" alt="Vim and Emacs vs Atom" />
-
 
 ## Functional Programming
 
@@ -75,13 +74,13 @@ One way to constrain your code is to implement functions purely in terms of core
 or library functions, as in this JavaScript example.
 
 ```javascript
-var mergeValues = _.compose(_.partialRight(_.reduce, _.merge), _.values)
-mergeValues({a: {foo: 1, bar: 2}, b: {qux: 3}})
+const mergeValues = _.compose(_.partialRight(_.reduce, _.merge), _.values);
+mergeValues({ a: { foo: 1, bar: 2 }, b: { qux: 3 } });
 //=> {foo: 1, bar: 2, qux: 3}
 ```
 
 I'm specifically avoiding the use of `function` in the definition of
-`mergeValues`. That is a strong indicator to the reader that *nothing* fancy is
+`mergeValues`. That is a strong indicator to the reader that _nothing_ fancy is
 going on here. It's simply a composition of library functions (lodash.js) which
 prevents me from writing any custom code. Instead, I'm forced to think of
 existing functions, and compose them in a way that produces intended behavior.
@@ -93,10 +92,9 @@ Composition is the foundation of reusability — a worthy pursuit.
 The benefits of immutability are quite well-known by now, even among OO
 programmers. It prevents all sorts of nonsense like defensive copying and
 combinatorial explosion of possible states and aligns well with reality and
-intuition. After all, a value is a value. When you say `2 + 3`{:.language-scala}
-you are not mutating `2`{:.language-scala} into `5`{:.language-scala}; you're
-producing a brand new, immutable, unchangeable value, `5`{:.language-scala}. Why
-should `2 :: List(3)`{:.language-scala} behave any differently?
+intuition. After all, a value is a value. When you say `2 + 3` you are not
+mutating `2`; you're producing a new, immutable, unchangeable value, `5`. Why
+should `2 :: List(3)` behave any differently?
 
 Immutability enforces a restriction on how we write algorithms. No longer can we
 loop over some collection and store computed results on another collection via
@@ -108,7 +106,6 @@ the benefits of immutability. It's a wonderful constraint.
 
 - [The Value of Values](http://www.infoq.com/presentations/Value-Values)
 - [Are We There Yet?](http://www.infoq.com/presentations/Are-We-There-Yet-Rich-Hickey)
-
 
 ### Referential transparency
 
@@ -129,7 +126,7 @@ double(4)
 ```
 
 It's obvious how the substitution works in this context. Now imagine the use of
-`double`{:.language-scala} in a slightly wider context:
+`double` in a slightly wider context:
 
 ```scala
 double(50) / double(5)
@@ -138,14 +135,12 @@ double(50) / double(5)
 ```
 
 Running this code in your head is very easy because you can safely substitute
-`100`{:.language-scala} for `double(50)`{:.language-scala} and
-`10`{:.language-scala} for `double(5)`{:.language-scala}. This concept of
-substitution scales up as your context gets wider and wider, as it naturally
-does in a program of any meaningful size. This is called equational reasoning.
-RT gives you the ability to reason locally in a small context instead of having
-to worry about who is mutating what or where unpredictable values are coming
-from. It also makes functions more testable, composable, and parallelizable.
-
+`100` and `10`. This concept of substitution scales up as your context gets
+wider and wider, as it naturally does in a program of any meaningful size. This
+is called equational reasoning. RT gives you the ability to reason locally in a
+small context instead of having to worry about who is mutating what or where
+unpredictable values are coming from. It also makes functions more testable,
+composable, and parallelizable.
 
 ## Constraint as freedom
 
@@ -159,5 +154,5 @@ Maker, choose your constraints wisely.
 ## Further exploration
 
 - [Constraints Liberate, Liberties Constrain](https://www.youtube.com/watch?v=GqmsQeSzMdw):
-   an excellent talk by the always-brilliant [Rúnar Bjarnason](http://blog.higher-order.com/),
-   co-author of [Functional Programming in Scala](https://www.manning.com/books/functional-programming-in-scala)
+  an excellent talk by the always-brilliant [Rúnar Bjarnason](http://blog.higher-order.com/),
+  co-author of [Functional Programming in Scala](https://www.manning.com/books/functional-programming-in-scala)

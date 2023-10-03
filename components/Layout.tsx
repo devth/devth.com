@@ -1,4 +1,4 @@
-import { Container, Stack, useMediaQuery } from "@mui/material";
+import { Container, Stack, Typography, useMediaQuery } from "@mui/material";
 import NextLink from "next/link";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
@@ -56,6 +56,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
       <Container maxWidth={maxWidth}>{children}</Container>
+      <Container maxWidth={maxWidth} sx={{ my: 4 }}>
+        <footer>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Link href="/">Home</Link>
+            <Link href="/about">About</Link>
+            <Link href="/overture">Overture</Link>
+            <Link href="/glossary">Glossary</Link>
+            <Typography variant="body2">
+              © {new Date().getFullYear()} Trevor C. Hartman{" "}
+            </Typography>
+            <a
+              style={{ textDecoration: "none", color: "#999" }}
+              href="https://en.wikipedia.org/wiki/Soli_Deo_gloria"
+            >
+              Soli Deo Gloria
+            </a>
+          </Stack>
+        </footer>
+      </Container>
     </>
   );
 }

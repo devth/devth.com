@@ -1,4 +1,4 @@
-import { Grid, Link } from "@mui/material";
+import { Grid, Link, Typography } from "@mui/material";
 import { ReactElement } from "react";
 import Layout from "../components/Layout";
 
@@ -7,7 +7,7 @@ export default function AboutPage(): ReactElement {
     <Layout>
       <Grid container>
         <Grid item xs={8}>
-          <h2>About Trevor Hartman</h2>
+          <Typography variant="h2">About Trevor Hartman</Typography>
           <p>
             Full stack software engineer with over two decades experience
             growing web and mobile apps. Cares about Developer Experience as
@@ -51,7 +51,7 @@ export default function AboutPage(): ReactElement {
           </p>
 
           <ul>
-            <li>early dark ages in Perl, JavaScript¹, Lingo (wat) and VB</li>
+            <li>early dark ages in Perl, JavaScript¹, Lingo (wat), VB</li>
             <li>middle ages in C# and ActionScript 3, Ruby and Python, Java</li>
             <li>
               up to recent years using Scala with Scalaz, Datalog (via Datomic),
@@ -60,6 +60,7 @@ export default function AboutPage(): ReactElement {
             <li>building open source with Clojure (and ClojureScript)</li>
             <li>grinding as necessary with Golang</li>
             <li>playing with Haskell, Eta, Elm, Unison</li>
+            <li>and being pragmatic with TypeScript</li>
           </ul>
 
           <p>
