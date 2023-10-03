@@ -1,0 +1,129 @@
+---
+title: Notes on Distributed Systems
+---
+
+These notes are from the excellent [Distributed Systems lecture series by
+Martin
+Kleppman](https://www.youtube.com/playlist?list=PLeKd45zvjcDFUEv_ohr_HdUFe97RItdiB).
+
+## Introduction
+
+A system becomes distributed when it leaves the confines of a single machine.
+A single machine provides concurrency in the form of multiple cores that can do
+work in parallel.
+
+A true distributed system provides concurrency via many machines made up of one
+or more cores that can do more work in parallel than can fit on a single
+machine.
+
+Obligatory Leslie Lamport quote:
+
+> A distributed system is one in which the failure of a computer you didn't even
+> know existed can render your own computer unusable
+
+Kleppman's definition is a little more concrete:
+
+1. Multiple computers communicating via a network
+2. Trying to achieve some tasks together
+3. Consisting of "nodes" (computer, phone, car, robot, ...)
+
+### Why make a distributed system?
+
+1. It's inherently distributed, e.g. sending a message from one device to
+   another)
+2. For better reliability: even if one node fails, the system as a whole keeps
+   functioning.
+3. For better performance: get data from a nearby node rather than one halfway
+   round the world.
+4. To solve bigger problems, e.g. processing data too large to fit on a single
+   machine.
+
+### What are the disadvantages of distributed systems?
+
+1. Communication between nodes may fail (and we might not even know it).
+2. Processes may crash (and we might not know it).
+3. Distributed systems introduce higher levels of non-determinism and are
+   therefore harder to reason about.
+
+When building distributed systems we strive for fault tolerance: we want the
+system as a whole to continue working, even when some parts are faulty, but this
+is hard.
+
+## Computer networking
+
+### Service Oriented Architecture (SOA)
+
+Split app into multiple services that communicate via some RPC, often with some
+Interface Definition Language (IDL) like Protobuf (used by gRPC), GraphQL Schema
+Definition, or Apache Thrift.
+
+## The two generals problem
+
+There are two armies, each controlled by 1 general. They must work together in
+order to capture a city. If only 1 of them attacks, they will lose. If both
+attack at the same time then they will win.
+
+1. The generals can't communicate to coordinate their attack.
+
+## 5. Replication
+
+Replication is keeping a copy of the same data on multiple nodes.
+
+Replicas provide redundancy in the case where a node goes down (caused by any
+number of reasons including network partition, power loss, corrupt hardware,
+and human error).
+
+## Spanner
+
+Consistency
+
+Distributed Transaction across all nodes
+Atomic commit - made on all nodes or aborted on all of the nodes
+
+State machine replication (Paxos, similar to Raft) within a shard
+
+Serializable transaction locking - two phase
+Hold locks until the transaction commits
+
+### Consistency
+
+- Serializable transactions
+- Linearizable reads and writes
+- Replication across many shards with atomic commits of transactions across them
+
+### Atomicity
+
+Two phase commit for cross-shard atomicity
+
+### Spanner
+
+Read only transactions without locks.
+From a "consistent snapshot" - a view of the database at a specific point in
+time using timestamps.
+
+### Multi Version Concurrency Control
+
+Common technique used by databases (Postgres, MySQL).
+
+It attaches a timestamp to every transaction.
+
+During a transaction it makes a copy of the object being written to with the new
+timestamp on it. Then if a read happens at the previous timestamp during the
+write it retrieves data from the older version - it ignores versions with a
+timestamp greater than the read timestamp.
+
+Physical clocks don't guarantee perfect timestamps. So why not logical clocks or
+lamport clocks?
+
+Replicas may never communicate with eachother, so nothing propagates lamport
+timestamps from A to B. We can't rely on the user to coordinate these.
+
+Replica B may not realize it needs a higher timestamp for T2 than T1 on Replica
+A.
+
+We can use physical clocks but they must be adjusted to maintain causal
+ordering. Spanner does this using a system of physical clocks called TrueTime.
+
+Replica requests a timestamp and it gets a range of min and max times.
+We can't be certain about absolute real time, but we can track the errors in the
+system including round-trip-time and drift to compute an uncertainty interval.

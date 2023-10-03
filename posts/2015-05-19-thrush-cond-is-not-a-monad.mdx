@@ -1,0 +1,331 @@
+---
+title: ThrushCond is not a Monad
+categories: scala
+comments: true
+excerpt: "Clojure has a useful macro called cond-> — let's explore a Scala equivalent"
+---
+
+Clojure has a useful macro called
+[cond->](https://clojuredocs.org/clojure.core/cond-%3E) that conditionally
+threads an initial value through a series of predicate/function pairs only
+applying each function if its predicate returns true. In this post we're going
+to look at a Scala representation, and whether it fits the shape and laws of any
+[common algebraic structures](https://en.wikipedia.org/wiki/Outline_of_algebraic_structures#Types_of_algebraic_structures).
+We'll look at Functor, Monad, Semigroup, and Monoid.
+
+**TL;DR** — [view the full code listing](https://gist.github.com/devth/308da859e5b584340f93).
+
+Let's start with an example in Clojure. We want to build up a request based on
+some arbitrary conditions:
+
+```clojure
+;; sample values from user input
+
+(def user-id 1)
+(def user-name "devth")
+(def user-address nil)
+(def accept :json)
+
+;; validation and helper functions
+
+(def accept-map )
+(defn valid-accept? [a] (accept-map a))
+(defn set-header [req k v] (update-in req [:headers] assoc k v))
+(defn set-param [req k v] (update-in req [:params] assoc k v))
+
+;; build up a request map using cond-> to decide which items to add to params
+;; and headers maps
+
+(def request
+  (cond->
+    user-name (set-param :user-name user-name)
+    user-address (set-param :user-address user-address)
+    (valid-accept? accept) (set-header :accept accept)))
+
+;; request value:
+
+{:target "/users"
+ :query-params
+ :headers
+```
+
+Since Clojure's `->` operator is sometimes referred to as
+the "thrush" operator, I'm going to call `cond->`
+in Scala `ThrushCond`.
+
+First let's model the `Request` and helpers equivalent to
+those we used in the Clojure example:
+
+```scala
+case class Request(
+  target: String,
+  params: Map[String, String] = Map.empty,
+  headers: Map[String, String] = Map.empty) {
+
+  // validation and helper functions
+  val acceptMap = Map("html" -> "text/html", "json" -> "application/json")
+  val isValidAccept: (String => Boolean) = acceptMap.isDefinedAt _
+
+  def addParam(k: String, v: String) = this.copy(params=params.updated(k, v))
+  def addHeader(k: String, v: String) = this.copy(headers=headers.updated(k, v))
+}
+
+// sample values from user input
+val userId: Int = 1
+val userName: Option[String] = Some("devth")
+val address: Option[String] = None
+val accept = "json"
+```
+
+Now we'll create the `ThrushCond` class that takes any number
+of predicate/function pairs, provides a `guard` function to only run a function
+if the predicate passes, a method to flatten the chain of functions via
+composition, and finally a `run` method that takes a value and
+runs it through the chain.
+
+```scala
+type Step[A] = (A => Boolean, A => A)
+
+case class ThrushCond[A](steps: Step[A]*) {
+  /** Perform a pipeline step only if the value meets a predicate */
+  def guard[A](pred: (A => Boolean), fn: (A => A)): (A => A) =
+    (a: A) => if (pred(a)) fn(a) else a
+  /** Compose the steps into a single function */
+  def comp = Function.chain(steps.map { step => guard(step._1, step._2) })
+  /** Run a value through the pipeline */
+  def run(a: A) = comp(a)
+}
+```
+
+Try it out:
+
+```scala
+val requestPipeline = ThrushCond[Request](
+  ({_ => userName.isDefined}, {_.addParam("userName", userName.get)}),
+  ({_ => address.isDefined}, {_.addParam("address", address.get)}),
+  ({_.isValidAccept(accept)}, {r => r.addHeader("accept", r.acceptMap(accept))}))
+
+val request = requestPipeline run Request("/users")
+
+//=>
+Request(/users,Map(userName -> devth),Map(accept -> application/json))
+```
+
+As you can see, it correctly skipped the 2nd step based on the
+`address.isDefined` condition and runs the other steps because
+their predicates evaluate to `true`.
+
+Will this work as one of the algebraic structures mentioned at the start?
+
+## Functor
+
+Consider Functor's `fmap`:
+
+```scala
+def fmap[A, B](f: A => B): F[A] => F[B]
+```
+
+In our case, both `A` are the
+same type, `Request` produces a
+function that fits, but we could easily use that with an existing Functor,
+e.g.:
+
+```scala
+val step: Request => Request =
+  guard({_ => userName.isDefined}, {setParam(_, "userName", userName.get)})
+Some(Request("/users")).map(step)
+```
+
+The essense of `ThrushCond`
+itself so it makes no sense to design a new Functor around it.
+
+## Monad
+
+Likewise, Monad's `flatMap`:
+
+```scala
+def flatMap[A, B](f: A => F[B]): F[A] => F[B]
+```
+
+We could make `guard`'s
+signature, but there's no point in doing so for the same reason it didn't make
+sense for Functor: the essense is not how a transformation is applied, it's
+_whether_ the transformation is applied, and because of the signature, the
+decision whether to perform a transformation must be embedded in the
+transformation itself, hence `guard`.
+
+## Semigroup
+
+Let's see if it meets Semigroup's associativity laws:
+
+```scala
+case class F(x: Int)
+val f = F(10)
+val always = Function.const(true) _
+
+val mult2: F => F = guard(always, {f => f.copy(x = f.x * 2)})
+val sub4: F => F = guard(always, {f => f.copy(x = f.x - 4)})
+val sub6: F => F = guard(always, {f => f.copy(x = f.x - 6)})
+
+val g: (F => F) = (mult2 andThen sub6) andThen sub4
+val h: (F => F) = mult2 andThen (sub6 andThen sub4)
+
+g(f)
+//=> F(10)
+h(f)
+//=> F(10)
+```
+
+`guard` is associative when composed with itself because
+[function composition is associative](https://en.wikipedia.org/wiki/Function_composition#Properties).
+Because of this associative binary operation we can provide evidence that
+`ThrushCond`'s
+`Semigroup` representation:
+
+```scala
+import scalaz._, Scalaz._
+
+case object ThrushCond {
+  /** Evidence of a Semigroup */
+  implicit def thrushCondSemigroup[A]: Semigroup[ThrushCond[A]] =
+    new Semigroup[ThrushCond[A]] {
+      def append(t1: ThrushCond[A], t2: => ThrushCond[A]): ThrushCond[A] =
+        ThrushCond[A]((Function.const(true), t2.comp compose t1.comp))
+    }
+}
+```
+
+We've defined a Semigroup over the set of all
+`ThrushCond[A]`s. What does this give us? We can now combine
+any number of `ThrushCond`s using Semigroup's
+`|+|` operator. A simple example using
+`ThrushCond[Int]`:
+
+```scala
+import ThrushCond.thrushCondSemigroup
+
+val addPipeline = ThrushCond[Int](
+  ((_ > 10), (_ + 2)),
+  ((_ < 20), (_ + 20)))
+
+val multPipeline = ThrushCond[Int](
+  ((_ == 70), (_ * 10)),
+  ((_ > 0), (_ * 7)))
+
+val pipeline = addPipeline |+| multPipeline
+
+// Examples
+multPipeline run 70 //=> 70 * 10 * 7 == 4900
+pipeline run 2 //=> (2 + 20) * 7 == 154
+pipeline run 12 //=> (12 + 2 + 20) * 7 == 238
+```
+
+## Monoid via PlusEmpty
+
+Monoids are Semigroups with an identity element.
+`ThrushCond`'s identity is simply a
+`ThrushCond` arguments.
+However, as [@lmm mentioned in the
+comments](http://devth.com/2015/thrush-cond-is-not-a-monad/#comment-2082941866):
+
+> it's not ThrushCond itself that forms a Monoid but rather ThrushCond[A] for
+> any given A
+
+This is where `PlusEmpty` comes in.
+`PlusEmpty` is a ["universally quantified
+Monoid"](https://github.com/scalaz/scalaz/blob/series/7.2.x/core/src/main/scala/scalaz/PlusEmpty.scala#L3-7)
+which means it's like a Monoid but for first-order `* -> *`
+types instead of proper `*` types.
+`PlusEmpty` itself is a higher-order `(* -> *) -> *` type. A
+helpful quote from #scalaz:
+
+> tpolecat: so `String` is a monoid, but
+> `List` (which means that
+> `List[A]`)
+
+To provide evidence of a `PlusEmpty`, we must be able to implement these two
+methods (where `F`):
+
+```scala
+def plus[A](a: F[A], b: => F[A]): F[A] // from Plus
+def empty[A]: F[A] // from PlusEmpty which extends Plus
+```
+
+We already implemented `plus` for `Semigroup`'s `append`, and
+`empty` is simply a `ThrushCond` without args.
+
+```scala
+case object ThrushCond {
+  /** Evidence of a PlusEmpty */
+  implicit def thrushCondPlusEmpty: PlusEmpty[ThrushCond] =
+    new PlusEmpty[ThrushCond] {
+      def plus[A](a: ThrushCond[A], b: => ThrushCond[A]): ThrushCond[A] =
+        ThrushCond[A((Function.const(true), b.comp compose a.comp)))
+
+      def empty[A]: ThrushCond[A] = ThrushCond[A]()
+    }
+  /** Use PlusEmpty to provide evidence of a Monoid[Request] */
+  implicit def requestMonoid: Monoid[ThrushCond[Request]] =
+    thrushCondPlusEmpty.monoid[Request]
+  /** Evidence of a Semigroup */
+  implicit def thrushCondSemigroup[A]: Semigroup[ThrushCond[A]] =
+    new Semigroup[ThrushCond[A]] {
+      def append(t1: ThrushCond[A], t2: => ThrushCond[A]): ThrushCond[A] =
+        ThrushCond[A]((Function.const(true), t2.comp compose t1.comp))
+    }
+}
+```
+
+Let's go back to our `Request` example in Clojure and use
+PlusEmpty's `<+>` to combine separate transformation
+pipelines:
+
+```scala
+import ThrushCond._ // evidence
+
+val userPipeline = ThrushCond[Request](
+  ({_ => userName.isDefined}, {_.addParam("userName", userName.get)}),
+  ({_ => address.isDefined}, {_.addParam("address", address.get)}))
+
+val headerPipeline = ThrushCond[Request](
+  ({_.isValidAccept(accept)}, {req =>
+    req.addHeader("accept", req.acceptMap(accept))}))
+
+// <+> is an alias for plus
+val requestPipeline = userPipeline <+> headerPipeline
+// A PlusEmpty[ThrushCond] is implicitly obtained and used to plus the two
+// ThrushCond[Request]s
+
+requestPipeline run Request("/users")
+//=>
+Request(/users,Map(userName -> devth),Map(accept -> application/json))
+```
+
+Because `PlusEmpty` can derive a Monoid for a given type, we can combine any
+number of `ThrushCond`s from a List. Let's construct one more
+`ThrushCond` pipeline that conditionally adds a cache-control
+header and try out our Monoid using `Foldable`'s
+`suml`:
+
+```scala
+import scala.language.postfixOps
+
+val shouldCache = false
+
+val cachePipeline = ThrushCond[Request](
+  ({_ => !shouldCache}, {_.addHeader("cache-control", "no-cache")}))
+
+val requestPipeline = List(userPipeline, headerPipeline, cachePipeline) suml
+requestPipeline run Request("/users")
+//=>
+Request(/users,
+  Map(userName -> devth),
+  Map(accept -> application/json, cache-control -> no-cache))
+```
+
+ThrushCond is not a Monad, nor a Functor, **but it is a PlusEmpty from which can
+be derived a Monoid**.
+
+[View the full code listing](https://gist.github.com/devth/308da859e5b584340f93).
+
+_Updated July 1, 2015: incorporated lmm's PlusEmpty suggestion._
