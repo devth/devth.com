@@ -38,9 +38,12 @@ export default function PostPage({ segments, source, frontMatter }) {
   return (
     <Layout>
       <div className="post-header">
-        <Typography variant="h1">{frontMatter.title}</Typography>
-
-        <Typography variant="h4">{date.toLocaleDateString("en-us")}</Typography>
+        <h1 style={{ marginBottom: 0 }}>{frontMatter.title}</h1>
+        <h3 style={{ marginTop: 0, color: "#999" }}>
+          <time dateTime={date.toLocaleDateString("en-us")}>
+            {date.toLocaleDateString("en-us")}
+          </time>
+        </h3>
         {frontMatter.description && (
           <p className="description">{frontMatter.description}</p>
         )}

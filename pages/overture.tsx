@@ -7,6 +7,7 @@ export default function Overture(): ReactElement {
     <Layout>
       <Grid container>
         <Grid item xs={8}>
+          <h2>Overture</h2>
           <p>
             Programming, tools, and processes are stuck in the past, held in
             place by hordes of OO-wielding proletariats collectively chanting

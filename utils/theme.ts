@@ -1,5 +1,4 @@
-import { PaletteOptions, createTheme } from "@mui/material/styles";
-import { red } from "@mui/material/colors";
+import { createTheme, PaletteOptions } from "@mui/material/styles";
 
 const palette = (mode: "dark" | "light"): PaletteOptions => ({
   primary: {
@@ -18,6 +17,24 @@ export const createThemeForMode = (mode: "dark" | "light") => {
     },
     typography: {
       fontFamily: ['"Helvetica Neue"', "-apple-system"].join(","),
+    },
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "none",
+          },
+        },
+      },
+      MuiCssBaseline: {
+        styleOverrides: `
+          blockquote {
+            border-left: 4px solid #ddd;
+            margin-left: 0;
+            padding-left: 1rem;
+          }
+        `,
+      },
     },
   });
 };

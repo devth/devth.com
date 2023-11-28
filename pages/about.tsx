@@ -1,4 +1,4 @@
-import { Grid, Link, Typography } from "@mui/material";
+import { Grid, Link } from "@mui/material";
 import { ReactElement } from "react";
 import Layout from "../components/Layout";
 
@@ -7,7 +7,7 @@ export default function AboutPage(): ReactElement {
     <Layout>
       <Grid container>
         <Grid item xs={8}>
-          <Typography variant="h2">About Trevor Hartman</Typography>
+          <h2>About Trevor Hartman</h2>
           <p>
             Full stack software engineer with over two decades experience
             growing web and mobile apps. Cares about Developer Experience as

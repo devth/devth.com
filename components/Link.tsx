@@ -17,6 +17,7 @@ export function Link({
     ? {}
     : {
         position: "relative",
+        paddingLeft: 30,
         "&::before": {
           content: '""',
           backgroundColor: "#FFCC0033",

@@ -60,7 +60,7 @@ export default function Index({ posts }: { posts: Post[] }) {
           <li key={post.filePath} style={{ marginTop: 0 }}>
             <Link
               disableHover={false}
-              style={{ display: "block", padding: "20px 0" }}
+              style={{ display: "block", padding: "20px 0px" }}
               as={`/${post.slug}`}
               href={`/[slug]`}
             >
@@ -68,7 +68,7 @@ export default function Index({ posts }: { posts: Post[] }) {
               <Typography
                 sx={{
                   display: "inline",
-                  fontSize: "4rem",
+                  fontSize: "3rem",
                   lineHeight: 1.1,
                   fontWeight: "bold",
                 }}
