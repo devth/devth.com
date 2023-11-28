@@ -21,15 +21,18 @@ export function Footer(): React.ReactElement {
           <Link href="/about">About</Link>
           <Link href="/overture">Overture</Link>
           <Link href="/glossary">Glossary</Link>
-          <Typography variant="body2">
-            © {new Date().getFullYear()} Trevor C. Hartman{" "}
+          <div style={{ flexGrow: 1 }} />
+          <Typography sx={{ marginLeft: "auto" }} variant="body2">
+            © {new Date().getFullYear()} Trevor C. Hartman
           </Typography>
-          <a
-            style={{ textDecoration: "none", color: "#999" }}
-            href="https://en.wikipedia.org/wiki/Soli_Deo_gloria"
-          >
-            Soli Deo Gloria
-          </a>
+          <Typography sx={{ marginLeft: "auto" }} variant="body2">
+            <a
+              style={{ textDecoration: "none", color: "#999" }}
+              href="https://en.wikipedia.org/wiki/Soli_Deo_gloria"
+            >
+              Soli Deo Gloria
+            </a>
+          </Typography>
           <Button
             onClick={colorMode.toggleColorMode}
             startIcon={
