@@ -16,34 +16,38 @@ export function Link({
   const hover = disableHover
     ? {}
     : {
-        position: "relative",
-        paddingLeft: 30,
-        "&::before": {
-          content: '""',
-          backgroundColor: "#FFCC0033",
-          position: "absolute",
-          left: 0,
-          bottom: 0,
-          width: "100%",
-          height: 0,
-          zIndex: -1,
-          transition: "all .3s ease-in-out",
-        },
-        "&:hover::before": {
-          bottom: 0,
-          height: "100%",
-          transition: "all .2s ease-out",
-        },
+      position: "relative",
+      paddingLeft: 30,
+      "&::before": {
+        content: '""',
+        backgroundColor: "#FFCC0033",
+        borderStyle: "solid",
+        borderColor: "#FFCC0033",
+        borderWidth: 0,
+        position: "absolute",
+        // left: "-15px",
+        bottom: 0,
+        height: "100%",
+        width: 0,
+        zIndex: -1,
+        transition: "all .3s ease-in-out",
+      },
+      "&:hover::before": {
+        bottom: 0,
+        width: "100%",
+        transition: "all .2s ease-out",
+        borderWidth: "0 0 10px 0px",
+      },
 
-        "&:hover": {
-          color: "black",
-          // marginLeft: "20px",
-          paddingTop: 20,
-          paddingBottom: 20,
-          // boxShadow: "inset 0 0 0 0 #FFCC00",
-          // transition: "all .2s ease-out",
-        },
-      };
+      "&:hover": {
+        color: "black",
+        // marginLeft: "20px",
+        paddingTop: 20,
+        paddingBottom: 20,
+        // boxShadow: "inset 0 0 0 0 #FFCC00",
+        // transition: "all .2s ease-out",
+      },
+    };
 
   return (
     <>
