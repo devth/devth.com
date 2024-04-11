@@ -45,6 +45,11 @@ If you get so many notifications that they've become noise, unsubscribe from
 unimportant, non-actionable notifications so that when someone does @mention you
 for something the notification doesn't get buried.
 
+If this is something your team is not already good at, you'll need a [Forcing
+Function] to change behavior. One idea would be to use gamification to
+incentive behavior change. Create a leaderboard of PR Reviews Requested with
+time-to-respond and ratio of Reviews Requested vs Reviews Given.
+
 ## Autonomy with Accountability
 
 ## Lazy loading product features
