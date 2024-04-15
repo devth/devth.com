@@ -15,6 +15,8 @@ import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
+import { useContext } from "react";
+import { ColorModeContext } from "../context";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
@@ -60,10 +62,13 @@ export default function Index({ posts }: { posts: Post[] }) {
     ([year]) => -year
   ).map(([year, posts]) => [year, sortBy(posts, (p) => -p.date.getTime())]);
 
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const gray = prefersDarkMode ? "#aaa" : "#555";
+  const { mode } = useContext(ColorModeContext);
+  const isDarkMode = mode === "dark";
+  const gray = isDarkMode ? "#aaa" : "#555";
 
-  const postLinkHover: SxProps = {
+  const postLinkSx: SxProps = {
+    display: "block",
+    padding: "20px 0px",
     position: "relative",
     paddingLeft: 30,
     "&::before": {
@@ -126,13 +131,7 @@ export default function Index({ posts }: { posts: Post[] }) {
               >
                 {posts.map((post) => (
                   <li key={post.filePath} style={{ marginTop: 0 }}>
-                    <Link
-                      hover={postLinkHover}
-                      style={{ display: "block", padding: "20px 0px" }}
-                      as={`/${post.slug}`}
-                      href={`/[slug]`}
-                    >
-                      {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
+                    <Link sx={postLinkSx} as={`/${post.slug}`} href={`/[slug]`}>
                       <Typography
                         sx={{
                           display: "inline",

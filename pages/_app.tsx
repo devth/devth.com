@@ -6,7 +6,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { CacheProvider, EmotionCache } from "@emotion/react";
 import createEmotionCache from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
-import { useMediaQuery } from "@mui/material";
+import { PaletteMode, useMediaQuery } from "@mui/material";
 import "@code-hike/mdx/dist/index.css";
 import { ColorModeContext } from "../context";
 
@@ -18,15 +18,21 @@ export interface MyAppProps extends AppProps {
 }
 
 export default function MyApp(props: MyAppProps) {
+  // use the system preference to determine the initial color of the site. after
+  // this, users can still toggle the mode manually. the system preferences just
+  // provide a default.
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const defaultMode = prefersDarkMode ? "dark" : "light";
 
-  const [mode, setMode] = React.useState<"light" | "dark">(defaultMode);
+  const [mode, setMode] = React.useState<PaletteMode>(defaultMode);
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+        setMode((prevMode: PaletteMode) =>
+          prevMode === "light" ? "dark" : "light"
+        );
       },
+      mode,
     }),
     []
   );
