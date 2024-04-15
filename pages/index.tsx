@@ -1,10 +1,20 @@
-import { Typography, darken, lighten, useMediaQuery } from "@mui/material";
+import {
+  Timeline,
+  TimelineConnector,
+  TimelineContent,
+  TimelineDot,
+  TimelineItem,
+  TimelineSeparator,
+  timelineItemClasses,
+} from "@mui/lab";
+import { SxProps, Typography, lighten, useMediaQuery } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
+import { groupBy, sortBy } from "lodash";
 import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
-import { matchFilePath, postFilePaths, POSTS_PATH } from "../utils/mdxUtils";
+import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
@@ -31,68 +41,130 @@ type PostWithDate = Post & {
 };
 
 export default function Index({ posts }: { posts: Post[] }) {
-  const postsWithDate = posts
-    .flatMap((post) => {
-      const date = new Date(post.dateString);
-      if (isNaN(date.getTime())) {
-        return [];
-      }
-      const p: PostWithDate = {
-        ...post,
-        date,
-      };
-      return [p];
-    })
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const postsWithDate = posts.flatMap((post) => {
+    const date = new Date(post.dateString);
+    if (isNaN(date.getTime())) {
+      return [];
+    }
+    const p: PostWithDate = {
+      ...post,
+      date,
+    };
+    return [p];
+  });
 
+  // group the posts by year, sorted by year descending
+  const postsByYear = groupBy(postsWithDate, (p) => p.date.getFullYear());
+  const sortedPosts: [string, PostWithDate[]][] = sortBy(
+    Object.entries(postsByYear),
+    ([year]) => -year
+  ).map(([year, posts]) => [year, sortBy(posts, (p) => -p.date.getTime())]);
+
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const gray = prefersDarkMode ? "#aaa" : "#555";
+
+  const postLinkHover: SxProps = {
+    position: "relative",
+    paddingLeft: 30,
+    "&::before": {
+      content: '""',
+      backgroundColor: "#FFCC0033",
+      borderStyle: "solid",
+      borderColor: "#FFCC0033",
+      borderWidth: 0,
+      position: "absolute",
+      // left: "-15px",
+      bottom: 0,
+      height: "100%",
+      width: 0,
+      zIndex: -1,
+      transition: "all .3s ease-in-out",
+    },
+    "&:hover::before": {
+      bottom: 0,
+      width: "100%",
+      transition: "all .2s ease-out",
+      borderWidth: "0 0 10px 0px",
+    },
+
+    "&:hover": {
+      color: "black",
+      // marginLeft: "20px",
+      paddingTop: 20,
+      paddingBottom: 20,
+      // boxShadow: "inset 0 0 0 0 #FFCC00",
+      // transition: "all .2s ease-out",
+    },
+  };
 
   return (
     <Layout>
-      <ul
-        style={{
-          listStyle: "none",
-          padding: 0,
+      <Timeline
+        sx={{
+          [`& .${timelineItemClasses.root}:before`]: {
+            flex: 0,
+            padding: 0,
+          },
         }}
       >
-        {postsWithDate.map((post) => (
-          <li key={post.filePath} style={{ marginTop: 0 }}>
-            <Link
-              disableHover={false}
-              style={{ display: "block", padding: "20px 0px" }}
-              as={`/${post.slug}`}
-              href={`/[slug]`}
-            >
-              {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
-              <Typography
-                sx={{
-                  display: "inline",
-                  fontSize: "3rem",
-                  lineHeight: 1.1,
-                  fontWeight: "bold",
+        {sortedPosts.map(([year, posts]) => (
+          <TimelineItem key={year}>
+            <TimelineSeparator>
+              <TimelineDot variant="outlined" color="primary" />
+              <TimelineConnector />
+            </TimelineSeparator>
+            <TimelineContent>
+              <Typography sx={{ color: "red", fontWeight: "bold" }}>
+                {year}
+              </Typography>
+
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
                 }}
               >
-                {post.data.title}
-              </Typography>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontSize: ".9rem", color: gray }}
-              >
-                <b
-                  style={{
-                    fontSize: "1.2em",
-                    color: lighten(gray, 0.4),
-                  }}
-                >
-                  {formatDate(post.date)}
-                </b>{" "}
-                {post.data.excerpt}
-              </Typography>
-            </Link>
-          </li>
+                {posts.map((post) => (
+                  <li key={post.filePath} style={{ marginTop: 0 }}>
+                    <Link
+                      hover={postLinkHover}
+                      style={{ display: "block", padding: "20px 0px" }}
+                      as={`/${post.slug}`}
+                      href={`/[slug]`}
+                    >
+                      {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
+                      <Typography
+                        sx={{
+                          display: "inline",
+                          fontSize: "3rem",
+                          lineHeight: 1.1,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {post.data.title}
+                      </Typography>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontSize: ".9rem", color: gray }}
+                      >
+                        <b
+                          style={{
+                            fontSize: "1.2em",
+                            color: lighten(gray, 0.4),
+                          }}
+                        >
+                          {formatDate(post.date)}
+                        </b>{" "}
+                        {post.data.excerpt}
+                      </Typography>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </TimelineContent>
+          </TimelineItem>
         ))}
-      </ul>
+      </Timeline>
     </Layout>
   );
 }
