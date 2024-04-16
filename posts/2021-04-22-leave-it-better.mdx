@@ -28,18 +28,22 @@ There are many things competing for an IC's time:
   - Org standups
   - Company days
   - Demo days
-  - and on and on and on
+- and on and on and on
 
 Internal projects tend to have a perpetually-alpha quality. I've seen it at
 every company I've worked for over the last 20+ years. It's rare to escape the
-sticky gravity well of perma-alpha. (One trick for doing it is to open source
-your thing).
+sticky gravity well of perma-alpha. (One trick for doing it is to [open
+source](/essentiality-of-open-source) your thing, when appropriate).
 
-When a new user clones the repo and opens README.md, do they very quickly find:
+To combat this, as software engineers we should leave things in a better state
+every time we interact with them, even if we don't technically own the thing.
+
+For example, if I need to make a change to an existing codebase, I hope and pray
+that I can clone the repo and very quickly find:
 
 1. links to the environments it's running in
 1. how to build (this should be 1 command that works on everyone's machine)
-1. docs
+1. docs (even some basic pointers)
 1. specs for expected shapes of data
 1. how to run the tests
 1. a link to the project's CI/CD
@@ -59,3 +63,5 @@ A great SRE or platform architect should be applying the same holistic
 excellence to the collection of apps they care for. How are you exposing a
 consistent interface into the system? Is it a GraphQL BFF? A consistent
 adherence to gRPC with well-defined Protobufs?
+
+Leave it better.

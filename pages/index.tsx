@@ -102,6 +102,7 @@ export default function Index({ posts }: { posts: Post[] }) {
     <Layout>
       <Timeline
         sx={{
+          padding: 1,
           [`& .${timelineItemClasses.root}:before`]: {
             flex: 0,
             padding: 0,
@@ -114,8 +115,17 @@ export default function Index({ posts }: { posts: Post[] }) {
               <TimelineDot variant="outlined" color="primary" />
               <TimelineConnector />
             </TimelineSeparator>
-            <TimelineContent>
-              <Typography sx={{ color: "red", fontWeight: "bold" }}>
+            <TimelineContent sx={{ mt: "-10px" }}>
+              <Typography
+                sx={{
+                  color: isDarkMode ? "cyan" : "red",
+                  // textShadow:
+                  //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  fontFamily: "monospace",
+                }}
+              >
                 {year}
               </Typography>
 
@@ -128,7 +138,11 @@ export default function Index({ posts }: { posts: Post[] }) {
                 {posts.map((post) => (
                   <li
                     key={post.filePath}
-                    style={{ display: "block", marginTop: 25 }}
+                    style={{
+                      display: "block",
+                      marginTop: 25,
+                      marginBottom: 25,
+                    }}
                   >
                     <Link sx={postLinkSx} as={`/${post.slug}`} href={`/[slug]`}>
                       <Typography
