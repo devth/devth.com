@@ -1,18 +1,27 @@
-import { Container, Stack, useMediaQuery } from "@mui/material";
+import { Container, Stack, SxProps } from "@mui/material";
 import NextLink from "next/link";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
 
 const maxWidth = "lg";
 
 export function Nav() {
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const isDarkMode = useIsDarkMode();
   const cyan = "#3cc";
-  const linkColor = prefersDarkMode ? cyan : cyan;
+  const linkColor = isDarkMode ? "#eee" : "black";
+  const hoverColor = isDarkMode ? cyan : "red";
   const linkFontSize = "1.2rem";
 
-  const hover = {
-    color: "red",
+  const sx: SxProps = {
+    textDecoration: "none",
+    fontWeight: "bold",
+    fontSize: linkFontSize,
+    color: linkColor,
+    transition: "color .3s ease-in-out, box-shadow 2s ease-out",
+    "&:hover": {
+      color: hoverColor,
+    },
   };
 
   return (
@@ -23,37 +32,13 @@ export function Nav() {
             <NextLink href="/">
               <Logo />
             </NextLink>
-            <Link
-              hover={hover}
-              style={{
-                fontWeight: "bold",
-                fontSize: linkFontSize,
-                color: linkColor,
-              }}
-              href="/about"
-            >
+            <Link sx={sx} href="/about">
               about
             </Link>
-            <Link
-              hover={hover}
-              style={{
-                fontWeight: "bold",
-                fontSize: linkFontSize,
-                color: linkColor,
-              }}
-              href="/overture"
-            >
+            <Link sx={sx} href="/overture">
               overture
             </Link>
-            <Link
-              hover={hover}
-              style={{
-                fontWeight: "bold",
-                fontSize: linkFontSize,
-                color: linkColor,
-              }}
-              href="/glossary"
-            >
+            <Link sx={sx} href="/glossary">
               glossary
             </Link>
           </Stack>

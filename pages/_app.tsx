@@ -6,9 +6,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { CacheProvider, EmotionCache } from "@emotion/react";
 import createEmotionCache from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
-import { useMediaQuery } from "@mui/material";
+import { GlobalStyles, PaletteMode, useMediaQuery } from "@mui/material";
 import "@code-hike/mdx/dist/index.css";
 import { ColorModeContext } from "../context";
+import { globalStyles } from "../utils/globalStyles";
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -18,17 +19,23 @@ export interface MyAppProps extends AppProps {
 }
 
 export default function MyApp(props: MyAppProps) {
+  // use the system preference to determine the initial color of the site. after
+  // this, users can still toggle the mode manually. the system preferences just
+  // provide a default.
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const defaultMode = prefersDarkMode ? "dark" : "light";
 
-  const [mode, setMode] = React.useState<"light" | "dark">(defaultMode);
+  const [mode, setMode] = React.useState<PaletteMode>(defaultMode);
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
+        setMode((prevMode: PaletteMode) =>
+          prevMode === "light" ? "dark" : "light"
+        );
       },
+      mode,
     }),
-    []
+    [mode]
   );
 
   const theme = React.useMemo(() => createThemeForMode(mode), [mode]);
@@ -112,6 +119,7 @@ export default function MyApp(props: MyAppProps) {
       </Head>
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
+          <GlobalStyles styles={globalStyles(mode)} />
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
           <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />

@@ -7,17 +7,20 @@ import {
   TimelineSeparator,
   timelineItemClasses,
 } from "@mui/lab";
-import { SxProps, Typography, lighten, useMediaQuery } from "@mui/material";
+import { SxProps, Typography, lighten } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
 import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
+
+const yellow = "#FFCC0033";
 
 // d.toLocaleDateString("en-us", {
 //   year: "numeric",
@@ -60,40 +63,36 @@ export default function Index({ posts }: { posts: Post[] }) {
     ([year]) => -year
   ).map(([year, posts]) => [year, sortBy(posts, (p) => -p.date.getTime())]);
 
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const gray = prefersDarkMode ? "#aaa" : "#555";
+  const isDarkMode = useIsDarkMode();
+  const gray = isDarkMode ? "#aaa" : "#666";
 
-  const postLinkHover: SxProps = {
+  const postLinkSx: SxProps = {
+    transition: "all .5s ease-out",
+    textDecoration: "none",
+    display: "inline-block",
     position: "relative",
-    paddingLeft: 30,
-    "&::before": {
-      content: '""',
-      backgroundColor: "#FFCC0033",
-      borderStyle: "solid",
-      borderColor: "#FFCC0033",
-      borderWidth: 0,
-      position: "absolute",
-      // left: "-15px",
-      bottom: 0,
-      height: "100%",
-      width: 0,
-      zIndex: -1,
-      transition: "all .3s ease-in-out",
-    },
-    "&:hover::before": {
-      bottom: 0,
-      width: "100%",
-      transition: "all .2s ease-out",
-      borderWidth: "0 0 10px 0px",
-    },
+    paddingBottom: 2,
 
+    "&::after": {
+      content: "''",
+      position: "absolute",
+      width: "100%",
+      transform: "scaleX(0)",
+      borderRadius: "0px",
+      height: "8px",
+      bottom: "0",
+      left: "0",
+      background: yellow,
+      transformOrigin: "bottom right",
+      transition: "transform 0.25s ease-out",
+    },
+    "&:hover::after": {
+      transform: "scaleX(1)",
+      transformOrigin: "bottom left",
+    },
     "&:hover": {
-      color: "black",
-      // marginLeft: "20px",
-      paddingTop: 20,
-      paddingBottom: 20,
-      // boxShadow: "inset 0 0 0 0 #FFCC00",
-      // transition: "all .2s ease-out",
+      // color: "red",
+      // textDecoration: "underline",
     },
   };
 
@@ -101,6 +100,7 @@ export default function Index({ posts }: { posts: Post[] }) {
     <Layout>
       <Timeline
         sx={{
+          padding: 1,
           [`& .${timelineItemClasses.root}:before`]: {
             flex: 0,
             padding: 0,
@@ -113,8 +113,17 @@ export default function Index({ posts }: { posts: Post[] }) {
               <TimelineDot variant="outlined" color="primary" />
               <TimelineConnector />
             </TimelineSeparator>
-            <TimelineContent>
-              <Typography sx={{ color: "red", fontWeight: "bold" }}>
+            <TimelineContent sx={{ mt: "-10px" }}>
+              <Typography
+                sx={{
+                  color: isDarkMode ? "cyan" : "red",
+                  // textShadow:
+                  //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
+                  fontWeight: "bold",
+                  fontSize: 30,
+                  fontFamily: "monospace",
+                }}
+              >
                 {year}
               </Typography>
 
@@ -125,14 +134,15 @@ export default function Index({ posts }: { posts: Post[] }) {
                 }}
               >
                 {posts.map((post) => (
-                  <li key={post.filePath} style={{ marginTop: 0 }}>
-                    <Link
-                      hover={postLinkHover}
-                      style={{ display: "block", padding: "20px 0px" }}
-                      as={`/${post.slug}`}
-                      href={`/[slug]`}
-                    >
-                      {/* <pre>{JSON.stringify(post, null, 2)}</pre> */}
+                  <li
+                    key={post.filePath}
+                    style={{
+                      display: "block",
+                      marginTop: 25,
+                      marginBottom: 25,
+                    }}
+                  >
+                    <Link sx={postLinkSx} as={`/${post.slug}`} href={`/[slug]`}>
                       <Typography
                         sx={{
                           display: "inline",
@@ -145,16 +155,16 @@ export default function Index({ posts }: { posts: Post[] }) {
                       </Typography>
                       <Typography
                         variant="subtitle1"
-                        sx={{ fontSize: ".9rem", color: gray }}
+                        sx={{ fontSize: "1rem", color: gray }}
                       >
-                        <b
+                        <span
                           style={{
                             fontSize: "1.2em",
-                            color: lighten(gray, 0.4),
+                            color: lighten(gray, 0.3),
                           }}
                         >
                           {formatDate(post.date)}
-                        </b>{" "}
+                        </span>{" "}
                         {post.data.excerpt}
                       </Typography>
                     </Link>
