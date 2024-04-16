@@ -21,6 +21,8 @@ import { ColorModeContext } from "../context";
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
 
+const yellow = "#FFCC0033";
+
 // d.toLocaleDateString("en-us", {
 //   year: "numeric",
 //   month: "numeric",
@@ -64,41 +66,35 @@ export default function Index({ posts }: { posts: Post[] }) {
 
   const { mode } = useContext(ColorModeContext);
   const isDarkMode = mode === "dark";
-  const gray = isDarkMode ? "#aaa" : "#555";
+  const gray = isDarkMode ? "#aaa" : "#666";
 
   const postLinkSx: SxProps = {
-    display: "block",
-    padding: "20px 0px",
+    transition: "all .5s ease-out",
+    textDecoration: "none",
+    display: "inline-block",
     position: "relative",
-    paddingLeft: 30,
-    "&::before": {
-      content: '""',
-      backgroundColor: "#FFCC0033",
-      borderStyle: "solid",
-      borderColor: "#FFCC0033",
-      borderWidth: 0,
-      position: "absolute",
-      // left: "-15px",
-      bottom: 0,
-      height: "100%",
-      width: 0,
-      zIndex: -1,
-      transition: "all .3s ease-in-out",
-    },
-    "&:hover::before": {
-      bottom: 0,
-      width: "100%",
-      transition: "all .2s ease-out",
-      borderWidth: "0 0 10px 0px",
-    },
+    paddingBottom: 2,
 
+    "&::after": {
+      content: "''",
+      position: "absolute",
+      width: "100%",
+      transform: "scaleX(0)",
+      borderRadius: "0px",
+      height: "8px",
+      bottom: "0",
+      left: "0",
+      background: yellow,
+      transformOrigin: "bottom right",
+      transition: "transform 0.25s ease-out",
+    },
+    "&:hover::after": {
+      transform: "scaleX(1)",
+      transformOrigin: "bottom left",
+    },
     "&:hover": {
-      color: "black",
-      // marginLeft: "20px",
-      paddingTop: 20,
-      paddingBottom: 20,
-      // boxShadow: "inset 0 0 0 0 #FFCC00",
-      // transition: "all .2s ease-out",
+      // color: "red",
+      // textDecoration: "underline",
     },
   };
 
@@ -130,7 +126,10 @@ export default function Index({ posts }: { posts: Post[] }) {
                 }}
               >
                 {posts.map((post) => (
-                  <li key={post.filePath} style={{ marginTop: 0 }}>
+                  <li
+                    key={post.filePath}
+                    style={{ display: "block", marginTop: 25 }}
+                  >
                     <Link sx={postLinkSx} as={`/${post.slug}`} href={`/[slug]`}>
                       <Typography
                         sx={{

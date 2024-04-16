@@ -34,7 +34,7 @@ export default function MyApp(props: MyAppProps) {
       },
       mode,
     }),
-    []
+    [mode]
   );
 
   const theme = React.useMemo(() => createThemeForMode(mode), [mode]);
