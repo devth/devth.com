@@ -11,7 +11,8 @@ export function Nav() {
   const { mode } = useContext(ColorModeContext);
   const isDarkMode = mode === "dark";
   const cyan = "#3cc";
-  const linkColor = isDarkMode ? cyan : "red";
+  const linkColor = isDarkMode ? "#eee" : "black";
+  const hoverColor = isDarkMode ? cyan : "red";
   const linkFontSize = "1.2rem";
 
   console.log("Nav prefersDarkMode", mode, isDarkMode);
@@ -23,7 +24,7 @@ export function Nav() {
     color: linkColor,
     transition: "color .3s ease-in-out, box-shadow 2s ease-out",
     "&:hover": {
-      color: isDarkMode ? "#eee" : "black",
+      color: hoverColor,
     },
   };
 
