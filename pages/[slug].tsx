@@ -1,22 +1,22 @@
-import { Grid, Typography } from "@mui/material";
+import { remarkCodeHike } from "@code-hike/mdx";
+import { CH } from "@code-hike/mdx/components";
+import { Grid } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
 import { serialize } from "next-mdx-remote/serialize";
-import { remarkCodeHike } from "@code-hike/mdx";
-import { CH } from "@code-hike/mdx/components";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
 import {
+  POSTS_PATH,
   findFilePath,
   matchFilePath,
   postFilePaths,
-  POSTS_PATH,
 } from "../utils/mdxUtils";
-// import rehypeHighlight from "rehype-highlight";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
@@ -33,6 +33,8 @@ const components = {
 };
 
 export default function PostPage({ segments, source, frontMatter }) {
+  const isDarkMode = useIsDarkMode();
+
   const { year, month, day } = segments;
   const date = new Date(`${year}-${month}-${day}`);
   return (
@@ -74,7 +76,7 @@ export const getStaticProps = async ({ params }) => {
   const mdxSource = await serialize(content, {
     // Optionally pass remark/rehype plugins
     mdxOptions: {
-      remarkPlugins: [[remarkCodeHike]],
+      remarkPlugins: [[remarkCodeHike, { theme: "github-from-css" }]],
       rehypePlugins: [],
     },
     scope: {

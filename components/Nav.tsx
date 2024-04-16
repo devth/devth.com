@@ -1,21 +1,17 @@
 import { Container, Stack, SxProps } from "@mui/material";
 import NextLink from "next/link";
-import { useContext } from "react";
-import { ColorModeContext } from "../context";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
 
 const maxWidth = "lg";
 
 export function Nav() {
-  const { mode } = useContext(ColorModeContext);
-  const isDarkMode = mode === "dark";
+  const isDarkMode = useIsDarkMode();
   const cyan = "#3cc";
   const linkColor = isDarkMode ? "#eee" : "black";
   const hoverColor = isDarkMode ? cyan : "red";
   const linkFontSize = "1.2rem";
-
-  console.log("Nav prefersDarkMode", mode, isDarkMode);
 
   const sx: SxProps = {
     textDecoration: "none",

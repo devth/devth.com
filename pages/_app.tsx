@@ -6,9 +6,10 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { CacheProvider, EmotionCache } from "@emotion/react";
 import createEmotionCache from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
-import { PaletteMode, useMediaQuery } from "@mui/material";
+import { GlobalStyles, PaletteMode, useMediaQuery } from "@mui/material";
 import "@code-hike/mdx/dist/index.css";
 import { ColorModeContext } from "../context";
+import { globalStyles } from "../utils/globalStyles";
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -118,6 +119,7 @@ export default function MyApp(props: MyAppProps) {
       </Head>
       <ColorModeContext.Provider value={colorMode}>
         <ThemeProvider theme={theme}>
+          <GlobalStyles styles={globalStyles(mode)} />
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
           <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />

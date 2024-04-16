@@ -7,16 +7,15 @@ import {
   TimelineSeparator,
   timelineItemClasses,
 } from "@mui/lab";
-import { SxProps, Typography, lighten, useMediaQuery } from "@mui/material";
+import { SxProps, Typography, lighten } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
 import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
-import { useContext } from "react";
-import { ColorModeContext } from "../context";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
@@ -64,8 +63,7 @@ export default function Index({ posts }: { posts: Post[] }) {
     ([year]) => -year
   ).map(([year, posts]) => [year, sortBy(posts, (p) => -p.date.getTime())]);
 
-  const { mode } = useContext(ColorModeContext);
-  const isDarkMode = mode === "dark";
+  const isDarkMode = useIsDarkMode();
   const gray = isDarkMode ? "#aaa" : "#666";
 
   const postLinkSx: SxProps = {
@@ -157,16 +155,16 @@ export default function Index({ posts }: { posts: Post[] }) {
                       </Typography>
                       <Typography
                         variant="subtitle1"
-                        sx={{ fontSize: ".9rem", color: gray }}
+                        sx={{ fontSize: "1rem", color: gray }}
                       >
-                        <b
+                        <span
                           style={{
                             fontSize: "1.2em",
-                            color: lighten(gray, 0.4),
+                            color: lighten(gray, 0.3),
                           }}
                         >
                           {formatDate(post.date)}
-                        </b>{" "}
+                        </span>{" "}
                         {post.data.excerpt}
                       </Typography>
                     </Link>

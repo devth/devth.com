@@ -1,14 +1,8 @@
-import { Box, Typography, useMediaQuery } from "@mui/material";
-import { useContext, useState } from "react";
-import { ColorModeContext } from "../context";
-
-const rand = (mm = 8) => -Math.random() * mm;
+import { Box, Typography } from "@mui/material";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 export const Logo = () => {
-  const [[ml, mr, top, left]] = useState([rand(3), rand(3), rand(), rand()]);
-  const { mode } = useContext(ColorModeContext);
-  const isDarkMode = mode === "dark";
-
+  const isDarkMode = useIsDarkMode();
   const logoColor = isDarkMode ? "#999" : "lightgray";
 
   return (
