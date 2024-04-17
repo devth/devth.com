@@ -1,6 +1,7 @@
 import { SxProps } from "@mui/material";
 import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import NextLink from "next/link";
+import { CSSProperties } from "react";
 
 export function Link({
   as,
@@ -9,7 +10,7 @@ export function Link({
   ...otherProps
 }: {
   as?: string;
-  sx?: SxProps;
+  sx?: CSSProperties;
 } & MuiLinkProps) {
   return (
     <>
@@ -18,7 +19,7 @@ export function Link({
           sx={{
             cursor: "pointer",
             transition: "all .2s ease-in-out, margin .2s ease-out",
-            ...(sx || {}),
+            ...sx,
           }}
           {...otherProps}
         />

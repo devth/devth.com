@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Grid, Link, Typography } from "@mui/material";
 import { ReactElement } from "react";
 import Layout from "../components/Layout";
@@ -90,6 +91,11 @@ export default function AboutPage(): ReactElement {
             </Link>
             , and maker of things.
           </p>
+          <img
+            style={{ maxWidth: "100%" }}
+            src="/images/dakota-50.jpg"
+            alt="Trevor Hartman at the Dakota 5-0 mountain bike race"
+          />
         </Grid>
       </Grid>
     </Layout>
