@@ -17,7 +17,7 @@ export function Link({
         <MuiLink
           sx={{
             cursor: "pointer",
-            transition: "all .2s ease-in-out, margin .2s ease-out",
+            transition: "all .5s ease-in-out",
             ...sx,
           }}
           {...otherProps}
