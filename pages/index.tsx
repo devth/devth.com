@@ -190,6 +190,7 @@ export function getStaticProps() {
     const p: Post = {
       content,
       data,
+      // must be a string for serialization
       dateString: date.toISOString(),
       slug,
       filePath,

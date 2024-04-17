@@ -1,4 +1,3 @@
-import { SxProps } from "@mui/material";
 import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import NextLink from "next/link";
 import { CSSProperties } from "react";
