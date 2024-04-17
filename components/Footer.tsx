@@ -31,7 +31,7 @@ export function Footer(): React.ReactElement {
   return (
     <footer style={{ backgroundColor: "divider", marginBottom: 0 }}>
       <Container maxWidth={maxWidth} sx={{ p: 10, mt: 4 }}>
-        <Stack direction="column" spacing={1} alignItems="center">
+        <Stack direction="column" spacing={1.2} alignItems="center">
           <Stack direction="row" spacing={2} alignItems="center">
             <Link sx={footerLinkSx} href="/">
               Home
@@ -58,14 +58,19 @@ export function Footer(): React.ReactElement {
               p: 0,
             }}
           >
-            Switch to {theme.palette.mode === "dark" ? "Light" : "Dark"} Mode
+            switch to {theme.palette.mode === "dark" ? "light" : "dark"} mode
           </Button>
           <Typography sx={{ marginLeft: "auto" }} variant="body2">
             © {new Date().getFullYear()} Trevor C. Hartman
           </Typography>
           <Typography variant="body2">
             <a
-              style={{ textDecoration: "none", color: "#999" }}
+              style={{
+                textTransform: "lowercase",
+                fontStyle: "italic",
+                textDecoration: "none",
+                color: "#999",
+              }}
               href="https://en.wikipedia.org/wiki/Soli_Deo_gloria"
             >
               Soli Deo Gloria

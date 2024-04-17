@@ -12,11 +12,9 @@ const maxWidth = "lg";
 export function Nav() {
   const linkColor = useHighlightColor();
   const hoverColor = useHighlightHoverColor();
-  const linkFontSize = "1rem";
 
   const headerLinkSx: SxProps = {
     textDecoration: "none",
-    fontSize: linkFontSize,
     fontFamily: "monospace",
     color: linkColor,
     transition: "color .3s ease-in-out, box-shadow 2s ease-out",

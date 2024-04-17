@@ -17,6 +17,7 @@ export const createThemeForMode = (mode: "dark" | "light") => {
     },
     typography: {
       fontFamily: ['"Helvetica Neue"', "-apple-system"].join(","),
+      fontSize: 18,
       h3: {
         fontWeight: "bold",
       },

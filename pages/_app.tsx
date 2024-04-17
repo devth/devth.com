@@ -44,6 +44,19 @@ export default function MyApp(props: MyAppProps) {
   return (
     <CacheProvider value={emotionCache}>
       <Head>
+        <GlobalStyles
+          styles={{
+            p: {
+              ...theme.typography.body1,
+            },
+            code: {
+              fontFamily: "monospace",
+              backgroundColor: "#f4f4f4",
+              borderRadius: 8,
+              padding: "2px 8px",
+            },
+          }}
+        />
         <meta name="viewport" content="initial-scale=1, width=device-width" />
 
         <link

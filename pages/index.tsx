@@ -84,7 +84,7 @@ export default function Index({ posts }: { posts: Post[] }) {
       left: "0",
       background: yellow,
       transformOrigin: "bottom right",
-      transition: "transform 0.25s ease-out",
+      transition: "transform 0.45s ease-out",
     },
     "&:hover::after": {
       transform: "scaleX(1)",
@@ -163,9 +163,9 @@ export default function Index({ posts }: { posts: Post[] }) {
                             color: lighten(gray, 0.3),
                           }}
                         >
-                          {formatDate(post.date)}
-                        </span>{" "}
-                        {post.data.excerpt}
+                          <b>{formatDate(post.date)}</b>
+                          {post.data.excerpt && ` / ${post.data.excerpt}`}
+                        </span>
                       </Typography>
                     </Link>
                   </li>
