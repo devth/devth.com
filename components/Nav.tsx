@@ -6,6 +6,7 @@ import {
 } from "../hooks/useHighlightColor";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
+import { DarkModeSwitch } from "./DarkModeSwitch";
 
 const maxWidth = "lg";
 
@@ -36,7 +37,7 @@ export function Nav() {
             <NextLink href="/">
               <Logo />
             </NextLink>
-            <Stack direction="row" spacing={2}>
+            <Stack direction="row" spacing={2} alignItems="center">
               <Link sx={headerLinkSx} href="/about">
                 about
               </Link>
@@ -46,6 +47,8 @@ export function Nav() {
               <Link sx={headerLinkSx} href="/glossary">
                 glossary
               </Link>
+
+              <DarkModeSwitch showText={false} />
             </Stack>
           </Stack>
         </Container>

@@ -8,6 +8,7 @@ import {
   useHighlightHoverColor,
 } from "../hooks/useHighlightColor";
 import { Link } from "./Link";
+import { DarkModeSwitch } from "./DarkModeSwitch";
 
 const maxWidth = "lg";
 
@@ -46,20 +47,8 @@ export function Footer(): React.ReactElement {
               Glossary
             </Link>
           </Stack>
-          <Button
-            component="a"
-            onClick={colorMode.toggleColorMode}
-            startIcon={
-              theme.palette.mode === "dark" ? <LightMode /> : <DarkMode />
-            }
-            sx={{
-              alignItems: "center",
-              justifyContent: "center",
-              p: 0,
-            }}
-          >
-            switch to {theme.palette.mode === "dark" ? "light" : "dark"} mode
-          </Button>
+
+          <DarkModeSwitch />
           <Typography sx={{ marginLeft: "auto" }} variant="body2">
             © {new Date().getFullYear()} Trevor C. Hartman
           </Typography>
