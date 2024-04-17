@@ -7,7 +7,7 @@ export default function Overture(): ReactElement {
     <Layout>
       <Grid container>
         <Grid item xs={8}>
-          <Typography variant="h3">Overture</Typography>
+          <Typography variant="h4">Overture</Typography>
           <p>
             Programming, tools, and processes are stuck in the past, held in
             place by hordes of OO-wielding proletariats collectively chanting

@@ -4,7 +4,7 @@ import React from "react";
 function TermsAndConcepts() {
   return (
     <div>
-      <Typography variant="h3">Glossary: Terms and Concepts</Typography>
+      <Typography variant="h4">Glossary: Terms and Concepts</Typography>
 
       <h3>Natural Transformation</h3>
       <p>

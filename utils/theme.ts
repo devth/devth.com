@@ -18,9 +18,12 @@ export const createThemeForMode = (mode: "dark" | "light") => {
     typography: {
       fontFamily: ['"Helvetica Neue"', "-apple-system"].join(","),
       fontSize: 18,
-      h3: {
-        fontWeight: "bold",
-      },
+      ...Object.fromEntries(
+        ["h1", "h2", "h3", "h4"].map((variant) => [
+          variant,
+          { fontWeight: "bold" },
+        ])
+      ),
     },
     components: {
       MuiButton: {

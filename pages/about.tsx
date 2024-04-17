@@ -8,7 +8,7 @@ export default function AboutPage(): ReactElement {
     <Layout>
       <Grid container>
         <Grid item xs={8}>
-          <Typography variant="h3">About Trevor Hartman</Typography>
+          <Typography variant="h4">About Trevor Hartman</Typography>
           <p>
             Full stack software engineer with over two decades experience
             growing web and mobile apps. Cares about Developer Experience as
