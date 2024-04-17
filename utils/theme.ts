@@ -17,6 +17,9 @@ export const createThemeForMode = (mode: "dark" | "light") => {
     },
     typography: {
       fontFamily: ['"Helvetica Neue"', "-apple-system"].join(","),
+      h3: {
+        fontWeight: "bold",
+      },
     },
     components: {
       MuiButton: {

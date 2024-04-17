@@ -8,7 +8,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Nav />
-      <Container maxWidth={maxWidth}>{children}</Container>
+      <Container sx={{ mt: 4 }} maxWidth={maxWidth}>
+        {children}
+      </Container>
       <Footer />
     </>
   );

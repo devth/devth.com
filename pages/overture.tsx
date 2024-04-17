@@ -1,4 +1,4 @@
-import { Grid, Link } from "@mui/material";
+import { Typography, Grid, Link } from "@mui/material";
 import { ReactElement } from "react";
 import Layout from "../components/Layout";
 
@@ -7,7 +7,7 @@ export default function Overture(): ReactElement {
     <Layout>
       <Grid container>
         <Grid item xs={8}>
-          <h2>Overture</h2>
+          <Typography variant="h3">Overture</Typography>
           <p>
             Programming, tools, and processes are stuck in the past, held in
             place by hordes of OO-wielding proletariats collectively chanting

@@ -1,10 +1,10 @@
-import { Link } from "@mui/material";
+import { Link, Typography } from "@mui/material";
 import React from "react";
 
 function TermsAndConcepts() {
   return (
     <div>
-      <h2>Terms and Concepts</h2>
+      <Typography variant="h3">Glossary: Terms and Concepts</Typography>
 
       <h3>Natural Transformation</h3>
       <p>

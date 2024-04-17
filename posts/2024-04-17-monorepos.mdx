@@ -1,0 +1,96 @@
+---
+layout: article
+title: You might not want a Monorepo
+categories: [infrastructure]
+comments: true
+excerpt: |
+  Monorepos have become popular in recent years. What problems are they
+  solving, and what problems are they introducing?
+---
+
+Monorepos have become popular in recent years. What problems are they solving,
+and what problems are they introducing? Should we switch to monorepo?
+
+## Monorepos introduce problems
+
+Monorepos introduce many technical, organizational and political problems.
+
+Monorepos are typically an alternative to standard build tooling. That means
+every feature your favorite, wildly popular, community-supported build tool's
+features will likely be missing in your monorepo tooling. You either need to
+custom build it, or tell your users "sorry, we don't support that".
+
+## Monorepos increase coupling
+
+In a large company there are people, teams, services, languages, frameworks that
+exist without you actually knowing about them. This is a good thing. We need
+boundaries and abstractions in order to make the world smaller.
+
+Counterpoint: Google. (Counterpoint: you are not Google).
+
+## Single language vs multi language
+
+There's a very big difference between monorepo tools that support multiple
+languages (like Bazel) and single language monorepo tools like Turborepo, Rush,
+or Lerna.
+
+Single language tools typically have a much better developer experience and are
+less complex because the language gets first class support. All the tooling is
+built around that particular language, which means there's likely much less of a
+gap between the full ecosystem of tooling for that language and what's available
+in the constrained monorepo world.
+
+Contrast that with a tool like Bazel. Bazel is very extensible, so even if your
+language isn't already supported you can add support pretty easily. But
+"support" just means opting in to the Bazel way of doing things, including
+its impressive incremental builds and extreme use of caching. What you don't get
+is IDE or standard tooling support. Want to use LSP and NeoVim? Too bad. The
+tools are setup in a way that expect common build tooling (e.g. deps in
+`node_modules` or compiled code in `target`). Bazel breaks all these
+conventions, so the vast ecosystem of tools built upon them just don't work
+unless you go to great lengths (and introduce incredible complexity) to bridge
+the gap between Bazel-land and established standards.
+
+## Go all in
+
+If you're going to use a monorepo, you need to absolutely go all in. You need a
+dedicated team to maintain your monorepo indefinitely. **Monorepos are an
+incredibly complex and expensive endeavor** but most people don't talk about
+this.
+
+This team should be come an expert in the tooling, whether it's Bazel, Pants,
+Buck, Earthly, Lerna, or something else.
+
+The monorepo should be the de facto way of building software at your company. Do
+not end up in a state where you still have polyrepos alongside your monorepo, or
+worse yet: multiple monorepos. This is the path to destruction.
+
+## Vendors as outsourced experts
+
+Because monorepos are incredibly complex and the tooling is nowhere near on-par
+with the standard tooling, whole companies have spun up around the monorepo
+ecosystem. You can hire them to be your experts and help fill the missing
+tooling gaps.
+
+They are expensive, but they are probably worth it when you compare their fee to
+a few annual developer salaries.
+
+**Monorepos are very expensive.** Make sure you're all in and understand the
+costs before embarking.
+
+## So what's the point?
+
+It's not all bad. Monorepos exist for a reason, and as long as you can avoid the
+many traps, it can provide a great developer experience.
+
+Monorepos give you:
+
+- Atomic code changes that you can be developed, tested, reviewed, and released
+  together.
+- Managed tooling. The team who supports the monorepo can take care of details
+  for you so you no longer need to care about them. Things like security
+  patches, dependency upgrades, CI/CD pipelines, and even automatic provisioning
+  of infrastructure (although these are all things you can do in a polyrepo
+  too).
+- A constrained set of standard langauges, frameworks, dependencies, and
+  tooling.

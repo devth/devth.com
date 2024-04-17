@@ -11,12 +11,15 @@ import path from "path";
 import Layout from "../components/Layout";
 import { Link } from "../components/Link";
 import {
+  useHighlightColor,
+  useHighlightHoverColor,
+} from "../hooks/useHighlightColor";
+import {
   POSTS_PATH,
   findFilePath,
   matchFilePath,
   postFilePaths,
 } from "../utils/mdxUtils";
-import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
@@ -33,7 +36,8 @@ const components = {
 };
 
 export default function PostPage({ segments, source, frontMatter }) {
-  const isDarkMode = useIsDarkMode();
+  const highlightColor = useHighlightColor();
+  const highlightHoverColor = useHighlightHoverColor();
 
   const { year, month, day } = segments;
   const date = new Date(`${year}-${month}-${day}`);
@@ -41,7 +45,16 @@ export default function PostPage({ segments, source, frontMatter }) {
     <Layout>
       <div className="post-header">
         <h1 style={{ marginBottom: 0 }}>{frontMatter.title}</h1>
-        <h3 style={{ marginTop: 0, color: "#999" }}>
+        <h3
+          style={{
+            fontFamily: "monospace",
+            marginTop: 0,
+            color: highlightColor,
+            fontWeight: "normal",
+          }}
+        >
+          Trevor Hartman
+          {" • "}
           <time dateTime={date.toLocaleDateString("en-us")}>
             {date.toLocaleDateString("en-us")}
           </time>
@@ -54,6 +67,26 @@ export default function PostPage({ segments, source, frontMatter }) {
         <Grid container>
           <Grid item xs={8}>
             <MDXRemote {...source} components={components} />
+            <Link
+              sx={{
+                p: 2,
+                display: "inline-block",
+                textDecoration: "none",
+                fontFamily: "monospace",
+                color: highlightColor,
+                marginTop: 2,
+                fontSize: 50,
+                transitionDuration: "0.4s",
+                "&:hover": {
+                  color: highlightHoverColor,
+                  // spin on hover
+                  transform: "rotate(360deg)",
+                },
+              }}
+              href="/"
+            >
+              ⇽
+            </Link>
           </Grid>
         </Grid>
       </main>
