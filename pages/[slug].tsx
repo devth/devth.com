@@ -42,7 +42,7 @@ export default function PostPage({ segments, source, frontMatter }) {
   const { year, month, day } = segments;
   const date = new Date(`${year}-${month}-${day}`);
   return (
-    <Layout>
+    <>
       <div className="post-header" style={{ textAlign: "center" }}>
         <Typography variant="h2" style={{ marginBottom: 0 }}>
           {frontMatter.title}
@@ -97,7 +97,7 @@ export default function PostPage({ segments, source, frontMatter }) {
           <Grid item xs={0} sm={2} />
         </Grid>
       </main>
-    </Layout>
+    </>
   );
 }
 

@@ -12,7 +12,6 @@ import fs from "fs";
 import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
 import path from "path";
-import Layout from "../components/Layout";
 import { Link } from "../components/Link";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
@@ -67,7 +66,7 @@ export default function Index({ posts }: { posts: Post[] }) {
   const gray = isDarkMode ? "#aaa" : "#666";
 
   const postLinkSx: SxProps = {
-    transition: "all .5s ease-out",
+    transition: "all .8s ease-out",
     textDecoration: "none",
     display: "inline-block",
     position: "relative",
@@ -97,93 +96,91 @@ export default function Index({ posts }: { posts: Post[] }) {
   };
 
   return (
-    <Layout>
-      <Grid container>
-        <Grid item xs={0} sm={1} />
-        <Grid item xs={12} sm={10}>
-          <Timeline
-            sx={{
-              padding: 1,
-              [`& .${timelineItemClasses.root}:before`]: {
-                flex: 0,
-                padding: 0,
-              },
-            }}
-          >
-            {sortedPosts.map(([year, posts]) => (
-              <TimelineItem key={year}>
-                <TimelineSeparator>
-                  <TimelineDot variant="outlined" color="primary" />
-                  <TimelineConnector />
-                </TimelineSeparator>
-                <TimelineContent sx={{ mt: "-8px" }}>
-                  <Typography
-                    sx={{
-                      color: isDarkMode ? "cyan" : "red",
-                      // textShadow:
-                      //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
-                      fontWeight: "bold",
-                      fontFamily: "monospace",
-                    }}
-                    variant="h6"
-                  >
-                    {year}
-                  </Typography>
+    <Grid container>
+      <Grid item xs={0} sm={1} />
+      <Grid item xs={12} sm={10}>
+        <Timeline
+          sx={{
+            padding: 1,
+            [`& .${timelineItemClasses.root}:before`]: {
+              flex: 0,
+              padding: 0,
+            },
+          }}
+        >
+          {sortedPosts.map(([year, posts]) => (
+            <TimelineItem key={year}>
+              <TimelineSeparator>
+                <TimelineDot variant="outlined" color="primary" />
+                <TimelineConnector />
+              </TimelineSeparator>
+              <TimelineContent sx={{ mt: "-8px" }}>
+                <Typography
+                  sx={{
+                    color: isDarkMode ? "cyan" : "red",
+                    // textShadow:
+                    //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
+                    fontWeight: "bold",
+                    fontFamily: "monospace",
+                  }}
+                  variant="h6"
+                >
+                  {year}
+                </Typography>
 
-                  <ul
-                    style={{
-                      listStyle: "none",
-                      padding: 0,
-                    }}
-                  >
-                    {posts.map((post) => (
-                      <li
-                        key={post.filePath}
-                        style={{
-                          display: "block",
-                          marginTop: 25,
-                          marginBottom: 25,
-                        }}
+                <ul
+                  style={{
+                    listStyle: "none",
+                    padding: 0,
+                  }}
+                >
+                  {posts.map((post) => (
+                    <li
+                      key={post.filePath}
+                      style={{
+                        display: "block",
+                        marginTop: 25,
+                        marginBottom: 25,
+                      }}
+                    >
+                      <Link
+                        sx={postLinkSx}
+                        as={`/${post.slug}`}
+                        href={`/[slug]`}
                       >
-                        <Link
-                          sx={postLinkSx}
-                          as={`/${post.slug}`}
-                          href={`/[slug]`}
+                        <Typography
+                          variant="h3"
+                          sx={{
+                            display: "inline",
+                          }}
                         >
-                          <Typography
-                            variant="h3"
-                            sx={{
-                              display: "inline",
+                          {post.data.title}
+                        </Typography>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ fontSize: "1rem", color: gray }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "1.2em",
+                              color: lighten(gray, 0.3),
                             }}
                           >
-                            {post.data.title}
-                          </Typography>
-                          <Typography
-                            variant="subtitle1"
-                            sx={{ fontSize: "1rem", color: gray }}
-                          >
-                            <span
-                              style={{
-                                fontSize: "1.2em",
-                                color: lighten(gray, 0.3),
-                              }}
-                            >
-                              <b>{formatDate(post.date)}</b>
-                              {post.data.excerpt && ` •  ${post.data.excerpt}`}
-                            </span>
-                          </Typography>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </TimelineContent>
-              </TimelineItem>
-            ))}
-          </Timeline>
-        </Grid>
-        <Grid item xs={0} sm={1} />
+                            <b>{formatDate(post.date)}</b>
+                            {post.data.excerpt && ` •  ${post.data.excerpt}`}
+                          </span>
+                        </Typography>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </TimelineContent>
+            </TimelineItem>
+          ))}
+        </Timeline>
       </Grid>
-    </Layout>
+      <Grid item xs={0} sm={1} />
+    </Grid>
   );
 }
 

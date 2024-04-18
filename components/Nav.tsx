@@ -4,10 +4,10 @@ import {
   useHighlightColor,
   useHighlightHoverColor,
 } from "../hooks/useHighlightColor";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
+import { DarkModeSwitch } from "./DarkModeSwitch";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
-import { DarkModeSwitch } from "./DarkModeSwitch";
-import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 const maxWidth = "lg";
 

@@ -10,6 +10,7 @@ import { GlobalStyles, PaletteMode, useMediaQuery } from "@mui/material";
 import "@code-hike/mdx/dist/index.css";
 import { ColorModeContext } from "../context";
 import { globalStyles } from "../utils/globalStyles";
+import Layout from "../components/Layout";
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -122,7 +123,12 @@ export default function MyApp(props: MyAppProps) {
           <GlobalStyles styles={globalStyles(mode)} />
           {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
           <CssBaseline />
-          <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />
+          <Layout>
+            <Component
+              style={{ backgroundColor: "#FFCC0033" }}
+              {...pageProps}
+            />
+          </Layout>
         </ThemeProvider>
       </ColorModeContext.Provider>
     </CacheProvider>
