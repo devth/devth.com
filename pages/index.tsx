@@ -116,16 +116,16 @@ export default function Index({ posts }: { posts: Post[] }) {
                   <TimelineDot variant="outlined" color="primary" />
                   <TimelineConnector />
                 </TimelineSeparator>
-                <TimelineContent sx={{ mt: "-10px" }}>
+                <TimelineContent sx={{ mt: "-8px" }}>
                   <Typography
                     sx={{
                       color: isDarkMode ? "cyan" : "red",
                       // textShadow:
                       //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
                       fontWeight: "bold",
-                      fontSize: 30,
                       fontFamily: "monospace",
                     }}
+                    variant="h6"
                   >
                     {year}
                   </Typography>
@@ -169,7 +169,7 @@ export default function Index({ posts }: { posts: Post[] }) {
                               }}
                             >
                               <b>{formatDate(post.date)}</b>
-                              {post.data.excerpt && ` / ${post.data.excerpt}`}
+                              {post.data.excerpt && ` •  ${post.data.excerpt}`}
                             </span>
                           </Typography>
                         </Link>
