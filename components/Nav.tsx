@@ -7,12 +7,16 @@ import {
 import { Link } from "./Link";
 import { Logo } from "./Logo";
 import { DarkModeSwitch } from "./DarkModeSwitch";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 const maxWidth = "lg";
 
 export function Nav() {
+  const isDarkMode = useIsDarkMode();
   const linkColor = useHighlightColor();
   const hoverColor = useHighlightHoverColor();
+
+  const bgColor = isDarkMode ? "#222" : "#fafafa";
 
   const headerLinkSx: SxProps = {
     textDecoration: "none",
@@ -25,7 +29,7 @@ export function Nav() {
   };
 
   return (
-    <header>
+    <header style={{ background: bgColor }}>
       <nav>
         <Container maxWidth={maxWidth}>
           <Stack

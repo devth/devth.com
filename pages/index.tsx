@@ -7,7 +7,7 @@ import {
   TimelineSeparator,
   timelineItemClasses,
 } from "@mui/lab";
-import { SxProps, Typography, lighten } from "@mui/material";
+import { Grid, SxProps, Typography, lighten } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
@@ -98,83 +98,91 @@ export default function Index({ posts }: { posts: Post[] }) {
 
   return (
     <Layout>
-      <Timeline
-        sx={{
-          padding: 1,
-          [`& .${timelineItemClasses.root}:before`]: {
-            flex: 0,
-            padding: 0,
-          },
-        }}
-      >
-        {sortedPosts.map(([year, posts]) => (
-          <TimelineItem key={year}>
-            <TimelineSeparator>
-              <TimelineDot variant="outlined" color="primary" />
-              <TimelineConnector />
-            </TimelineSeparator>
-            <TimelineContent sx={{ mt: "-10px" }}>
-              <Typography
-                sx={{
-                  color: isDarkMode ? "cyan" : "red",
-                  // textShadow:
-                  //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
-                  fontWeight: "bold",
-                  fontSize: 30,
-                  fontFamily: "monospace",
-                }}
-              >
-                {year}
-              </Typography>
-
-              <ul
-                style={{
-                  listStyle: "none",
-                  padding: 0,
-                }}
-              >
-                {posts.map((post) => (
-                  <li
-                    key={post.filePath}
-                    style={{
-                      display: "block",
-                      marginTop: 25,
-                      marginBottom: 25,
+      <Grid container>
+        <Grid item xs={0} sm={1} />
+        <Grid item xs={12} sm={10}>
+          <Timeline
+            sx={{
+              padding: 1,
+              [`& .${timelineItemClasses.root}:before`]: {
+                flex: 0,
+                padding: 0,
+              },
+            }}
+          >
+            {sortedPosts.map(([year, posts]) => (
+              <TimelineItem key={year}>
+                <TimelineSeparator>
+                  <TimelineDot variant="outlined" color="primary" />
+                  <TimelineConnector />
+                </TimelineSeparator>
+                <TimelineContent sx={{ mt: "-10px" }}>
+                  <Typography
+                    sx={{
+                      color: isDarkMode ? "cyan" : "red",
+                      // textShadow:
+                      //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
+                      fontWeight: "bold",
+                      fontSize: 30,
+                      fontFamily: "monospace",
                     }}
                   >
-                    <Link sx={postLinkSx} as={`/${post.slug}`} href={`/[slug]`}>
-                      <Typography
-                        sx={{
-                          display: "inline",
-                          fontSize: "3rem",
-                          lineHeight: 1.1,
-                          fontWeight: "bold",
+                    {year}
+                  </Typography>
+
+                  <ul
+                    style={{
+                      listStyle: "none",
+                      padding: 0,
+                    }}
+                  >
+                    {posts.map((post) => (
+                      <li
+                        key={post.filePath}
+                        style={{
+                          display: "block",
+                          marginTop: 25,
+                          marginBottom: 25,
                         }}
                       >
-                        {post.data.title}
-                      </Typography>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontSize: "1rem", color: gray }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "1.2em",
-                            color: lighten(gray, 0.3),
-                          }}
+                        <Link
+                          sx={postLinkSx}
+                          as={`/${post.slug}`}
+                          href={`/[slug]`}
                         >
-                          <b>{formatDate(post.date)}</b>
-                          {post.data.excerpt && ` / ${post.data.excerpt}`}
-                        </span>
-                      </Typography>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </TimelineContent>
-          </TimelineItem>
-        ))}
-      </Timeline>
+                          <Typography
+                            variant="h3"
+                            sx={{
+                              display: "inline",
+                            }}
+                          >
+                            {post.data.title}
+                          </Typography>
+                          <Typography
+                            variant="subtitle1"
+                            sx={{ fontSize: "1rem", color: gray }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "1.2em",
+                                color: lighten(gray, 0.3),
+                              }}
+                            >
+                              <b>{formatDate(post.date)}</b>
+                              {post.data.excerpt && ` / ${post.data.excerpt}`}
+                            </span>
+                          </Typography>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </TimelineContent>
+              </TimelineItem>
+            ))}
+          </Timeline>
+        </Grid>
+        <Grid item xs={0} sm={1} />
+      </Grid>
     </Layout>
   );
 }

@@ -1,4 +1,8 @@
-import { createTheme, PaletteOptions } from "@mui/material/styles";
+import {
+  createTheme,
+  responsiveFontSizes,
+  PaletteOptions,
+} from "@mui/material/styles";
 
 const palette = (mode: "dark" | "light"): PaletteOptions => ({
   primary: {
@@ -10,7 +14,7 @@ const palette = (mode: "dark" | "light"): PaletteOptions => ({
 });
 
 export const createThemeForMode = (mode: "dark" | "light") => {
-  return createTheme({
+  const theme = createTheme({
     palette: {
       ...palette(mode),
       mode,
@@ -21,7 +25,7 @@ export const createThemeForMode = (mode: "dark" | "light") => {
       ...Object.fromEntries(
         ["h1", "h2", "h3", "h4"].map((variant) => [
           variant,
-          { fontWeight: "bold" },
+          { fontWeight: "bold", textWrap: "balance" },
         ])
       ),
     },
@@ -44,4 +48,5 @@ export const createThemeForMode = (mode: "dark" | "light") => {
       },
     },
   });
+  return responsiveFontSizes(theme);
 };

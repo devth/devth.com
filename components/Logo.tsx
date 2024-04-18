@@ -3,7 +3,7 @@ import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 export const Logo = () => {
   const isDarkMode = useIsDarkMode();
-  const logoColor = isDarkMode ? "#999" : "lightgray";
+  const logoColor = isDarkMode ? "#666" : "#ccc";
 
   return (
     <Typography

@@ -1,6 +1,6 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
-import { Grid } from "@mui/material";
+import { Typography, Stack, Box, Grid } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -43,9 +43,12 @@ export default function PostPage({ segments, source, frontMatter }) {
   const date = new Date(`${year}-${month}-${day}`);
   return (
     <Layout>
-      <div className="post-header">
-        <h1 style={{ marginBottom: 0 }}>{frontMatter.title}</h1>
-        <h3
+      <div className="post-header" style={{ textAlign: "center" }}>
+        <Typography variant="h2" style={{ marginBottom: 0 }}>
+          {frontMatter.title}
+        </Typography>
+        <Typography
+          variant="h6"
           style={{
             fontFamily: "monospace",
             marginTop: 0,
@@ -58,36 +61,40 @@ export default function PostPage({ segments, source, frontMatter }) {
           <time dateTime={date.toLocaleDateString("en-us")}>
             {date.toLocaleDateString("en-us")}
           </time>
-        </h3>
+        </Typography>
         {frontMatter.description && (
           <p className="description">{frontMatter.description}</p>
         )}
       </div>
       <main>
         <Grid container>
-          <Grid item xs={8}>
+          <Grid item xs={0} sm={2} />
+          <Grid item xs={12} sm={8}>
             <MDXRemote {...source} components={components} />
-            <Link
-              sx={{
-                p: 2,
-                display: "inline-block",
-                textDecoration: "none",
-                fontFamily: "monospace",
-                color: highlightColor,
-                marginTop: 2,
-                fontSize: 50,
-                transitionDuration: "0.4s",
-                "&:hover": {
-                  color: highlightHoverColor,
-                  // spin on hover
-                  transform: "rotate(360deg)",
-                },
-              }}
-              href="/"
-            >
-              ⇽
-            </Link>
+            <Stack direction="row" justifyContent="center">
+              <Link
+                sx={{
+                  p: 2,
+                  display: "inline-block",
+                  textDecoration: "none",
+                  fontFamily: "monospace",
+                  color: highlightColor,
+                  marginTop: 2,
+                  fontSize: 50,
+                  transitionDuration: "0.4s",
+                  "&:hover": {
+                    color: highlightHoverColor,
+                    // spin on hover
+                    transform: "rotate(360deg)",
+                  },
+                }}
+                href="/"
+              >
+                ⇽
+              </Link>
+            </Stack>
           </Grid>
+          <Grid item xs={0} sm={2} />
         </Grid>
       </main>
     </Layout>

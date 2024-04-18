@@ -9,15 +9,15 @@ import {
 } from "../hooks/useHighlightColor";
 import { Link } from "./Link";
 import { DarkModeSwitch } from "./DarkModeSwitch";
+import { useIsDarkMode } from "../hooks/useIsDarkMode";
 
 const maxWidth = "lg";
 
 export function Footer(): React.ReactElement {
-  const theme = useTheme();
-  const colorMode = React.useContext(ColorModeContext);
-
+  const isDarkMode = useIsDarkMode();
   const highlightColor = useHighlightColor();
   const highlightHoverColor = useHighlightHoverColor();
+  const bgColor = isDarkMode ? "#222" : "#fafafa";
 
   const footerLinkSx: SxProps = {
     color: highlightColor,
@@ -30,7 +30,7 @@ export function Footer(): React.ReactElement {
   };
 
   return (
-    <footer style={{ backgroundColor: "divider", marginBottom: 0 }}>
+    <footer style={{ backgroundColor: bgColor, marginBottom: 0 }}>
       <Container maxWidth={maxWidth} sx={{ p: 10, mt: 4 }}>
         <Stack direction="column" spacing={1.2} alignItems="center">
           <Stack direction="row" spacing={2} alignItems="center">
