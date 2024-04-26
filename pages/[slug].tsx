@@ -1,6 +1,7 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
-import { Typography, Stack, Box, Grid } from "@mui/material";
+import { UTCDate } from "@date-fns/utc";
+import { Grid, Stack, Typography } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -8,7 +9,6 @@ import { serialize } from "next-mdx-remote/serialize";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import path from "path";
-import Layout from "../components/Layout";
 import { Link } from "../components/Link";
 import {
   useHighlightColor,
@@ -40,7 +40,7 @@ export default function PostPage({ segments, source, frontMatter }) {
   const highlightHoverColor = useHighlightHoverColor();
 
   const { year, month, day } = segments;
-  const date = new Date(`${year}-${month}-${day}`);
+  const date = new UTCDate(`${year}-${month}-${day}`);
   return (
     <>
       <div className="post-header" style={{ textAlign: "center" }}>

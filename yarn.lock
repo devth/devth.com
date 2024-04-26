@@ -70,6 +70,11 @@
     "@code-hike/lighter" "0.7.0"
     node-fetch "^2.0.0"
 
+"@date-fns/utc@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@date-fns/utc/-/utc-1.2.0.tgz#fb705b025b6769840608782c8fa7f3919d1b3337"
+  integrity sha512-YLq+crMPJiBmIdkRmv9nZuZy1mVtMlDcUKlg4mvI0UsC/dZeIaGoGB5p/C4FrpeOhZ7zBTK03T58S0DFkRNMnw==
+
 "@emotion/babel-plugin@^11.11.0":
   version "11.11.0"
   resolved "https://registry.yarnpkg.com/@emotion/babel-plugin/-/babel-plugin-11.11.0.tgz#c2d872b6a7767a9d176d007f5b31f7d504bb5d6c"
