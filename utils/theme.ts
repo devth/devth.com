@@ -14,6 +14,7 @@ const palette = (mode: "dark" | "light"): PaletteOptions => ({
 });
 
 export const createThemeForMode = (mode: "dark" | "light") => {
+  console.log("createThemeForMode", { mode });
   const theme = createTheme({
     palette: {
       ...palette(mode),

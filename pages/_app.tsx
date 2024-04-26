@@ -19,12 +19,14 @@ export interface MyAppProps extends AppProps {
   emotionCache?: EmotionCache;
 }
 
-export default function MyApp(props: MyAppProps) {
+export default function DevthApp(props: MyAppProps) {
   // use the system preference to determine the initial color of the site. after
   // this, users can still toggle the mode manually. the system preferences just
   // provide a default.
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const defaultMode = prefersDarkMode ? "dark" : "light";
+
+  console.log("default mode:", defaultMode);
 
   const [mode, setMode] = React.useState<PaletteMode>(defaultMode);
   const colorMode = React.useMemo(
