@@ -66,11 +66,12 @@ export default function Index({ posts }: { posts: Post[] }) {
   const gray = isDarkMode ? "#aaa" : "#666";
 
   const postLinkSx: SxProps = {
-    transition: "all .8s ease-out",
+    transition: "all .8s ease-out, padding-bottom .2s ease-out",
     textDecoration: "none",
     display: "inline-block",
+    textWrap: "balance",
     position: "relative",
-    paddingBottom: 2,
+    paddingBottom: 0,
 
     "&::after": {
       content: "''",
@@ -90,6 +91,7 @@ export default function Index({ posts }: { posts: Post[] }) {
       transformOrigin: "bottom left",
     },
     "&:hover": {
+      paddingBottom: 0,
       // color: "red",
       // textDecoration: "underline",
     },
@@ -143,34 +145,34 @@ export default function Index({ posts }: { posts: Post[] }) {
                         marginBottom: 25,
                       }}
                     >
-                      <Link
-                        sx={postLinkSx}
-                        as={`/${post.slug}`}
-                        href={`/[slug]`}
+                      <Typography
+                        variant="h3"
+                        sx={{
+                          display: "inline",
+                        }}
                       >
-                        <Typography
-                          variant="h3"
-                          sx={{
-                            display: "inline",
-                          }}
+                        <Link
+                          sx={postLinkSx}
+                          as={`/${post.slug}`}
+                          href={`/[slug]`}
                         >
                           {post.data.title}
-                        </Typography>
-                        <Typography
-                          variant="subtitle1"
-                          sx={{ fontSize: "1rem", color: gray }}
+                        </Link>
+                      </Typography>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontSize: "1rem", color: gray }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "1.2em",
+                            color: lighten(gray, 0.3),
+                          }}
                         >
-                          <span
-                            style={{
-                              fontSize: "1.2em",
-                              color: lighten(gray, 0.3),
-                            }}
-                          >
-                            <b>{formatDate(post.date)}</b>
-                            {post.data.excerpt && ` •  ${post.data.excerpt}`}
-                          </span>
-                        </Typography>
-                      </Link>
+                          <b>{formatDate(post.date)}</b>
+                          {post.data.excerpt && ` •  ${post.data.excerpt}`}
+                        </span>
+                      </Typography>
                     </li>
                   ))}
                 </ul>

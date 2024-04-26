@@ -38,9 +38,7 @@ export function Nav() {
             spacing={2}
             alignItems="baseline"
           >
-            <NextLink href="/">
-              <Logo />
-            </NextLink>
+            <Logo />
             <Stack direction="row" spacing={2} alignItems="center">
               <Link sx={headerLinkSx} href="/about">
                 about

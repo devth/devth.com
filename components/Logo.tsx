@@ -12,18 +12,18 @@ export const Logo = () => {
   const fontSize = 60 * scale;
 
   return (
-    <NextLink legacyBehavior href="/" suppressHydrationWarning>
+    <NextLink legacyBehavior href="/">
       <MuiLink
         sx={{
           fontSize: `${fontSize}px`,
           fontWeight: "bold",
-          display: "inline-block",
           transition: "all .3s ease-out 0s, font-size .4s ease-out 0.5s",
           color: logoColor,
           "&:hover": {
             color: isDarkMode ? "#eee" : "black",
           },
           textDecoration: "none",
+          cursor: "pointer",
         }}
       >
         devth
