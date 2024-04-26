@@ -1,5 +1,10 @@
-import { Container, Stack, SxProps } from "@mui/material";
-import NextLink from "next/link";
+import {
+  Container,
+  Stack,
+  SxProps,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import {
   useHighlightColor,
   useHighlightHoverColor,
@@ -15,6 +20,8 @@ export function Nav() {
   const isDarkMode = useIsDarkMode();
   const linkColor = useHighlightColor();
   const hoverColor = useHighlightHoverColor();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const bgColor = isDarkMode ? "#222" : "#fafafa";
 
@@ -28,6 +35,8 @@ export function Nav() {
     },
   };
 
+  const spacing = isMobile ? 1 : 2;
+
   return (
     <header style={{ background: bgColor }}>
       <nav>
@@ -39,7 +48,7 @@ export function Nav() {
             alignItems="baseline"
           >
             <Logo />
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={spacing} alignItems="center">
               <Link sx={headerLinkSx} href="/about">
                 about
               </Link>
@@ -50,7 +59,7 @@ export function Nav() {
                 glossary
               </Link>
 
-              <DarkModeSwitch showText={false} />
+              {!isMobile && <DarkModeSwitch showText={false} />}
             </Stack>
           </Stack>
         </Container>
