@@ -10,6 +10,7 @@ import {
 import { Link } from "./Link";
 import { DarkModeSwitch } from "./DarkModeSwitch";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
+import { CSSProperties } from "@mui/material/styles/createMixins";
 
 const maxWidth = "lg";
 
@@ -27,6 +28,13 @@ export function Footer(): React.ReactElement {
       color: highlightHoverColor,
     },
     textTransform: "lowercase",
+  };
+
+  const footerSubLink: CSSProperties = {
+    textTransform: "lowercase",
+    fontStyle: "italic",
+    textDecoration: "none",
+    color: "#999",
   };
 
   return (
@@ -52,14 +60,13 @@ export function Footer(): React.ReactElement {
           <Typography sx={{ marginLeft: "auto" }} variant="body2">
             © {new Date().getFullYear()} Trevor C. Hartman
           </Typography>
-          <Typography variant="body2">
+          <Typography variant="body2" sx={{ color: "grey" }}>
+            <a style={footerSubLink} href="https://github.com/devth/devth.com">
+              view source
+            </a>
+            {" • "}
             <a
-              style={{
-                textTransform: "lowercase",
-                fontStyle: "italic",
-                textDecoration: "none",
-                color: "#999",
-              }}
+              style={footerSubLink}
               href="https://en.wikipedia.org/wiki/Soli_Deo_gloria"
             >
               Soli Deo Gloria
