@@ -15,6 +15,7 @@ import path from "path";
 import { Link } from "../components/Link";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
+import { UTCDate } from "@date-fns/utc";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
@@ -44,7 +45,7 @@ type PostWithDate = Post & {
 
 export default function Index({ posts }: { posts: Post[] }) {
   const postsWithDate = posts.flatMap((post) => {
-    const date = new Date(post.dateString);
+    const date = new UTCDate(post.dateString);
     if (isNaN(date.getTime())) {
       return [];
     }
@@ -192,13 +193,17 @@ export function getStaticProps() {
     const { content, data } = matter(source);
     const { year, month, day, slug } = matchFilePath(filePath);
 
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    const date = new UTCDate(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day)
+    );
 
     const p: Post = {
       content,
       data,
       // must be a string for serialization
-      dateString: date.toISOString(),
+      dateString: date.toDateString(),
       slug,
       filePath,
     };
