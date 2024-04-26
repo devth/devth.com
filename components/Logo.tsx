@@ -29,7 +29,7 @@ export const Logo = () => {
           },
         }}
       >
-        devth
+        devth haha check it out
       </Typography>
     </NextLink>
   );
