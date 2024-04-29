@@ -24,9 +24,14 @@ export const createThemeForMode = (mode: "dark" | "light") => {
       fontFamily: ['"Helvetica Neue"', "-apple-system"].join(","),
       fontSize: 18,
       ...Object.fromEntries(
-        ["h1", "h2", "h3", "h4"].map((variant) => [
+        [
+          ["h1", "5rem"],
+          ["h2", "3em"],
+          ["h3", "1.2em"],
+          ["h4", "1em"],
+        ].map(([variant, fontSize]) => [
           variant,
-          { fontWeight: "bold", textWrap: "balance" },
+          { fontWeight: "bold", fontSize, textWrap: "balance" },
         ])
       ),
     },
@@ -49,5 +54,7 @@ export const createThemeForMode = (mode: "dark" | "light") => {
       },
     },
   });
-  return responsiveFontSizes(theme);
+  return responsiveFontSizes(theme, {
+    factor: 2,
+  });
 };
