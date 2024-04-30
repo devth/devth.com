@@ -28,6 +28,14 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {/* PWA primary color */}
         <meta name="theme-color" content={theme.palette.primary.main} />
         <link rel="shortcut icon" href="/favicon.ico" />
+        <title>devth - Trevor Hartman</title>
+        <meta property="og:title" content={"devth - Trevor Hartman"} />
+        <meta
+          property="og:description"
+          content={"The blog of Trevor Hartman"}
+        />
+        <meta property="og:type" content="website" />
+        <meta property="article:author" content="Trevor Hartman" />
         <meta name="emotion-insertion-point" content="" />
         {emotionStyleTags}
       </Head>

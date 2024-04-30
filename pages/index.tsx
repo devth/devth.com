@@ -1,3 +1,4 @@
+import { UTCDate } from "@date-fns/utc";
 import {
   Timeline,
   TimelineConnector,
@@ -13,10 +14,9 @@ import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
 import path from "path";
 import { Link } from "../components/Link";
+import { useHighlightColor } from "../hooks/useHighlightColor";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
-import { UTCDate } from "@date-fns/utc";
-import { useHighlightColor } from "../hooks/useHighlightColor";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
