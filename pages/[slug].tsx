@@ -6,7 +6,6 @@ import {
   Stack,
   Typography,
   TypographyProps,
-  lighten,
   useTheme,
 } from "@mui/material";
 import fs from "fs";
@@ -15,7 +14,10 @@ import { MDXRemote } from "next-mdx-remote";
 import { serialize } from "next-mdx-remote/serialize";
 import dynamic from "next/dynamic";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import path from "path";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import rehypeSlug from "rehype-slug";
 import { Link } from "../components/Link";
 import {
   useHighlightColor,
@@ -27,9 +29,6 @@ import {
   matchFilePath,
   postFilePaths,
 } from "../utils/mdxUtils";
-import rehypeSlug from "rehype-slug";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
-import { useRouter } from "next/router";
 
 const HashHeader = (props) => {
   const theme = useTheme();
@@ -103,6 +102,16 @@ export default function PostPage({ segments, source, frontMatter }) {
   const date = new UTCDate(`${year}-${month}-${day}`);
   return (
     <>
+      <Head>
+        <meta property="og:title" content={frontMatter.title} />
+        <meta property="og:description" content={frontMatter.excerpt} />
+        <meta property="og:type" content="article" />
+        <meta
+          property="article:published_time"
+          content={date.toLocaleDateString("en-us")}
+        />
+        <meta property="article:author" content="Trevor Hartman" />
+      </Head>
       <div className="post-header" style={{ textAlign: "center" }}>
         <Typography variant="h1" style={{ marginBottom: 0 }}>
           {frontMatter.title}
