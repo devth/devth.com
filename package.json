@@ -22,7 +22,9 @@
     "next-mdx-remote": "^4.4.1",
     "next-remote-watch": "2.0.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "rehype-autolink-headings": "^7.1.0",
+    "rehype-slug": "^6.0.0"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.0",

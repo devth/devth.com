@@ -1,7 +1,14 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
 import { UTCDate } from "@date-fns/utc";
-import { Grid, Stack, Typography } from "@mui/material";
+import {
+  Grid,
+  Stack,
+  Typography,
+  TypographyProps,
+  lighten,
+  useTheme,
+} from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -20,6 +27,52 @@ import {
   matchFilePath,
   postFilePaths,
 } from "../utils/mdxUtils";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import { useRouter } from "next/router";
+
+const HashHeader = (props) => {
+  const theme = useTheme();
+  const highlightColor = useHighlightColor();
+  const router = useRouter();
+  return (
+    <Typography
+      id={props.id}
+      variant={props.variant}
+      onClick={() => {
+        router.push(`#${props.id}`);
+      }}
+      sx={{
+        cursor: "pointer",
+        transition: "color .2s ease-out",
+        "&:hover": {
+          // color: lighten(theme.palette.primary.main, 0.1),
+          "&:before": {
+            content: '"#"',
+            color: highlightColor,
+            fontSize: ".8em",
+            fontFamily: "monospace",
+            fontStyle: "normal",
+            position: "relative",
+            marginLeft: "-1.3ch",
+            paddingRight: "0.3ch",
+          },
+        },
+      }}
+    >
+      {props.children}
+    </Typography>
+  );
+};
+HashHeader.displayName = "HashHeader";
+
+// eslint-disable-next-line react/display-name
+const Header = (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") => (
+  props: TypographyProps & { id: string }
+) => {
+  return <HashHeader variant={variant} {...props} />;
+};
+Header.displayName = "Header";
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
@@ -33,6 +86,13 @@ const components = {
   // See the notes in README.md for more details.
   TestComponent: dynamic(() => import("../components/TestComponent")),
   Head,
+
+  h1: Header("h1"),
+  h2: Header("h2"),
+  h3: Header("h3"),
+  h4: Header("h4"),
+  h5: Header("h5"),
+  h6: Header("h6"),
 };
 
 export default function PostPage({ segments, source, frontMatter }) {
@@ -44,7 +104,7 @@ export default function PostPage({ segments, source, frontMatter }) {
   return (
     <>
       <div className="post-header" style={{ textAlign: "center" }}>
-        <Typography variant="h2" style={{ marginBottom: 0 }}>
+        <Typography variant="h1" style={{ marginBottom: 0 }}>
           {frontMatter.title}
         </Typography>
         <Typography
@@ -117,7 +177,7 @@ export const getStaticProps = async ({ params }) => {
     // Optionally pass remark/rehype plugins
     mdxOptions: {
       remarkPlugins: [[remarkCodeHike, { theme: "github-from-css" }]],
-      rehypePlugins: [],
+      rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
     },
     scope: {
       ...data,

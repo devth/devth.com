@@ -16,6 +16,7 @@ import { Link } from "../components/Link";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
 import { UTCDate } from "@date-fns/utc";
+import { useHighlightColor } from "../hooks/useHighlightColor";
 
 /** Format a javascript date like yyyy-mm-dd */
 const formatDate = (d: Date) => d.toLocaleDateString("en-us");
@@ -97,6 +98,7 @@ export default function Index({ posts }: { posts: Post[] }) {
       // textDecoration: "underline",
     },
   };
+  const highlightColor = useHighlightColor();
 
   return (
     <Grid container>
@@ -120,7 +122,7 @@ export default function Index({ posts }: { posts: Post[] }) {
               <TimelineContent sx={{ mt: "-8px" }}>
                 <Typography
                   sx={{
-                    color: isDarkMode ? "cyan" : "red",
+                    color: highlightColor,
                     // textShadow:
                     //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
                     fontWeight: "bold",
@@ -147,7 +149,7 @@ export default function Index({ posts }: { posts: Post[] }) {
                       }}
                     >
                       <Typography
-                        variant="h3"
+                        variant="h2"
                         sx={{
                           display: "inline",
                         }}
@@ -170,8 +172,17 @@ export default function Index({ posts }: { posts: Post[] }) {
                             color: lighten(gray, 0.3),
                           }}
                         >
-                          <b>{formatDate(post.date)}</b>
-                          {post.data.excerpt && ` •  ${post.data.excerpt}`}
+                          <span
+                            style={{
+                              color: highlightColor,
+                              fontFamily: "monospace",
+                              fontSize: "0.7em",
+                              paddingRight: "0.3em",
+                            }}
+                          >
+                            {formatDate(post.date)}
+                          </span>
+                          {post.data.excerpt && `  ${post.data.excerpt}`}
                         </span>
                       </Typography>
                     </li>

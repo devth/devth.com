@@ -6,7 +6,7 @@ export default function Overture(): ReactElement {
     <Grid container>
       <Grid item xs={0} sm={2} />
       <Grid item xs={12} sm={8}>
-        <Typography textAlign={"center"} variant="h3">
+        <Typography textAlign={"center"} variant="h1">
           Overture
         </Typography>
         <p>
@@ -27,6 +27,12 @@ export default function Overture(): ReactElement {
         <h3>Philosophy</h3>
 
         <ul>
+          <li>
+            <Link href="https://alistapart.com/article/i-am-a-creative/">
+              I am a creative
+            </Link>
+            {" — "} by Jeffrey Zeldman, January 29, 2024
+          </li>
           <li>
             <Link href="https://www.technologyreview.com/s/531911/isaac-asimov-asks-how-do-people-get-new-ideas/">
               Isaac Asimov Asks, “How Do People Get New Ideas?”
