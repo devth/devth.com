@@ -2,7 +2,6 @@ import { Container, GlobalStyles, useTheme } from "@mui/material";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { Footer } from "./Footer";
 import { Nav } from "./Nav";
-import type { Metadata } from "next";
 
 const maxWidth = "lg";
 

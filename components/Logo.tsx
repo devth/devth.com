@@ -13,7 +13,7 @@ export const Logo = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const scale = isHome && !isMobile ? 1 : 0.5;
   const scaleDuration = isMobile ? 0 : 0.5;
-  const fontSize = 60 * scale;
+  const fontSize = 70 * scale;
 
   return (
     <NextLink legacyBehavior href="/">
