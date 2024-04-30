@@ -45,9 +45,11 @@ const HashHeader = (props) => {
         cursor: "pointer",
         transition: "color .2s ease-out",
         "&:hover": {
-          color: lighten(theme.palette.primary.main, 0.2),
+          color: lighten(theme.palette.primary.main, 0.1),
           "&:before": {
             content: '"#"',
+            fontSize: ".9em",
+            fontStyle: "italic",
             position: "relative",
             marginLeft: "-1.2ch",
             paddingRight: "0.2ch",
