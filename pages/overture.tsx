@@ -28,6 +28,12 @@ export default function Overture(): ReactElement {
 
         <ul>
           <li>
+            <Link href="https://alistapart.com/article/i-am-a-creative/">
+              I am a creative
+            </Link>
+            {" — "} by Jeffrey Zeldman, January 29, 2024
+          </li>
+          <li>
             <Link href="https://www.technologyreview.com/s/531911/isaac-asimov-asks-how-do-people-get-new-ideas/">
               Isaac Asimov Asks, “How Do People Get New Ideas?”
             </Link>

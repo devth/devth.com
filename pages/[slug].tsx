@@ -33,6 +33,7 @@ import { useRouter } from "next/router";
 
 const HashHeader = (props) => {
   const theme = useTheme();
+  const highlightColor = useHighlightColor();
   const router = useRouter();
   return (
     <Typography
@@ -45,11 +46,13 @@ const HashHeader = (props) => {
         cursor: "pointer",
         transition: "color .2s ease-out",
         "&:hover": {
-          color: lighten(theme.palette.primary.main, 0.1),
+          // color: lighten(theme.palette.primary.main, 0.1),
           "&:before": {
             content: '"#"',
+            color: highlightColor,
             fontSize: ".9em",
-            fontStyle: "italic",
+            fontFamily: "monospace",
+            // fontStyle: "italic",
             position: "relative",
             marginLeft: "-1.2ch",
             paddingRight: "0.2ch",
