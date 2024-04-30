@@ -1,11 +1,14 @@
 import { css } from "@emotion/react";
-import { PaletteMode } from "@mui/material";
+import { PaletteMode, lighten } from "@mui/material";
 
 // docs: https://codehike.org/docs/themes#lightdark-mode
 
 export const globalStyles = (mode: PaletteMode) =>
   mode === "light"
     ? css`
+        ::selection {
+          background: ${lighten("#FFFF0066", 0.4)}; /* WebKit/Blink Browsers */
+        }
         :root {
           --ch-0: light;
           --ch-1: #6e7781;

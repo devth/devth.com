@@ -3,7 +3,7 @@ import { Link, Typography } from "@mui/material";
 function TermsAndConcepts() {
   return (
     <div>
-      <Typography textAlign={"center"} variant="h3">
+      <Typography textAlign={"center"} variant="h1">
         Glossary: Terms and Concepts
       </Typography>
 

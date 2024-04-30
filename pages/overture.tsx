@@ -6,7 +6,7 @@ export default function Overture(): ReactElement {
     <Grid container>
       <Grid item xs={0} sm={2} />
       <Grid item xs={12} sm={8}>
-        <Typography textAlign={"center"} variant="h3">
+        <Typography textAlign={"center"} variant="h1">
           Overture
         </Typography>
         <p>
