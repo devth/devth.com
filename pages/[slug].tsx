@@ -103,7 +103,7 @@ export default function PostPage({ segments, source, frontMatter }) {
   return (
     <>
       <Head>
-        <title>{frontMatter.title} - devth</title>
+        <title>{frontMatter.title}</title>
         <meta property="og:title" content={frontMatter.title} />
         <meta property="og:description" content={frontMatter.excerpt} />
         <meta property="og:type" content="article" />
