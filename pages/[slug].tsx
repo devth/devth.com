@@ -50,12 +50,12 @@ const HashHeader = (props) => {
           "&:before": {
             content: '"#"',
             color: highlightColor,
-            fontSize: ".9em",
+            fontSize: ".8em",
             fontFamily: "monospace",
-            // fontStyle: "italic",
+            fontStyle: "normal",
             position: "relative",
-            marginLeft: "-1.2ch",
-            paddingRight: "0.2ch",
+            marginLeft: "-1.3ch",
+            paddingRight: "0.3ch",
           },
         },
       }}
