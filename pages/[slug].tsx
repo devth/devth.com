@@ -1,7 +1,14 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
 import { UTCDate } from "@date-fns/utc";
-import { Grid, Stack, Typography, TypographyProps } from "@mui/material";
+import {
+  Grid,
+  Stack,
+  Typography,
+  TypographyProps,
+  lighten,
+  useTheme,
+} from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -25,6 +32,7 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import { useRouter } from "next/router";
 
 const HashHeader = (props) => {
+  const theme = useTheme();
   const router = useRouter();
   return (
     <Typography
@@ -35,8 +43,9 @@ const HashHeader = (props) => {
       }}
       sx={{
         cursor: "pointer",
+        transition: "color .2s ease-out",
         "&:hover": {
-          color: "primary.main",
+          color: lighten(theme.palette.primary.main, 0.2),
           "&:before": {
             content: '"#"',
             position: "relative",
@@ -52,10 +61,10 @@ const HashHeader = (props) => {
 };
 HashHeader.displayName = "HashHeader";
 
+// eslint-disable-next-line react/display-name
 const Header = (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") => (
   props: TypographyProps & { id: string }
 ) => {
-  // eslint-disable-next-line react/display-name
   return <HashHeader variant={variant} {...props} />;
 };
 Header.displayName = "Header";

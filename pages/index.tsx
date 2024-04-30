@@ -147,7 +147,7 @@ export default function Index({ posts }: { posts: Post[] }) {
                       }}
                     >
                       <Typography
-                        variant="h3"
+                        variant="h2"
                         sx={{
                           display: "inline",
                         }}
