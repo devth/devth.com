@@ -13,10 +13,19 @@ import createEmotionCache from "../utils/createEmotionCache";
 import { MyAppProps } from "./_app";
 import { useMediaQuery } from "@mui/material";
 import { createThemeForMode } from "../utils/theme";
+import { Metadata } from "next";
 
 interface MyDocumentProps extends DocumentProps {
   emotionStyleTags: JSX.Element[];
 }
+
+export const metadata: Metadata = {
+  title: {
+    template: "%s - devth",
+    // a default is required when creating a template
+    default: "devth - Trevor Hartman",
+  },
+};
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
@@ -28,7 +37,6 @@ export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
         {/* PWA primary color */}
         <meta name="theme-color" content={theme.palette.primary.main} />
         <link rel="shortcut icon" href="/favicon.ico" />
-        <title>devth - Trevor Hartman</title>
         <meta property="og:title" content={"devth - Trevor Hartman"} />
         <meta
           property="og:description"

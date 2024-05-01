@@ -8,6 +8,10 @@ toc: true
 image:
   feature: dec_wide.png
   teaser: dec_410_228.png
+excerpt: |
+  dec is a tiny library that embraces constraints to afford users equivalentcy
+  between multiple ways of setting environment variables according to their
+  particular requirements.
 ---
 
 There are many [too-strong
@@ -23,7 +27,7 @@ options:
 
 While #4 is an interesting option in light of modern cluster-based infrastructure
 and tools like `consul` and `etcd`, we're going to focus on the first three
-mechanisms for this post: flat files,  env vars and CLI arguments.
+mechanisms for this post: flat files, env vars and CLI arguments.
 
 **Systems should not require configuration via only one mechanism, but instead
 allow any or all available mechanisms in combination.** This affords the
@@ -65,7 +69,11 @@ string to obtain its expected format.
 constraint and provides an `explode` function to transform KV pairs into an
 expected shape equivalent to a potentially deep EDN structure.
 
-<img style={{width: "100%"}} src="https://github.com/devth/dec/raw/master/img/dec-colors.png?raw=true" alt="dec logo" />
+<img
+  style={{ width: "100%" }}
+  src="https://github.com/devth/dec/raw/master/img/dec-colors.png?raw=true"
+  alt="dec logo"
+/>
 
 The following configurations are equivalent from the perspective of dec:
 
