@@ -78,14 +78,12 @@ export default function AboutPage(): ReactElement {
           can Tweet <Link href="https://twitter.com/devth">@devth</Link>.
         </p>
         <p>
-          I work remotely on a globally-distributed team for{" "}
-          <Link href="https://carta.com/">Carta</Link> helping build the future
-          of financial infrastructure. I live in Montana with my wife and five
-          kids. I'm an aspiring electronics tinkerer, musician, climber,{" "}
+          I live in Montana with my wife and five kids. I'm an aspiring
+          electronics tinkerer, musician, climber,{" "}
           <Link href="https://www.strava.com/athletes/devth">
             mountain biker and cyclist
           </Link>
-          , learner, avid{" "}
+          , health and fitness nerd, learner, avid{" "}
           <Link href="https://www.last.fm/user/trevorhartman">
             listener of music
           </Link>

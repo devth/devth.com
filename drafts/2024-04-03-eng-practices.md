@@ -15,6 +15,16 @@ If you have a standard it must be automatically enforced.
 - Retrospectives
 - Accountability
 
+## Declarative intent
+
+Decouple the intent of your app or system from the implementation. This is an
+essential requirement of affording yourself the ability to change your mind
+later (2 way door decision).
+
+Engineers don't design perfect systems all at once, up front. An ideal system
+design takes time, thought, testing assumptions and hypotheses. Slowly, we get
+closer and closer to the ideal design. We almost have to sneak up on it.
+
 ## Make the World Small
 
 Well defined interfaces
@@ -26,11 +36,12 @@ quality between your API and that of Stripe's, or GitHub's.
 
 Never be more than 1 version behind latest.
 It often makes sense to wait for the x.1 or x.2 version so that initial bugs can
-be irioned out.
-Example: eslint 9. Eslint loves to break backwards compatability on a regular
+be ironed out.
+
+Example: eslint 9. Eslint loves to break backwards compatibility on a regular
 basis, causing widespread pain throughout the many projects that depend on it.
 If on a Next.js project you upgrade to eslint 9.0.x, you're inviting pain and
-incompatabilities between how Next.js expects eslint to be configured, and out
+incompatibilities between how Next.js expects eslint to be configured, and out
 of date docs.
 
 ## Tune your notifications
