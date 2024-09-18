@@ -74,14 +74,14 @@ export default function AboutPage(): ReactElement {
           writing about them was a way to achieve that. I don't claim to be an
           expert. Please give me feedback, good or bad, but especially bad. If
           you'd like to chat, I usually hang out on{" "}
-          <Link href="https://slack.yetibot.com">Yetibot Slack</Link>, or you
-          can Tweet <Link href="https://twitter.com/devth">@devth</Link>.
+          <Link href="https://discordapp.com/users/devth.com">Discord</Link>, or
+          you can Tweet <Link href="https://twitter.com/devth">@devth</Link>.
         </p>
         <p>
           I live in Montana with my wife and five kids. I'm an aspiring
           electronics tinkerer, musician, climber,{" "}
           <Link href="https://www.strava.com/athletes/devth">
-            mountain biker and cyclist
+            mountain biker
           </Link>
           , health and fitness nerd, learner, avid{" "}
           <Link href="https://www.last.fm/user/trevorhartman">
