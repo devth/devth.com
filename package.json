@@ -18,7 +18,7 @@
     "@mui/material": "^5.16.7",
     "gray-matter": "^4.0.2",
     "lodash": "^4.17.21",
-    "next": "^14.2.3",
+    "next": "^15.1.6",
     "next-mdx-remote": "^5.0.0",
     "next-remote-watch": "2.0.0",
     "react": "^18.3.1",
