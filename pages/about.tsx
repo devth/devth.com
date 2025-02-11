@@ -83,7 +83,7 @@ export default function AboutPage(): ReactElement {
           <Link href="https://www.strava.com/athletes/devth">
             mountain biker
           </Link>
-          , health and fitness nerd, learner, avid{" "}
+          , health and fitness nerd, permabeginner, avid{" "}
           <Link href="https://www.last.fm/user/trevorhartman">
             listener of music
           </Link>

@@ -9,6 +9,12 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
-groups:
-  development-dependencies:
-    dependency-type: "development"
+
+    groups:
+      development-dependencies:
+        dependency-type: "development"
+      mui:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
+
