@@ -1,5 +1,11 @@
 # devth.com
 
+## Local dev
+
+```bash
+yarn dev
+```
+
 ## Requirements
 
 - [x] Write posts in markdown. Solved via MDX.

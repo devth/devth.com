@@ -1,16 +1,13 @@
-import { DarkMode, LightMode } from "@mui/icons-material";
-import { Button, Container, Stack, Typography } from "@mui/material";
-import { SxProps, useTheme } from "@mui/material/styles";
+import { Container, Stack, Typography } from "@mui/material";
+import { SxProps } from "@mui/material/styles";
+import { CSSProperties } from "@mui/material/styles/createMixins";
 import * as React from "react";
-import { ColorModeContext } from "../context";
 import {
   useHighlightColor,
   useHighlightHoverColor,
 } from "../hooks/useHighlightColor";
-import { Link } from "./Link";
-import { DarkModeSwitch } from "./DarkModeSwitch";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
-import { CSSProperties } from "@mui/material/styles/createMixins";
+import { Link } from "./Link";
 
 const maxWidth = "lg";
 
@@ -56,7 +53,6 @@ export function Footer(): React.ReactElement {
             </Link>
           </Stack>
 
-          <DarkModeSwitch />
           <Typography sx={{ marginLeft: "auto" }} variant="body2">
             © {new Date().getFullYear()} Trevor C. Hartman
           </Typography>

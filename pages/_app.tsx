@@ -8,7 +8,6 @@ import createEmotionCache from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
 import { GlobalStyles, PaletteMode, useMediaQuery } from "@mui/material";
 import "@code-hike/mdx/dist/index.css";
-import { ColorModeContext } from "../context";
 import { globalStyles } from "../utils/globalStyles";
 import Layout from "../components/Layout";
 
@@ -28,20 +27,9 @@ export default function DevthApp(props: MyAppProps) {
 
   console.log("default mode:", defaultMode);
 
-  const [mode, setMode] = React.useState<PaletteMode>(defaultMode);
-  const colorMode = React.useMemo(
-    () => ({
-      toggleColorMode: () => {
-        setMode((prevMode: PaletteMode) =>
-          prevMode === "light" ? "dark" : "light"
-        );
-      },
-      mode,
-    }),
-    [mode]
-  );
+  const [mode] = React.useState<PaletteMode>(defaultMode);
 
-  const theme = React.useMemo(() => createThemeForMode(mode), [mode]);
+  const theme = React.useMemo(() => createThemeForMode(), []);
 
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   return (
@@ -120,19 +108,14 @@ export default function DevthApp(props: MyAppProps) {
           sizes="128x128"
         />
       </Head>
-      <ColorModeContext.Provider value={colorMode}>
-        <ThemeProvider theme={theme}>
-          <GlobalStyles styles={globalStyles(mode)} />
-          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-          <CssBaseline />
-          <Layout>
-            <Component
-              style={{ backgroundColor: "#FFCC0033" }}
-              {...pageProps}
-            />
-          </Layout>
-        </ThemeProvider>
-      </ColorModeContext.Provider>
+      <ThemeProvider theme={theme}>
+        <GlobalStyles styles={globalStyles(mode)} />
+        {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+        <CssBaseline />
+        <Layout>
+          <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />
+        </Layout>
+      </ThemeProvider>
     </CacheProvider>
   );
 }

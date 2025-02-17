@@ -1,13 +1,7 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
 import { UTCDate } from "@date-fns/utc";
-import {
-  Grid,
-  Stack,
-  Typography,
-  TypographyProps,
-  useTheme,
-} from "@mui/material";
+import { Grid, Stack, Typography, TypographyProps } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -31,7 +25,6 @@ import {
 } from "../utils/mdxUtils";
 
 const HashHeader = (props) => {
-  const theme = useTheme();
   const highlightColor = useHighlightColor();
   const router = useRouter();
   return (
@@ -66,11 +59,11 @@ const HashHeader = (props) => {
 HashHeader.displayName = "HashHeader";
 
 // eslint-disable-next-line react/display-name
-const Header = (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") => (
-  props: TypographyProps & { id: string }
-) => {
-  return <HashHeader variant={variant} {...props} />;
-};
+const Header =
+  (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") =>
+    (props: TypographyProps & { id: string }) => {
+      return <HashHeader variant={variant} {...props} />;
+    };
 Header.displayName = "Header";
 
 // Custom components/renderers to pass to MDX.

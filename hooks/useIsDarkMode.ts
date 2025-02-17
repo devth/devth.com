@@ -1,8 +1,7 @@
-import { useContext } from "react";
-import { ColorModeContext } from "../context";
+import { useTheme } from "@mui/material";
 
 export function useIsDarkMode() {
-  const { mode } = useContext(ColorModeContext);
-  const isDarkMode = mode === "dark";
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
   return isDarkMode;
 }

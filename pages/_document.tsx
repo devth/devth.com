@@ -28,8 +28,7 @@ export const metadata: Metadata = {
 };
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
-  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
-  const theme = createThemeForMode(prefersDarkMode ? "dark" : "light");
+  const theme = createThemeForMode();
 
   return (
     <Html lang="en">
@@ -90,7 +89,7 @@ MyDocument.getInitialProps = async (ctx: DocumentContext) => {
   ctx.renderPage = () =>
     originalRenderPage({
       enhanceApp: (
-        App: React.ComponentType<React.ComponentProps<AppType> & MyAppProps>
+        App: React.ComponentType<React.ComponentProps<AppType> & MyAppProps>,
       ) =>
         function EnhanceApp(props) {
           return <App emotionCache={cache} {...props} />;

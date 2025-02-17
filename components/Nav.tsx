@@ -10,7 +10,6 @@ import {
   useHighlightHoverColor,
 } from "../hooks/useHighlightColor";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
-import { DarkModeSwitch } from "./DarkModeSwitch";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
 
@@ -58,8 +57,6 @@ export function Nav() {
               <Link sx={headerLinkSx} href="/glossary">
                 glossary
               </Link>
-
-              {!isMobile && <DarkModeSwitch showText={false} />}
             </Stack>
           </Stack>
         </Container>
