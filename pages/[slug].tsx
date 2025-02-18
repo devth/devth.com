@@ -1,7 +1,7 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
 import { UTCDate } from "@date-fns/utc";
-import { Grid, Stack, Typography, TypographyProps } from "@mui/material";
+import { Grid2, Stack, Typography, TypographyProps } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -58,13 +58,13 @@ const HashHeader = (props) => {
 };
 HashHeader.displayName = "HashHeader";
 
-// eslint-disable-next-line react/display-name
-const Header =
-  (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") =>
-    (props: TypographyProps & { id: string }) => {
-      return <HashHeader variant={variant} {...props} />;
-    };
-Header.displayName = "Header";
+const Header = (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") => {
+  const Component = (props: TypographyProps & { id: string }) => {
+    return <HashHeader variant={variant} {...props} />;
+  };
+  Component.displayName = `Header(${variant})`;
+  return Component;
+};
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
@@ -130,9 +130,19 @@ export default function PostPage({ segments, source, frontMatter }) {
         )}
       </div>
       <main>
-        <Grid container>
-          <Grid item xs={0} sm={2} />
-          <Grid item xs={12} sm={8}>
+        <Grid2 container>
+          <Grid2
+            size={{
+              xs: 0,
+              sm: 2,
+            }}
+          />
+          <Grid2
+            size={{
+              xs: 12,
+              sm: 8,
+            }}
+          >
             <MDXRemote {...source} components={components} />
             <Stack direction="row" justifyContent="center">
               <Link
@@ -156,9 +166,14 @@ export default function PostPage({ segments, source, frontMatter }) {
                 ⇽
               </Link>
             </Stack>
-          </Grid>
-          <Grid item xs={0} sm={2} />
-        </Grid>
+          </Grid2>
+          <Grid2
+            size={{
+              xs: 0,
+              sm: 2,
+            }}
+          />
+        </Grid2>
       </main>
     </>
   );
