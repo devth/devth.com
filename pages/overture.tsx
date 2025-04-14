@@ -21,7 +21,7 @@ export default function Overture(): ReactElement {
 
         <p>
           We are inundated with programming posts of varying quality. This is a
-          curated list of only the best or most important I've come across.
+          curated list of favorites.
         </p>
 
         <h3>Philosophy</h3>
