@@ -7,19 +7,30 @@ excerpt: |
   YAML was a bad idea for CI pipelines
 ---
 
-> Let's create a declarative spec that limits what we can do and promotes
-> hermetic deterministic pipelines
-
-but also:
-
-> Let's make it Turing complete but extremely awkward to express basic
-> conditionals, control flows, parallelism, and dependencies
-
-Should have just used a real programming language. Same concept applies to
-Terraform (bad) and CDK (better).
-
 Remember how for decades we researched and iterated a million ways to make
 programming languages expressive and correct and built massive ecosystems of
 libraries, tooling, testing, type checking around them? 
 
 Then we throw that out and replace it with 1000 line dumb yamls.
+
+The reasoning goes something like this:
+
+> Let's create a declarative spec that limits what we can do and promotes
+> hermetic deterministic pipelines
+
+but then you (we) realize we need to do programmy stuff, so:
+
+> Let's make it Turing complete but extremely awkward to express basic
+> conditionals, control flows, parallelism, and dependencies
+
+Look at the iteration of the HashiCorp Configuration Language (HCL), one of the
+worst methods of expression to ever curse SREs. It's declarative but it's also
+imperative. It's the worst of all worlds.
+
+Should have just used a real programming language.
+
+YAML was a bad idea for CI pipelines in the same way that HCL was a bad idea for
+Terraform. CDK did it much better. (I can't believe I'm saying AWS tech is
+better than something).
+
+Delete CI YAML.
