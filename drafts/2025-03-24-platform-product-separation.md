@@ -11,8 +11,8 @@ Examples:
 ## Programmatic Operation
 
 A true platform is a system that can be programmatically managed and operated.
-If your platform upgrade requires opening a PR in 60 app-repos, you're doing it
-wrong.
+If your platform upgrade requires opening a PR in 60 (or 600) app-repos, you're
+doing it wrong.
 
 ## What does this mean?
 
@@ -41,6 +41,33 @@ don't make users care about region. If you're multi region, abstract over the
 regional specifics. Compare the specs of running an app on Fly.io vs a Helm
 Chart deployed to an EKS cluster. If you have a platform, your spec looks much
 more like Fly.io's.
+
+## Kubernetes specific product resources
+
+If you're using Kubernetes underneath, consider using Custom Resource
+Definitions to allow services to manage dependent infrastructure. The continuous
+reconcilliation model is incredibly elegant and works well for this.
+
+For example, your service may consist of the usual K8S concepts, like:
+
+- a `Deployment` running containers
+- a `Service` to route traffic to the containers
+- an `Ingress` to allow traffic from outside the cluster and handle TLS
+- a `Secret` to hold the database credentials
+
+But it may also include non-K8S-native resources, like:
+
+- an `ExternalSecret` to fetch secrets from your cloud secret manager repository
+- a `PagerDuty` resource to represent the Service, Escalation Policy, and Team
+  in PagerDuty
+- a `Grafana` Alerting Policy, Contact Point, and Notification Policy
+- an AWS Aurora instance for database storage
+
+Or whatever your stack happens to consist of. This should all be represented
+alongside the app as K8S objects, continuously reconciled in the same lifecycle
+as the containers themselves. **It does not belong in Terraform**. Terraform
+defines the platform layer. This is the product layer that lives on top.
+
 
 ## Terraform
 
