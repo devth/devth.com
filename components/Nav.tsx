@@ -22,7 +22,7 @@ export function Nav() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
-  const bgColor = isDarkMode ? "#222" : "#fafafa";
+  const bgColor = "transparent"; // isDarkMode ? "#222" : "#fafafa";
 
   const headerLinkSx: SxProps = {
     textDecoration: "none",

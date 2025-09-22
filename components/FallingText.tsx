@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 
 interface FallingTextProps {
   children: string;
@@ -6,7 +7,7 @@ interface FallingTextProps {
   delay?: number;
 }
 
-export default function FallingText({ children, className, delay = 0 }: FallingTextProps) {
+function FallingTextComponent({ children, className, delay = 0 }: FallingTextProps) {
   const letters = (children || "").split("");
 
   const container = {
@@ -40,7 +41,6 @@ export default function FallingText({ children, className, delay = 0 }: FallingT
       initial="hidden"
       animate="visible"
       exit="exit"
-      suppressHydrationWarning
       style={{ display: "inline-block" }}
     >
       {letters.map((letter, index) => (
@@ -51,3 +51,9 @@ export default function FallingText({ children, className, delay = 0 }: FallingT
     </motion.div>
   );
 }
+
+const FallingText = dynamic(() => Promise.resolve(FallingTextComponent), {
+  ssr: false,
+});
+
+export default FallingText;

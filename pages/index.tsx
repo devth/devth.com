@@ -8,7 +8,7 @@ import {
   TimelineSeparator,
   timelineItemClasses,
 } from "@mui/lab";
-import { Grid2, SxProps, Typography, lighten } from "@mui/material";
+import { Grid, SxProps, Typography, lighten } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
@@ -102,9 +102,9 @@ export default function Index({ posts }: { posts: Post[] }) {
   const highlightColor = useHighlightColor();
 
   return (
-    <Grid2 container>
-      <Grid2 size={{ xs: 0, sm: 1 }} />
-      <Grid2 size={{ xs: 12, sm: 10 }}>
+    <Grid container>
+      <Grid item xs={0} sm={1} />
+      <Grid item xs={12} sm={10}>
         <Timeline
           sx={{
             padding: 1,
@@ -193,9 +193,9 @@ export default function Index({ posts }: { posts: Post[] }) {
             </TimelineItem>
           ))}
         </Timeline>
-      </Grid2>
-      <Grid2 size={{ xs: 0, sm: 1 }} />
-    </Grid2>
+      </Grid>
+      <Grid item xs={0} sm={1} />
+    </Grid>
   );
 }
 
