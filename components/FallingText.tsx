@@ -15,7 +15,7 @@ function FallingTextComponent({ children, className, delay = 0 }: FallingTextPro
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05,
+        staggerChildren: 0.1,
         delayChildren: delay,
       },
     },

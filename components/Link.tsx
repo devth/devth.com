@@ -1,6 +1,7 @@
+import { SxProps } from "@mui/material";
 import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import NextLink from "next/link";
-import { CSSProperties, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -12,7 +13,7 @@ export function Link({
   ...otherProps
 }: {
   as?: string;
-  sx?: CSSProperties;
+  sx?: SxProps;
   children: React.ReactNode;
 } & MuiLinkProps) {
   const linkRef = useRef<HTMLAnchorElement>(null);
@@ -33,6 +34,8 @@ export function Link({
       target.setAttribute("data-value", originalText);
 
       let iteration = 0;
+      // steps for consistent duration regardless of text length
+      const increment = originalText.length / 60; 
 
       if (interval) clearInterval(interval);
 
@@ -52,22 +55,34 @@ export function Link({
           if (interval) clearInterval(interval);
         }
 
-        iteration += 1 / 3;
-      }, 30);
+        iteration += increment;
+      }, 10);
+    };
+
+    const handleMouseOut = () => {
+      const link = linkRef.current;
+      if (link) {
+        link.innerText = originalTextRef.current;
+      }
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
     };
 
     link.addEventListener("mouseover", handleMouseOver);
+    link.addEventListener("mouseout", handleMouseOut);
 
     return () => {
       link.removeEventListener("mouseover", handleMouseOver);
+      link.removeEventListener("mouseout", handleMouseOut);
       if (interval) clearInterval(interval);
     };
   }, []);
 
   return (
-    <>
+    <NextLink href={href} as={as} legacyBehavior>
       <MuiLink
-        component={NextLink}
         href={href}
         ref={linkRef}
         sx={{
@@ -75,9 +90,10 @@ export function Link({
           transition: "all .5s ease-in-out",
           fontFamily: "'Space Mono', monospace",
           padding: "0rem clamp(0.2rem, 0.5vw, 0.5rem)",
-          borderRadius: "clamp(0.2rem, 0.375vw, 0.5rem)",
+          textDecoration: "none",
+          // borderRadius: "clamp(0.2rem, 0.375vw, 0.5rem)",
           "&:hover": {
-            backgroundColor: "white",
+            // backgroundColor: "white",
             color: "black",
           },
           ...sx,
@@ -86,6 +102,6 @@ export function Link({
       >
         {children}
       </MuiLink>
-    </>
+    </NextLink>
   );
 }
