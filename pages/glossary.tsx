@@ -1,6 +1,6 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
-import { Grid2 } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -12,12 +12,12 @@ import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
 import { Header } from "../components/HashHeader";
 import { Link } from "../components/Link";
+import { FallingText } from "../components/FallingText";
 
 // Custom components/renderers to pass to MDX.
 const components = {
   CH,
   a: Link,
-  TestComponent: dynamic(() => import("../components/TestComponent")),
   Head,
   h1: Header("h1"),
   h2: Header("h2"),
@@ -35,13 +35,16 @@ export default function GlossaryPage({ source, frontMatter }) {
         <meta property="og:title" content={frontMatter.title} />
         <meta property="og:type" content="website" />
       </Head>
-      <Grid2 container>
-        <Grid2 size={{ xs: 0, sm: 2 }} />
-        <Grid2 size={{ xs: 12, sm: 8 }}>
+      <Grid container>
+        <Grid size={{ xs: 0, sm: 2 }} />
+        <Grid size={{ xs: 12, sm: 8 }}>
+          <Typography textAlign={"center"} variant="h1">
+            <FallingText>Glossary: Terms and Concepts</FallingText>
+          </Typography>
           <MDXRemote {...source} components={components} />
-        </Grid2>
-        <Grid2 size={{ xs: 0, sm: 2 }} />
-      </Grid2>
+        </Grid>
+        <Grid size={{ xs: 0, sm: 2 }} />
+      </Grid>
     </>
   );
 }

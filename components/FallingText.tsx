@@ -52,8 +52,6 @@ function FallingTextComponent({ children, className, delay = 0 }: FallingTextPro
   );
 }
 
-const FallingText = dynamic(() => Promise.resolve(FallingTextComponent), {
+export const FallingText = dynamic(() => Promise.resolve(FallingTextComponent), {
   ssr: false,
 });
-
-export default FallingText;

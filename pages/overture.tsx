@@ -1,13 +1,13 @@
 import { Grid, Link, Typography } from "@mui/material";
 import { ReactElement } from "react";
-import FallingText from "../components/FallingText";
+import { FallingText } from "../components/FallingText";
 
 export default function Overture(): ReactElement {
   return (
     <Grid container>
-      <Grid item xs={0} sm={2} />
-      <Grid item xs={12} sm={8}>
-        <Typography textAlign={"center"} variant="h1">
+      <Grid size={{ xs: 0, sm: 2 }} />
+      <Grid size={{ xs: 12, sm: 8 }}>
+        <Typography sx={{ textAlign: "center" }} variant="h1">
           <FallingText>Overture</FallingText>
         </Typography>
         <p>
@@ -223,7 +223,7 @@ export default function Overture(): ReactElement {
           </p>
         </blockquote>
       </Grid>
-      <Grid item xs={0} sm={2} />
+      <Grid size={{ xs: 0, sm: 2 }} />
     </Grid>
   );
 }

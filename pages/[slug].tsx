@@ -1,7 +1,7 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
 import { UTCDate } from "@date-fns/utc";
-import { Grid2, Stack, Typography } from "@mui/material";
+import { Grid, Stack, Typography } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
@@ -11,7 +11,7 @@ import Head from "next/head";
 import path from "path";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
-import FallingText from "../components/FallingText";
+import { FallingText } from "../components/FallingText";
 import { Header } from "../components/HashHeader";
 import { Link } from "../components/Link";
 import {
@@ -34,10 +34,7 @@ import {
 const components = {
   CH,
   a: Link,
-  // It also works with dynamically-imported components, which is especially
-  // useful for conditionally loading components for certain routes.
-  // See the notes in README.md for more details.
-  TestComponent: dynamic(() => import("../components/TestComponent")),
+
   Head,
 
   h1: Header("h1"),
@@ -89,14 +86,14 @@ export default function PostPage({ segments, source, frontMatter }) {
         )}
       </div>
       <main>
-        <Grid2 container>
-          <Grid2
+        <Grid container>
+          <Grid
             size={{
               xs: 0,
               sm: 2,
             }}
           />
-          <Grid2
+          <Grid
             size={{
               xs: 12,
               sm: 8,
@@ -125,14 +122,14 @@ export default function PostPage({ segments, source, frontMatter }) {
                 ⇽
               </Link>
             </Stack>
-          </Grid2>
-          <Grid2
+          </Grid>
+          <Grid
             size={{
               xs: 0,
               sm: 2,
             }}
           />
-        </Grid2>
+        </Grid>
       </main>
     </>
   );

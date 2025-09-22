@@ -1,13 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { Grid, Link, Typography } from "@mui/material";
 import { ReactElement } from "react";
-import FallingText from "../components/FallingText";
+import { FallingText } from "../components/FallingText";
 
 export default function AboutPage(): ReactElement {
   return (
     <Grid container>
-      <Grid item xs={0} sm={2} />
-      <Grid item xs={12} sm={8}>
+      <Grid size={{ xs: 0, sm: 2 }} />
+      <Grid size={{ xs: 12, sm: 8 }}>
         <Typography textAlign={"center"} variant="h1">
           <FallingText>About Trevor Hartman</FallingText>
         </Typography>
@@ -96,7 +96,7 @@ export default function AboutPage(): ReactElement {
           alt="Trevor Hartman at the Dakota 5-0 mountain bike race"
         />
       </Grid>
-      <Grid item xs={0} sm={2} />
+      <Grid size={{ xs: 0, sm: 2 }} />
     </Grid>
   );
 }

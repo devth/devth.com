@@ -9,14 +9,12 @@ import {
   useHighlightColor,
   useHighlightHoverColor,
 } from "../hooks/useHighlightColor";
-import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { Link } from "./Link";
 import { Logo } from "./Logo";
 
 const maxWidth = "lg";
 
 export function Nav() {
-  const isDarkMode = useIsDarkMode();
   const linkColor = useHighlightColor();
   const hoverColor = useHighlightHoverColor();
   const theme = useTheme();

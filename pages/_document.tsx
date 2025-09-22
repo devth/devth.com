@@ -10,7 +10,7 @@ import Document, {
   NextScript,
 } from "next/document";
 import * as React from "react";
-import createEmotionCache from "../utils/createEmotionCache";
+import { createEmotionCache } from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
 import { MyAppProps } from "./_app";
 
