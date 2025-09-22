@@ -1,0 +1,129 @@
+---
+title: "Glossary: Terms and Concepts"
+layout: "page"
+---
+
+# Glossary: Terms and Concepts
+
+## Natural Transformation
+
+A natural transformation is a mapping between functors that preserves the structure of the underlying categories. — <cite>Bartosz Milewski from [Understanding Yoneda](https://www.fpcomplete.com/user/bartosz/understanding-yoneda)</cite>
+
+This is a case where definitions are confusing, but the actual thing is quite simple in practice. Let's try that out in Scala using the Functors `List` and `Option`.
+
+```scala
+val someString: Option[String] = Some("foo")
+val noneString: Option[String] = None
+
+// We can intuitively think of Option as being a List of 0 or 1 elements, so the
+// natural transformation is trivial (note: I'm intentionally avoiding the use
+// of Scala's own .toList):
+def optionToList[A](a: Option[A]): List[A] =
+  a.map(x => List(x)).getOrElse(List.empty[A])
+
+optionToList(someString)
+//=> res: List[String] = List(foo)
+
+optionToList(noneString)
+//=> res: List[String] = List()
+
+optionToList(None)
+//=> res: List[Nothing] = List()
+```
+
+## Isomorphism
+
+In mathematics, an isomorphism (from the Greek: isos "equal", and morphe "shape") is a homomorphism (or more generally a morphism) **that admits an inverse**. Two mathematical objects are isomorphic if an isomorphism exists between them. — <cite>[Wikipedia](http://en.wikipedia.org/wiki/Isomorphism)</cite>
+
+Now the Scala in which we'll describe the world's most trivial isomorphism:
+
+```scala
+// These two objects are isomorphic because a morphism (i.e. function) exists
+// that maps each to the other.
+val nameAge = ("foo", 42)
+val ageName = (42, "foo")
+
+def tuple2Iso[A, B](p: (A, B)): (B, A) = (p._2, p._1)
+
+// A => B
+tuple2Iso(nameAge) == ageName
+//=> true
+
+// B => A
+tuple2Iso(ageName) == nameAge
+//=> true
+
+tuple2Iso(tuple2Iso(nameAge)) == nameAge
+//=> true
+```
+
+## Domain and Codomain
+
+Domains come from set theory, and represent the set of input values for a function, while codomains represent the set of output values. Therefore, a function is the mapping between its domain and codomain.
+
+In programming, types and domains are related but not quite the same. Domains are strictly related to functions, while a type specifies a set of values.
+
+## Existential types
+
+Read [Existential type](https://www.haskell.org/haskellwiki/Existential_type) on the HaskellWiki.
+
+Existential types provide a way of baking the generics into a type instead of explicitly declaring them. Consider the ultra-contrived example where we have a type `Things` which contains a list of stuff whose type we don't care about because the only operation we want to perform on it is to count how many there are.
+
+```scala
+case class Things[A](list: List[A])
+val intThings: Things[Int] = Things(List(1, 2, 3))
+def count[A](ts: Things[A]) = ts.list.size
+count(intThings)
+//=> 3
+```
+
+## Rank-1 Polymorphic Function
+
+An example based on [Higher-Rank Polymorphism in Scala](https://apocalisp.wordpress.com/2010/07/02/higher-rank-polymorphism-in-scala/):
+
+```scala
+def r1[A](f: A => A, a: A): A = f(a)
+r1({ i: Int => i * i }, 10)
+// res4: Int = 100
+```
+
+## Rank-2 Polymorphic Function
+
+Again from [Higher-Rank Polymorphism in Scala](https://apocalisp.wordpress.com/2010/07/02/higher-rank-polymorphism-in-scala/):
+
+```scala
+trait ~>[F[_],G[_]] {
+  def apply[A](a: F[A]): G[A]
+}
+```
+
+## Parametricity
+
+> captures the intuition that all instances of a polymorphic function act the same way — <cite>[Wikipedia](https://en.wikipedia.org/wiki/Parametricity)</cite>
+
+## Partial Function
+
+A function which is not defined for some inputs.
+
+## Total Function
+
+A function which is defined for all inputs, as opposed to a partial function.
+
+## Extensionality and Intensionality
+
+In logic, extensionality, or extensional equality, refers to principles that judge objects to be equal if they have the same external properties. It stands in contrast to the concept of intensionality, which is concerned with whether the internal definitions of objects are the same. — <cite>[Wikipedia](http://en.wikipedia.org/wiki/Extensionality)</cite>
+
+```haskell
+f :: Int -> Int
+f x = x + x + x
+
+g :: Int -> Int
+g x = x * 3
+
+-- f and g are extensionally equal but not intensionally equal.
+
+h :: Int -> Int
+h x = x + x + x
+
+-- f and h are intensionally equal.
+```

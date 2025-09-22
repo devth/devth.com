@@ -1,17 +1,18 @@
 import { remarkCodeHike } from "@code-hike/mdx";
 import { CH } from "@code-hike/mdx/components";
 import { UTCDate } from "@date-fns/utc";
-import { Grid2, Stack, Typography, TypographyProps } from "@mui/material";
+import { Grid2, Stack, Typography } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
 import { serialize } from "next-mdx-remote/serialize";
 import dynamic from "next/dynamic";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import path from "path";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeSlug from "rehype-slug";
+import FallingText from "../components/FallingText";
+import { Header } from "../components/HashHeader";
 import { Link } from "../components/Link";
 import {
   useHighlightColor,
@@ -24,47 +25,7 @@ import {
   postFilePaths,
 } from "../utils/mdxUtils";
 
-const HashHeader = (props) => {
-  const highlightColor = useHighlightColor();
-  const router = useRouter();
-  return (
-    <Typography
-      id={props.id}
-      variant={props.variant}
-      onClick={() => {
-        router.push(`#${props.id}`);
-      }}
-      sx={{
-        cursor: "pointer",
-        transition: "color .2s ease-out",
-        "&:hover": {
-          // color: lighten(theme.palette.primary.main, 0.1),
-          "&:before": {
-            content: '"#"',
-            color: highlightColor,
-            fontSize: ".8em",
-            fontFamily: "monospace",
-            fontStyle: "normal",
-            position: "relative",
-            marginLeft: "-1.3ch",
-            paddingRight: "0.3ch",
-          },
-        },
-      }}
-    >
-      {props.children}
-    </Typography>
-  );
-};
-HashHeader.displayName = "HashHeader";
 
-const Header = (variant: "h1" | "h2" | "h3" | "h4" | "h5" | "h6") => {
-  const Component = (props: TypographyProps & { id: string }) => {
-    return <HashHeader variant={variant} {...props} />;
-  };
-  Component.displayName = `Header(${variant})`;
-  return Component;
-};
 
 // Custom components/renderers to pass to MDX.
 // Since the MDX files aren't loaded by webpack, they have no knowledge of how
@@ -108,7 +69,7 @@ export default function PostPage({ segments, source, frontMatter }) {
       </Head>
       <div className="post-header" style={{ textAlign: "center" }}>
         <Typography variant="h1" style={{ marginBottom: 0 }}>
-          {frontMatter.title}
+          <FallingText>{frontMatter.title}</FallingText>
         </Typography>
         <Typography
           variant="h6"
@@ -119,11 +80,9 @@ export default function PostPage({ segments, source, frontMatter }) {
             fontWeight: "normal",
           }}
         >
-          Trevor Hartman
-          {" • "}
-          <time dateTime={date.toLocaleDateString("en-us")}>
-            {date.toLocaleDateString("en-us")}
-          </time>
+          <FallingText delay={0.5}>
+            {`Trevor Hartman • ${date.toLocaleDateString("en-us")}`}
+          </FallingText>
         </Typography>
         {frontMatter.description && (
           <p className="description">{frontMatter.description}</p>

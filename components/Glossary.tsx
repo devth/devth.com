@@ -1,10 +1,11 @@
 import { Link, Typography } from "@mui/material";
+import FallingText from "./FallingText";
 
 function TermsAndConcepts() {
   return (
     <div>
       <Typography textAlign={"center"} variant="h1">
-        Glossary: Terms and Concepts
+        <FallingText>Glossary: Terms and Concepts</FallingText>
       </Typography>
 
       <h3>Natural Transformation</h3>

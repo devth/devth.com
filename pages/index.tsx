@@ -8,12 +8,13 @@ import {
   TimelineSeparator,
   timelineItemClasses,
 } from "@mui/lab";
-import { Grid, SxProps, Typography, lighten } from "@mui/material";
+import { Grid2, SxProps, Typography, lighten } from "@mui/material";
 import fs from "fs";
 import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
 import path from "path";
 import { Link } from "../components/Link";
+import FallingText from "../components/FallingText";
 import { useHighlightColor } from "../hooks/useHighlightColor";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
@@ -101,9 +102,9 @@ export default function Index({ posts }: { posts: Post[] }) {
   const highlightColor = useHighlightColor();
 
   return (
-    <Grid container>
-      <Grid item xs={0} sm={1} />
-      <Grid item xs={12} sm={10}>
+    <Grid2 container>
+      <Grid2 size={{ xs: 0, sm: 1 }} />
+      <Grid2 size={{ xs: 12, sm: 10 }}>
         <Timeline
           sx={{
             padding: 1,
@@ -130,7 +131,7 @@ export default function Index({ posts }: { posts: Post[] }) {
                   }}
                   variant="h6"
                 >
-                  {year}
+                  <FallingText>{year}</FallingText>
                 </Typography>
 
                 <ul
@@ -159,7 +160,7 @@ export default function Index({ posts }: { posts: Post[] }) {
                           as={`/${post.slug}`}
                           href={`/[slug]`}
                         >
-                          {post.data.title}
+                          <FallingText>{post.data.title}</FallingText>
                         </Link>
                       </Typography>
                       <Typography
@@ -192,9 +193,9 @@ export default function Index({ posts }: { posts: Post[] }) {
             </TimelineItem>
           ))}
         </Timeline>
-      </Grid>
-      <Grid item xs={0} sm={1} />
-    </Grid>
+      </Grid2>
+      <Grid2 size={{ xs: 0, sm: 1 }} />
+    </Grid2>
   );
 }
 

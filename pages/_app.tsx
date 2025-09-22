@@ -29,7 +29,7 @@ export default function DevthApp(props: MyAppProps) {
 
   const [mode] = React.useState<PaletteMode>(defaultMode);
 
-  const theme = React.useMemo(() => createThemeForMode(), []);
+  const theme = React.useMemo(() => createThemeForMode(mode), [mode]);
 
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   return (
@@ -113,7 +113,7 @@ export default function DevthApp(props: MyAppProps) {
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <Layout>
-          <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />
+          <Component {...pageProps} />
         </Layout>
       </ThemeProvider>
     </CacheProvider>
