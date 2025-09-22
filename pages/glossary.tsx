@@ -39,7 +39,7 @@ export default function GlossaryPage({ source, frontMatter }) {
         <Grid size={{ xs: 0, sm: 2 }} />
         <Grid size={{ xs: 12, sm: 8 }}>
           <Typography textAlign={"center"} variant="h1">
-            <FallingText>Glossary: Terms and Concepts</FallingText>
+            <FallingText>Glossary</FallingText>
           </Typography>
           <MDXRemote {...source} components={components} />
         </Grid>

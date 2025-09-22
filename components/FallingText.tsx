@@ -15,14 +15,14 @@ function FallingTextComponent({ children, className, delay = 0 }: FallingTextPro
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.02,
         delayChildren: delay,
       },
     },
     exit: {
       opacity: 0,
       transition: {
-        staggerChildren: 0.02,
+        staggerChildren: 0.004,
         staggerDirection: -1,
       },
     },
@@ -30,8 +30,16 @@ function FallingTextComponent({ children, className, delay = 0 }: FallingTextPro
 
   const item = {
     hidden: { y: -20, opacity: 0 },
-    visible: { y: 0, opacity: 1 },
-    exit: { y: 50, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.06 },
+    },
+    exit: {
+      y: 50,
+      opacity: 0,
+      transition: { duration: 0.06 },
+    },
   };
 
   return (

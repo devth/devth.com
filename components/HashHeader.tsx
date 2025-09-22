@@ -14,6 +14,7 @@ export const HashHeader = (props: TypographyProps & { id: string }) => {
       }}
       sx={{
         cursor: "pointer",
+        marginLeft: 0,
         transition: "color .2s ease-out",
         "&:hover": {
           // color: lighten(theme.palette.primary.main, 0.1),
