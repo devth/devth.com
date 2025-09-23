@@ -1,9 +1,10 @@
-import { SxProps } from "@mui/material";
+import { useMediaQuery, SxProps } from "@mui/material";
 import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import NextLink from "next/link";
 import { useEffect, useRef } from "react";
 
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const uppercaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const lowercaseLetters = "abcdefghijklmnopqrstuvwxyz";
 
 export function Link({
   as,
@@ -18,13 +19,14 @@ export function Link({
 } & MuiLinkProps) {
   const linkRef = useRef<HTMLAnchorElement>(null);
   const originalTextRef = useRef<string>("");
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
   useEffect(() => {
     const link = linkRef.current;
     if (!link) return;
 
     // Capture original text once
-    originalTextRef.current = link.textContent || "";
+    originalTextRef.current = (link.textContent || "").replace(/\n/g, " ");
 
     let interval: NodeJS.Timeout | null = null;
 
@@ -35,28 +37,35 @@ export function Link({
 
       let iteration = 0;
       // steps for consistent duration regardless of text length
-      const increment = originalText.length / 60; 
+      const increment = originalText.length / 60;
 
       if (interval) clearInterval(interval);
 
-      interval = setInterval(() => {
-        target.innerText = target.innerText
-          .split("")
-          .map((letter, index) => {
-            if (letter === " ") return letter;
-            if (index < iteration) {
-              return originalText[index];
-            }
-            return letters[Math.floor(Math.random() * 26)];
-          })
-          .join("");
+       interval = setInterval(() => {
+         target.innerText = target.innerText
+           .split("")
+           .map((letter, index) => {
+             if (letter === " ") return letter;
+             if (index < iteration) {
+               return originalText[index];
+             }
+             const originalChar = originalText[index];
+             if (originalChar === originalChar.toUpperCase() && originalChar !== originalChar.toLowerCase()) {
+               return uppercaseLetters[Math.floor(Math.random() * 26)];
+             } else if (originalChar === originalChar.toLowerCase() && originalChar !== originalChar.toUpperCase()) {
+               return lowercaseLetters[Math.floor(Math.random() * 26)];
+             } else {
+               return originalChar; // for non-letters, keep as is
+             }
+           })
+           .join("");
 
-        if (iteration >= originalText.length) {
-          if (interval) clearInterval(interval);
-        }
+         if (iteration >= originalText.length) {
+           if (interval) clearInterval(interval);
+         }
 
-        iteration += increment;
-      }, 10);
+         iteration += increment;
+       }, 10);
     };
 
     const handleMouseOut = () => {
@@ -94,7 +103,7 @@ export function Link({
           // borderRadius: "clamp(0.2rem, 0.375vw, 0.5rem)",
           "&:hover": {
             // backgroundColor: "white",
-            color: "black",
+            color: prefersDarkMode ? "#444" : "black",
           },
           ...sx,
         }}

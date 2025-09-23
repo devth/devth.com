@@ -6,7 +6,6 @@ import fs from "fs";
 import matter from "gray-matter";
 import { MDXRemote } from "next-mdx-remote";
 import { serialize } from "next-mdx-remote/serialize";
-import dynamic from "next/dynamic";
 import Head from "next/head";
 import path from "path";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
@@ -150,7 +149,7 @@ export const getStaticProps = async ({ params }) => {
   const mdxSource = await serialize(content, {
     // Optionally pass remark/rehype plugins
     mdxOptions: {
-      remarkPlugins: [[remarkCodeHike, { theme: "github-from-css" }]],
+      remarkPlugins: [[remarkCodeHike, { theme: "material-from-css" }]],
       rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings],
     },
     scope: {

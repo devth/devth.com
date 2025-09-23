@@ -1,8 +1,7 @@
-import MuiLink from "@mui/material/Link";
-import NextLink from "next/link";
 import { useRouter } from "next/router";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { useMediaQuery, useTheme } from "@mui/material";
+import { Link } from "./Link";
 
 export const Logo = () => {
   const router = useRouter();
@@ -16,8 +15,7 @@ export const Logo = () => {
   const fontSize = 70 * scale;
 
   return (
-    <MuiLink
-      component={NextLink}
+    <Link
       href="/"
       sx={{
         fontSize: `${fontSize}px`,
@@ -32,6 +30,6 @@ export const Logo = () => {
       }}
     >
       devth
-    </MuiLink>
+    </Link>
   );
 };
