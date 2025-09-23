@@ -6,16 +6,14 @@ import {
   useHighlightColor,
   useHighlightHoverColor,
 } from "../hooks/useHighlightColor";
-import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { Link } from "./Link";
 
 const maxWidth = "lg";
 
 export function Footer(): React.ReactElement {
-  const isDarkMode = useIsDarkMode();
   const highlightColor = useHighlightColor();
   const highlightHoverColor = useHighlightHoverColor();
-  const bgColor = isDarkMode ? "rgba(34, 34, 34, 0.1)" : "rgba(250, 250, 250, 0.3)";
+  const bgColor = "transparent";
 
   const footerLinkSx: SxProps = {
     color: highlightColor,
