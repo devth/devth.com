@@ -15,7 +15,7 @@ export function Footer(): React.ReactElement {
   const isDarkMode = useIsDarkMode();
   const highlightColor = useHighlightColor();
   const highlightHoverColor = useHighlightHoverColor();
-  const bgColor = isDarkMode ? "#222" : "#fafafa";
+  const bgColor = isDarkMode ? "rgba(34, 34, 34, 0.1)" : "rgba(250, 250, 250, 0.3)";
 
   const footerLinkSx: SxProps = {
     color: highlightColor,

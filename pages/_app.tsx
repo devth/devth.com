@@ -4,12 +4,12 @@ import { AppProps } from "next/app";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { CacheProvider, EmotionCache } from "@emotion/react";
-import createEmotionCache from "../utils/createEmotionCache";
+import { createEmotionCache } from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
 import { GlobalStyles, PaletteMode, useMediaQuery } from "@mui/material";
 import "@code-hike/mdx/dist/index.css";
 import { globalStyles } from "../utils/globalStyles";
-import Layout from "../components/Layout";
+import { Layout } from "../components/Layout";
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
@@ -29,7 +29,7 @@ export default function DevthApp(props: MyAppProps) {
 
   const [mode] = React.useState<PaletteMode>(defaultMode);
 
-  const theme = React.useMemo(() => createThemeForMode(), []);
+  const theme = React.useMemo(() => createThemeForMode(mode), [mode]);
 
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   return (
@@ -113,7 +113,7 @@ export default function DevthApp(props: MyAppProps) {
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <Layout>
-          <Component style={{ backgroundColor: "#FFCC0033" }} {...pageProps} />
+          <Component {...pageProps} />
         </Layout>
       </ThemeProvider>
     </CacheProvider>

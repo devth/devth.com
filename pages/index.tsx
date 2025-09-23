@@ -14,6 +14,7 @@ import matter from "gray-matter";
 import { groupBy, sortBy } from "lodash";
 import path from "path";
 import { Link } from "../components/Link";
+import { FallingText } from "../components/FallingText";
 import { useHighlightColor } from "../hooks/useHighlightColor";
 import { useIsDarkMode } from "../hooks/useIsDarkMode";
 import { POSTS_PATH, matchFilePath, postFilePaths } from "../utils/mdxUtils";
@@ -92,18 +93,13 @@ export default function Index({ posts }: { posts: Post[] }) {
       transform: "scaleX(1)",
       transformOrigin: "bottom left",
     },
-    "&:hover": {
-      paddingBottom: 0,
-      // color: "red",
-      // textDecoration: "underline",
-    },
   };
   const highlightColor = useHighlightColor();
 
   return (
     <Grid container>
-      <Grid item xs={0} sm={1} />
-      <Grid item xs={12} sm={10}>
+      <Grid size={{ xs: 0, sm: 1 }} />
+      <Grid size={{ xs: 12, sm: 10 }}>
         <Timeline
           sx={{
             padding: 1,
@@ -120,18 +116,18 @@ export default function Index({ posts }: { posts: Post[] }) {
                 <TimelineConnector />
               </TimelineSeparator>
               <TimelineContent sx={{ mt: "-8px" }}>
-                <Typography
-                  sx={{
-                    color: highlightColor,
-                    // textShadow:
-                    //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
-                    fontWeight: "bold",
-                    fontFamily: "monospace",
-                  }}
-                  variant="h6"
-                >
-                  {year}
-                </Typography>
+                   <Typography
+                     sx={{
+                       color: highlightColor,
+                       // textShadow:
+                       //   "1px 1px 0 red, -1px 1px 0 red, -1px -1px 0 red, 1px -1px 0 red",
+                       fontWeight: "bold",
+                       fontFamily: "monospace",
+                     }}
+                     variant="h6"
+                   >
+                     {year}
+                   </Typography>
 
                 <ul
                   style={{
@@ -154,13 +150,19 @@ export default function Index({ posts }: { posts: Post[] }) {
                           display: "inline",
                         }}
                       >
-                        <Link
-                          sx={postLinkSx}
-                          as={`/${post.slug}`}
-                          href={`/[slug]`}
-                        >
-                          {post.data.title}
-                        </Link>
+                         <Link
+                           as={`/${post.slug}`}
+                           href={`/[slug]`}
+                         >
+                           <span style={{
+                             transition: "all .8s ease-out, padding-bottom .2s ease-out",
+                             textDecoration: "none",
+                             display: "inline-block",
+                             textWrap: "balance",
+                             position: "relative",
+                             paddingBottom: 0,
+                           }}>{post.data.title}</span>
+                         </Link>
                       </Typography>
                       <Typography
                         variant="subtitle1"
@@ -193,7 +195,7 @@ export default function Index({ posts }: { posts: Post[] }) {
           ))}
         </Timeline>
       </Grid>
-      <Grid item xs={0} sm={1} />
+      <Grid size={{ xs: 0, sm: 1 }} />
     </Grid>
   );
 }

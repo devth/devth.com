@@ -7,7 +7,7 @@ import { useMediaQuery, useTheme } from "@mui/material";
 export const Logo = () => {
   const router = useRouter();
   const isDarkMode = useIsDarkMode();
-  const logoColor = isDarkMode ? "#666" : "#ccc";
+  const logoColor = isDarkMode ? "#666" : "#999";
   const isHome = router.pathname === "/";
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -16,22 +16,22 @@ export const Logo = () => {
   const fontSize = 70 * scale;
 
   return (
-    <NextLink legacyBehavior href="/">
-      <MuiLink
-        sx={{
-          fontSize: `${fontSize}px`,
-          fontWeight: "bold",
-          transition: `all .3s ease-out 0s, font-size ${scaleDuration}s ease-out 0.5s`,
-          color: logoColor,
-          "&:hover": {
-            color: isDarkMode ? "#eee" : "black",
-          },
-          textDecoration: "none",
-          cursor: "pointer",
-        }}
-      >
-        devth
-      </MuiLink>
-    </NextLink>
+    <MuiLink
+      component={NextLink}
+      href="/"
+      sx={{
+        fontSize: `${fontSize}px`,
+        fontWeight: "bold",
+        transition: `all .3s ease-out 0s, font-size ${scaleDuration}s ease-out 0.5s`,
+        color: logoColor,
+        "&:hover": {
+          color: isDarkMode ? "#eee" : "black",
+        },
+        textDecoration: "none",
+        cursor: "pointer",
+      }}
+    >
+      devth
+    </MuiLink>
   );
 };

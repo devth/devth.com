@@ -5,7 +5,7 @@ import { Nav } from "./Nav";
 
 const maxWidth = "lg";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export const Layout = ({ children }: { children: React.ReactNode }) => {
   const theme = useTheme();
   const isDarkMode = useIsDarkMode();
   return (

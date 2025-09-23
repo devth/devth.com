@@ -1,6 +1,6 @@
 import { createTheme, responsiveFontSizes } from "@mui/material/styles";
 
-export const createThemeForMode = () =>
+export const createThemeForMode = (mode: "light" | "dark") =>
   responsiveFontSizes(
     createTheme({
       colorSchemes: {
@@ -51,6 +51,9 @@ export const createThemeForMode = () =>
         },
         MuiCssBaseline: {
           styleOverrides: `
+          body {
+            background-color: ${mode === "light" ? "#FCF6E5" : "default"};
+          }
           blockquote {
             border-left: 4px solid #ddd;
             margin-left: 0;

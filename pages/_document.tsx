@@ -1,19 +1,18 @@
-import * as React from "react";
+import createEmotionServer from "@emotion/server/create-instance";
+import { Metadata } from "next";
+import { AppType } from "next/app";
 import Document, {
-  Html,
+  DocumentContext,
+  DocumentProps,
   Head,
+  Html,
   Main,
   NextScript,
-  DocumentProps,
-  DocumentContext,
 } from "next/document";
-import createEmotionServer from "@emotion/server/create-instance";
-import { AppType } from "next/app";
-import createEmotionCache from "../utils/createEmotionCache";
-import { MyAppProps } from "./_app";
-import { useMediaQuery } from "@mui/material";
+import * as React from "react";
+import { createEmotionCache } from "../utils/createEmotionCache";
 import { createThemeForMode } from "../utils/theme";
-import { Metadata } from "next";
+import { MyAppProps } from "./_app";
 
 interface MyDocumentProps extends DocumentProps {
   emotionStyleTags: JSX.Element[];
@@ -28,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export default function MyDocument({ emotionStyleTags }: MyDocumentProps) {
-  const theme = createThemeForMode();
+  const theme = createThemeForMode("light");
 
   return (
     <Html lang="en">
