@@ -98,7 +98,7 @@ export function Link({
           cursor: "pointer",
           transition: "all .5s ease-in-out",
           fontFamily: "'Space Mono', monospace",
-          padding: "0rem clamp(0.2rem, 0.5vw, 0.5rem)",
+          padding: "0rem",
           textDecoration: "none",
           // borderRadius: "clamp(0.2rem, 0.375vw, 0.5rem)",
           "&:hover": {
