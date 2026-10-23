@@ -58,13 +58,12 @@ body.cosmos-page {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #06070b;
+  background: transparent;
   color: #e6e6ec;
   overflow: hidden;
   border: 0;
 }
-.cosmos-canvas,
-.cosmos-fallback {
+.cosmos-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -84,9 +83,6 @@ body.cosmos-page {
 }
 .cosmos-stage[data-ready] .cosmos-canvas {
   display: block;
-}
-.cosmos-stage[data-ready] .cosmos-fallback {
-  display: none;
 }
 .cosmos-coordinate {
   position: fixed;
@@ -223,8 +219,5 @@ body.cosmos-page {
   .cosmos-stage {
     position: relative;
     height: 80vh;
-  }
-  .cosmos-fallback {
-    display: block !important;
   }
 }

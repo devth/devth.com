@@ -75,12 +75,13 @@ test("cosmos remains a viewable page without JavaScript", async ({ browser, base
   const page = await context.newPage();
   await page.goto(baseURL + "/cosmos");
   await expect(page.getByRole("heading", { name: "Cosmos", exact: true })).toBeVisible();
-  await expect(page.getByRole("img", { name: "Static ribbon sculpture" })).toBeVisible();
+  await expect(page.locator(".cosmos-fallback")).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeHidden();
   await context.close();
 });
 
-test("cosmos shows a still sculpture when WebGL is unavailable", async ({ page }) => {
+test("cosmos stays dark when WebGL is unavailable", async ({ page }) => {
   await page.addInitScript(() => {
     const getContext = HTMLCanvasElement.prototype.getContext;
     HTMLCanvasElement.prototype.getContext = function (type, ...args) {
@@ -88,8 +89,9 @@ test("cosmos shows a still sculpture when WebGL is unavailable", async ({ page }
     };
   });
   await page.goto("/cosmos");
-  await expect(page.getByRole("status")).toHaveText("WebGL unavailable. Showing a static image.");
-  await expect(page.getByRole("img", { name: "Static ribbon sculpture" })).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("WebGL unavailable.");
+  await expect(page.locator(".cosmos-fallback")).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "devth home" })).toBeVisible();
 });
 
 test("link sigils randomize without moving text and respect reduced motion", async ({ page }) => {

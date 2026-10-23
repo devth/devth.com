@@ -7,6 +7,7 @@ import { slug as slugify } from "github-slugger";
 import { createHighlighter } from "shiki";
 import { cosmosBody } from "./cosmos-page.js";
 import { parseHTML } from "linkedom";
+import { background } from "./background.js";
 
 const origin = "https://devth.com";
 const root = resolve(import.meta.dirname, "..");
@@ -97,11 +98,12 @@ function layout({
   <script type="module" src="/main.js"></script>
   ${slug === "cosmos" ? '<link rel="stylesheet" href="/cosmos.css"><script type="module" src="/cosmos.js"></script>' : ""}
 </head>
-<body id="top"${slug === "cosmos" ? ' class="cosmos-page"' : ""}>
+<body id="top"${slug === "cosmos" ? ' class="cosmos-page"' : slug === "" ? ' class="home-page"' : ""}>
+  ${background}
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="site-shell">
     <header class="site-header">
-      <a class="brand" href="/" aria-label="devth home">devth<span aria-hidden="true">_</span><span class="brand-tagline">work in progress</span></a>
+      <a class="brand" href="/" aria-label="devth home"><${slug === "" ? "h1" : "span"} class="brand-mark">devth<span aria-hidden="true">_</span></${slug === "" ? "h1" : "span"}><span class="brand-tagline">work in progress</span></a>
       <nav aria-label="Main navigation">${nav.map(([href, label]) => `<a href="${href}"${href === `/${slug}` ? ' aria-current="page"' : ""}>${label}</a>`).join("")}</nav>
       <button class="header-search" type="button" data-quick-nav-trigger aria-label="Search" aria-haspopup="dialog" aria-controls="quick-nav" aria-keyshortcuts="Meta+K Control+K" hidden><span aria-hidden="true">⌕</span><kbd aria-hidden="true">⌘K</kbd></button>
       <a class="header-github" href="https://github.com/devth">github <span aria-hidden="true">↗</span></a>
@@ -130,8 +132,8 @@ function categoryLink(category) {
 
 function home(posts) {
   const years = [...new Set(posts.map((post) => post.date.slice(0, 4)))];
-  return `<section id="writing" class="writing" aria-labelledby="writing-title">
-    <div class="section-heading"><h1 id="writing-title">Writing<span class="count">[${String(posts.length).padStart(2, "0")}]</span></h1><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
+  return `<section id="writing" class="writing" aria-label="Posts">
+    <div class="section-heading"><span class="archive-count" aria-label="${posts.length} posts">[${String(posts.length).padStart(2, "0")}]</span><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
     <div class="category-filter" data-category-filter hidden><span data-category-label></span><a href="/">all posts</a></div>
     <p class="sr-only" role="status" data-search-status></p>
     <div class="archive">${years
@@ -278,8 +280,8 @@ export async function generateSite() {
     Object.entries(assets).map(([name, content]) => writeFile(resolve(output, name), content)),
   );
   await Promise.all(
-    ["style.css", "main.js", "search.js", "toc.js", "cosmos.css", "cosmos.js"].map((name) =>
-      copyFile(resolve(root, "src", name), resolve(output, name)),
+    ["style.css", "main.js", "background.js", "search.js", "toc.js", "cosmos.css", "cosmos.js"].map(
+      (name) => copyFile(resolve(root, "src", name), resolve(output, name)),
     ),
   );
   return { input: pages.map((page) => resolve(output, page.path)), assets };

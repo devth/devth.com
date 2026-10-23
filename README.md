@@ -1,6 +1,6 @@
 # devth.com
 
-Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, and geometric link hovers; the isolated `/cosmos` experiment loads Three.js only on that page. A separate Cloudflare Worker with Durable Object storage serves the retro per-page hit-counter images.
+Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page. A separate Cloudflare Worker with Durable Object storage serves the retro per-page hit-counter images.
 
 ## Develop
 
@@ -31,6 +31,7 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 - `non-posts/glossary.mdx` — the glossary.
 - `drafts/` and other `non-posts/` files — never published.
 - `src/style.css` — design, responsive layout, system light/dark modes, print styles.
+- `scripts/background.js`, `src/background.js` — pre-rendered decorative node/edge background on every page. Tiny randomized, bounded node shifts and connected edges update only on scroll; no idle animation loop, timers, or 3D dependency. Reduced motion leaves it static.
 - `src/main.js` — archive/category filtering, quick-navigation entry point, and randomized geometric link sigils; `/` focuses archive filtering, Escape clears it.
 - `src/search.js` — lazily loaded Cmd+K/Ctrl+K dialog; searches a generated static index using original titles, excerpts and categories.
 - `src/toc.js` — sticky heading-derived contents with a stepped SVG scroll-progress rail; native fragment links work without JavaScript.
@@ -77,9 +78,9 @@ After the preview is approved, production promotion requires explicitly attachin
 
 ### Cosmos
 
-Open [/cosmos](https://preview.devth.com/cosmos). The scene fills the viewport behind overlaid navigation and controls: shader-deformed interlocking ribbons, additive wire meshes, instanced nodes, rotating cages, orbital loops and 2,600 stars. Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or randomize the sculpture. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
+Open [/cosmos](https://preview.devth.com/cosmos). The scene fills the viewport behind overlaid navigation and controls: shader-deformed interlocking ribbons, additive wire meshes, rotating cages, orbital loops and 2,600 stars. The shared static/scroll-driven node graph sits behind the transparent canvas instead of duplicating a rotating 3D graph. Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or randomize the sculpture. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
 
-Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs, and a still SVG appears without JavaScript or WebGL. Only this page downloads the 3D renderer. Other pages never request Three.js; search code and its static index load only when the dialog is first opened, and the contents tracker loads only on pages with a ToC.
+Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs. There is no loading diagram or substitute sculpture: the background stays dark while the renderer loads or JavaScript is unavailable. A WebGL failure shows a short status; header navigation remains usable. Only this page downloads the 3D renderer. Other pages never request Three.js; search code and its static index load only when the dialog is first opened, and the contents tracker loads only on pages with a ToC.
 
 Link hovers draw a short, randomized node/edge sigil beside the link without moving or obscuring its text. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
 
@@ -92,6 +93,8 @@ Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows select a r
 Articles with multiple headings get a native, collapsible contents section. Its desktop sidebar sticks beside the prose; on narrow screens it becomes a compact section above the article. A stepped SVG line follows heading nesting and fills with scroll progress. Reduced motion disables its interpolation, not its progress indication. Existing heading IDs remain unchanged, including `$EDITOR` → `#editor`; trusted inline-HTML headings receive unique IDs too.
 
 ### Page transitions
+
+The homepage restores an oversized responsive **devth** logo rather than a visible “Writing” title. Its shared `site-brand` view-transition name animates the large mark into the compact header mark when opening an article, and back on return. This remains native cross-document navigation with a 200ms transition and reduced-motion opt-out.
 
 Internal same-origin navigation uses native cross-document View Transitions: a 200 ms crossfade with a small depth shift. Only opacity and transforms animate. There is no wind simulation, tumbling, animated shadow, filter or grid background.
 

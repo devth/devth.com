@@ -71,7 +71,7 @@ test("native navigation uses a short, restrained depth transition", async ({ pag
   await expect(page.getByRole("heading", { name: "About Trevor Hartman" })).toBeVisible();
   await page.goBack();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "Writing" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "devth", exact: true })).toBeVisible();
   await page.goForward();
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByRole("heading", { name: "About Trevor Hartman" })).toBeVisible();

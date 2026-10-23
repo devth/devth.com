@@ -160,51 +160,6 @@ function sculpture(seed) {
     group.add(ribbon);
   }
 
-  const network = new THREE.Group();
-  const nodeGeometry = new THREE.OctahedronGeometry(0.07);
-  const nodeMaterial = new THREE.MeshBasicMaterial({ color: "#f9b9ed", wireframe: true });
-  const nodes = new THREE.InstancedMesh(nodeGeometry, nodeMaterial, 64);
-  const matrix = new THREE.Matrix4();
-  const points = [];
-  for (let i = 0; i < nodes.count; i++) {
-    const y = 1 - (i / (nodes.count - 1)) * 2;
-    const theta = i * Math.PI * (3 - Math.sqrt(5)) + random() * 0.4;
-    const radius = 3.5 + random() * 2;
-    const point = new THREE.Vector3(
-      Math.cos(theta) * Math.sqrt(1 - y * y),
-      y,
-      Math.sin(theta) * Math.sqrt(1 - y * y),
-    ).multiplyScalar(radius);
-    points.push(point);
-    nodes.setMatrixAt(i, matrix.makeTranslation(point.x, point.y, point.z));
-  }
-  network.add(nodes);
-  const connections = [];
-  const pairs = new Set();
-  for (let i = 0; i < points.length; i++) {
-    const nearest = points
-      .map((point, j) => ({ j, distance: points[i].distanceToSquared(point) }))
-      .filter(({ j }) => j !== i)
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 3);
-    for (const { j } of nearest) {
-      const key = [Math.min(i, j), Math.max(i, j)].join("-");
-      if (pairs.has(key)) continue;
-      pairs.add(key);
-      connections.push(...points[i].toArray(), ...points[j].toArray());
-    }
-  }
-  network.add(
-    new THREE.LineSegments(
-      new THREE.BufferGeometry().setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(connections, 3),
-      ),
-      new THREE.LineBasicMaterial({ color: "#bfa4ee", transparent: true, opacity: 0.17 }),
-    ),
-  );
-  group.add(network);
-
   const cages = [];
   for (const [radius, color] of [
     [4.2, "#e8ab7c"],
@@ -269,7 +224,6 @@ function sculpture(seed) {
   group.rotation.set(0.2, 0.6, -0.1);
   return {
     group,
-    nodes: [nodes],
     animate(elapsed) {
       time.value = elapsed;
       ribbons.forEach((ribbon, i) => {
@@ -277,7 +231,6 @@ function sculpture(seed) {
         ribbon.rotation.z = i * 0.4 + Math.sin(elapsed * 0.4 + i) * 0.22;
         ribbon.scale.setScalar(ribbon.userData.scale * (1 + Math.sin(elapsed * 0.6 + i) * 0.06));
       });
-      network.rotation.set(elapsed * -0.04, elapsed * 0.06, 0);
       cages.forEach((cage, i) =>
         cage.rotation.set(elapsed * (i ? -0.08 : 0.1), i + elapsed * 0.05, i * 0.6),
       );
@@ -290,9 +243,9 @@ function sculpture(seed) {
 }
 
 function start() {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-  renderer.setClearColor("#06070b");
+  renderer.setClearColor("#06070b", 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
@@ -311,9 +264,6 @@ function start() {
   let lastTime = 0;
   let sceneTime = 0;
   let inView = true;
-  let hovered = "";
-  const raycaster = new THREE.Raycaster();
-  const pointer = new THREE.Vector2();
   function updatePause() {
     pauseButton.textContent = paused ? "Resume" : "Pause";
     pauseButton.setAttribute("aria-pressed", String(paused));
@@ -347,9 +297,7 @@ function start() {
     if (!dirty) return;
     renderer.render(scene, camera);
     const r = object.group.rotation;
-    readout.textContent =
-      hovered ||
-      `X ${r.x.toFixed(2)} / Y ${r.y.toFixed(2)} / Z ${r.z.toFixed(2)} / θ ${controls.getAzimuthalAngle().toFixed(2)}`;
+    readout.textContent = `X ${r.x.toFixed(2)} / Y ${r.y.toFixed(2)} / Z ${r.z.toFixed(2)} / θ ${controls.getAzimuthalAngle().toFixed(2)}`;
     dirty = false;
   }
   function syncLoop() {
@@ -370,21 +318,6 @@ function start() {
     dirty = true;
   });
   resize.observe(stage);
-  canvas.addEventListener("pointermove", (event) => {
-    const rect = canvas.getBoundingClientRect();
-    pointer.set(
-      ((event.clientX - rect.left) / rect.width) * 2 - 1,
-      -((event.clientY - rect.top) / rect.height) * 2 + 1,
-    );
-    raycaster.setFromCamera(pointer, camera);
-    const hit = raycaster.intersectObjects(object.nodes)[0];
-    hovered = hit ? "NODE " + String(hit.instanceId + 1).padStart(2, "0") : "";
-    dirty = true;
-  });
-  canvas.addEventListener("pointerleave", () => {
-    hovered = "";
-    dirty = true;
-  });
   const togglePause = () => {
     paused = !paused;
     updatePause();
@@ -450,5 +383,5 @@ function start() {
 try {
   start();
 } catch {
-  status.textContent = "WebGL unavailable. Showing a static image.";
+  status.textContent = "WebGL unavailable.";
 }

@@ -96,6 +96,24 @@ describe("static publishing contract", () => {
     }
   });
 
+  it("uses a static decorative graph everywhere and the large home brand instead of Writing", () => {
+    const home = documentFor("index.html");
+    expect(home.querySelector("h1").textContent).toBe("devth_");
+    expect(home.querySelector("#writing h1")).toBeNull();
+    for (const path of [
+      "index.html",
+      "about/index.html",
+      "cosmos/index.html",
+      "beautiful-constraint/index.html",
+      "404.html",
+    ]) {
+      const graph = documentFor(path).querySelector(".page-graph");
+      expect(graph.getAttribute("aria-hidden")).toBe("true");
+      expect(graph.querySelectorAll(".graph-node")).toHaveLength(44);
+      expect(graph.querySelectorAll("line").length).toBeGreaterThan(44);
+    }
+  });
+
   it("indexes original titles and excerpts for lazy global search", () => {
     const index = JSON.parse(read("search.json"));
     expect(index).toHaveLength(22);
@@ -197,7 +215,7 @@ describe("static publishing contract", () => {
     const home = documentFor("index.html");
     const lab = documentFor("cosmos/index.html");
     expect(lab.querySelector("canvas")).not.toBeNull();
-    expect(lab.querySelector(".cosmos-fallback title").textContent).toContain("ribbon");
+    expect(lab.querySelector(".cosmos-fallback")).toBeNull();
     expect(lab.querySelector("meta[name=robots]").content).toContain("noindex");
     expect(read("sitemap.xml")).not.toContain("/cosmos");
     expect(home.querySelectorAll("script[src]")).toHaveLength(1);

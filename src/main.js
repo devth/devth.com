@@ -1,3 +1,5 @@
+import "./background.js";
+
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
 const sigil = document.createElementNS(namespace, "svg");

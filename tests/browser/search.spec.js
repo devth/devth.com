@@ -72,5 +72,5 @@ test("unavailable search leaves normal navigation usable", async ({ page }) => {
   await expect(dialog.getByRole("status")).toHaveText("Search unavailable.");
   await dialog.getByRole("link", { name: "home", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
-  await expect(page.getByRole("heading", { name: "Writing" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "devth", exact: true })).toBeVisible();
 });

@@ -75,7 +75,7 @@ test("content and navigation work without JavaScript", async ({ browser, baseURL
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(baseURL + "/");
-  await expect(page.getByRole("heading", { name: "Writing" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "devth", exact: true })).toBeVisible();
   await expect(page.getByRole("searchbox")).toBeHidden();
   await expect
     .poll(() =>
