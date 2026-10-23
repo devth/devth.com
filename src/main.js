@@ -1,3 +1,4 @@
+document.documentElement.style.setProperty("--pane-spin", Math.random() < 0.5 ? "-1" : "1");
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
 const sigil = document.createElementNS(namespace, "svg");

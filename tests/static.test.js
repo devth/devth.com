@@ -118,6 +118,18 @@ describe("static publishing contract", () => {
     );
   });
 
+  it("deploys only the preview hostname and preserves the counter account", () => {
+    const config = (path) => JSON.parse(readFileSync(path, "utf8").replace(/,(\s*[}\]])/g, "$1"));
+    const site = config("wrangler.jsonc");
+    expect(site.account_id).toBe("ab80ed3a83c85462eff2a15e7b38a884");
+    expect(site.routes).toEqual([{ pattern: "preview.devth.com", custom_domain: true }]);
+    expect(site.workers_dev).toBe(false);
+    expect(site.preview_urls).toBe(false);
+    const counter = config("wrangler.counter.jsonc");
+    expect(counter.account_id).toBe("f1ca5a657f85b1dfa8e4ce92a64aa3db");
+    expect(counter.name).toBe("devth-hit-counter-preview");
+  });
+
   it("generates a feed, sitemap, and a real 404 instead of an SPA fallback", () => {
     const feed = read("feed.xml");
     expect(feed.match(/<item>/g) || []).toHaveLength(17);

@@ -53,9 +53,11 @@ Name it `posts/YYYY-MM-DD-a-good-slug.md` (or `.mdx`), then build. The index, fe
 
 ## Cloudflare preview
 
-Preview: <https://devth-com-preview.devth.workers.dev>
+Preview: <https://preview.devth.com>
 
-`wrangler.jsonc` deliberately names a separate `devth-com-preview` deployment in the **devth** Cloudflare account. It has **no custom domains or production routes**. Deploying it cannot move `devth.com` away from the existing Vercel site.
+`wrangler.jsonc` names a separate `devth-com-preview` deployment in the **Trevor Hartman** Cloudflare account, which owns the `devth.com` zone. Its only custom domain is **`preview.devth.com`**; it has no production routes, `workers.dev` hostname, or version-preview URLs. Deploying it cannot move `devth.com` away from the existing Vercel site.
+
+The counter Worker remains in the original **devth** account (`wrangler.counter.jsonc`), preserving its Durable Object namespace and existing counts. Both configs pin their account IDs; the deploying login needs access to both accounts when running `npm run deploy`. The original `devth-com-preview.devth.workers.dev` deployment is left intact as a fallback.
 
 ```sh
 npx wrangler login
@@ -70,11 +72,17 @@ After the preview is approved, production promotion requires explicitly attachin
 
 ### Cosmos
 
-Open [/cosmos](https://devth-com-preview.devth.workers.dev/cosmos). Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or generate another seeded universe. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
+Open [/cosmos](https://preview.devth.com/cosmos). Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or generate another seeded universe. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
 
 Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs, and a still SVG appears without JavaScript or WebGL. Only this page downloads the 3D renderer; ordinary pages load about 1.6 KB gzipped of JavaScript.
 
 Link hovers draw a short, randomized node/edge sigil beside the link without moving or obscuring its text. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
+
+### Falling page transitions
+
+Internal same-origin navigation uses native cross-document View Transitions: the old page lifts into a thick-edged pane, tilts, and tumbles down through a wire-grid void while the next page swings forward from behind it. The direction varies between page loads. There is no client-side router, intercepted link navigation, or artificial loading delay; the effect takes under a second after the next document is ready.
+
+The CSS transition also works without JavaScript (with a fixed direction). Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation; fragment links, downloads, external links, modified clicks, and browser history retain native behavior.
 
 ### Hit counters
 
