@@ -110,7 +110,7 @@ function layout({
     </header>
     <main id="main" tabindex="-1">${body}</main>
     <footer class="site-footer">
-      <p>© ${new Date().getFullYear()} Trevor C. Hartman<br><a href="https://en.wikipedia.org/wiki/Soli_Deo_gloria">Soli Deo Gloria</a></p>
+      <p>© ${new Date().getFullYear()} Trevor C. Hartman<br><a href="https://grokipedia.com/page/Soli_Deo_gloria">Soli Deo Gloria</a></p>
       <span class="hit-counter" title="Page loads, not unique visitors. No cookies."><span>HITS</span><img src="${escape(counter.href)}" width="126" height="24" alt="Page hit counter" referrerpolicy="no-referrer"></span>
       <div><a href="/cosmos">Cosmos ◇</a><a href="/feed.xml">RSS ↗</a><a href="https://github.com/devth/devth.com">view source ↗</a><a href="#top" aria-label="Back to top">↑ Top</a></div>
     </footer>
@@ -171,7 +171,7 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
   const rendered = article.innerHTML;
   const toc =
     headings.length > 1
-      ? `<details class="article-toc" data-toc open><summary>on this page</summary><nav aria-label="on this page"><svg aria-hidden="true" width="24"><path class="toc-track"/><path class="toc-progress" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><ol>${headings.map(({ id, title, depth }) => `<li><a href="#${escape(id)}" data-depth="${depth}" style="--toc-depth:${depth}">${escape(title)}</a></li>`).join("")}</ol></nav></details>`
+      ? `<div class="article-toc" data-toc><nav aria-label="on this page"><svg aria-hidden="true" width="24"><path class="toc-track"/><path class="toc-progress" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><ol>${headings.map(({ id, title, depth }) => `<li><a href="#${escape(id)}" data-depth="${depth}" style="--toc-depth:${depth}">${escape(title)}</a></li>`).join("")}</ol></nav></div>`
       : "";
   return `<header class="article-header">
     <a class="back-link" href="/">← all writing</a>
@@ -280,9 +280,16 @@ export async function generateSite() {
     Object.entries(assets).map(([name, content]) => writeFile(resolve(output, name), content)),
   );
   await Promise.all(
-    ["style.css", "main.js", "background.js", "search.js", "toc.js", "cosmos.css", "cosmos.js"].map(
-      (name) => copyFile(resolve(root, "src", name), resolve(output, name)),
-    ),
+    [
+      "style.css",
+      "main.js",
+      "background.js",
+      "graph-geometry.js",
+      "search.js",
+      "toc.js",
+      "cosmos.css",
+      "cosmos.js",
+    ].map((name) => copyFile(resolve(root, "src", name), resolve(output, name))),
   );
   return { input: pages.map((page) => resolve(output, page.path)), assets };
 }

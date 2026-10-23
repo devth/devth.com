@@ -5,6 +5,7 @@ test("contents rail follows headings and fills with scroll", async ({ page }, te
   await page.goto("/beautiful-constraint");
   const toc = page.getByRole("navigation", { name: "on this page", exact: true });
   await expect(toc).toBeVisible();
+  await expect(page.getByText("on this page", { exact: true })).toHaveCount(0);
   await expect(toc.locator(".toc-track")).toHaveAttribute("d", /L/);
   const editor = toc.getByRole("link", { name: "$EDITOR", exact: true });
   await editor.click();
@@ -18,6 +19,31 @@ test("contents rail follows headings and fills with scroll", async ({ page }, te
     "aria-current",
     "location",
   );
+});
+
+test("flat contents show the active rail before the first section", async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce", colorScheme: "dark" });
+  await page.goto("/thrush-cond-is-not-a-monad");
+  const toc = page.getByRole("navigation", { name: "on this page", exact: true });
+  await expect(toc.locator(".toc-track")).toHaveAttribute("d", /L/);
+  await expect
+    .poll(() =>
+      toc
+        .locator(".toc-progress")
+        .evaluate((node) => Number.parseFloat(getComputedStyle(node).strokeDashoffset)),
+    )
+    .toBeLessThan(0.95);
+  await expect(toc.getByRole("link", { name: "Functor", exact: true })).toHaveAttribute(
+    "aria-current",
+    "location",
+  );
+  await expect(
+    page.getByRole("link", { name: "common algebraic structures", exact: true }),
+  ).toHaveAttribute(
+    "href",
+    "https://grokipedia.com/page/Outline_of_algebraic_structures#overview-and-study-of-algebraic-structures",
+  );
+  await page.screenshot({ path: testInfo.outputPath("flat-contents-rail.png") });
 });
 
 test("contents links work without JavaScript", async ({ browser, baseURL }) => {

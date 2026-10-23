@@ -914,11 +914,6 @@ html:has(.quick-nav[open]) {
 .standalone-reading .article-toc {
   grid-column: 2;
 }
-.article-toc summary {
-  color: var(--muted);
-  cursor: pointer;
-  margin-bottom: 12px;
-}
 .article-toc nav {
   position: relative;
   max-height: calc(100dvh - 120px);

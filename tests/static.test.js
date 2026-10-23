@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { project, glyphPath, shapeCount } from "../src/graph-geometry.js";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { describe, it, expect } from "vite-plus/test";
@@ -111,6 +112,53 @@ describe("static publishing contract", () => {
       expect(graph.getAttribute("aria-hidden")).toBe("true");
       expect(graph.querySelectorAll(".graph-node")).toHaveLength(44);
       expect(graph.querySelectorAll("line").length).toBeGreaterThan(44);
+    }
+  });
+
+  it("projects real node depth and rotating heterogeneous wireframe solids", () => {
+    expect(project({ x: 100, y: 0, z: 400 }).scale).toBeGreaterThan(
+      project({ x: 100, y: 0, z: -400 }).scale,
+    );
+    expect(project({ x: 100, y: 0, z: 400 }, 0.1, 0.2).x).not.toBe(
+      project({ x: 100, y: 0, z: 400 }).x,
+    );
+    expect(shapeCount).toBe(4);
+    expect(
+      Array.from(
+        { length: shapeCount },
+        (_, shape) => glyphPath(0, 0, shape).split("M").length - 1,
+      ),
+    ).toEqual([30, 30, 24, 36]);
+    for (let shape = 0; shape < shapeCount; shape++)
+      expect(glyphPath(0.1, 0.2, shape)).not.toBe(glyphPath(0, 0, shape));
+    const graph = documentFor("index.html").querySelector(".page-graph");
+    expect(
+      new Set([...graph.querySelectorAll("use")].map((node) => node.getAttribute("href"))).size,
+    ).toBe(4);
+  });
+
+  it("uses verified Grokipedia references throughout published pages", () => {
+    const paths = [
+      "index.html",
+      "about/index.html",
+      "overture/index.html",
+      "glossary/index.html",
+      "cosmos/index.html",
+      ...Object.keys(originalCopy.posts).map((slug) => slug + "/index.html"),
+    ];
+    const html = paths.map(read).join("\n");
+    expect(html).not.toContain("wikipedia.org/");
+    for (const article of [
+      "Isomorphism",
+      "parametricity",
+      "Extensionality",
+      "Soli_Deo_gloria",
+      "Ad_hoc_polymorphism",
+      "List_of_Java_bytecode_instructions",
+      "Function_composition#properties",
+      "Outline_of_algebraic_structures#overview-and-study-of-algebraic-structures",
+    ]) {
+      expect(html).toContain("https://grokipedia.com/page/" + article);
     }
   });
 

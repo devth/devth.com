@@ -9,6 +9,7 @@ const svg = nav.querySelector("svg");
 const track = nav.querySelector(".toc-track");
 const progress = nav.querySelector(".toc-progress");
 let distances = [];
+let ends = [];
 let length = 1;
 let queued = false;
 
@@ -18,12 +19,13 @@ function measure() {
     const rect = link.getBoundingClientRect();
     return {
       x: 4 + Number(link.dataset.depth) * 8,
+      halfHeight: rect.height / 2,
       y: rect.top - bounds.top + nav.scrollTop + rect.height / 2,
     };
   });
-  let path = "M" + points[0].x + " " + points[0].y;
-  let distance = 0;
-  distances = [0];
+  let path = "M" + points[0].x + " " + (points[0].y - points[0].halfHeight + 1);
+  let distance = points[0].halfHeight - 1;
+  distances = [distance];
   for (let i = 1; i < points.length; i++) {
     const previous = points[i - 1];
     const next = points[i];
@@ -32,8 +34,10 @@ function measure() {
     distance += next.y - bend - previous.y + Math.hypot(next.x - previous.x, bend);
     distances.push(distance);
   }
-  path += " L" + points.at(-1).x + " " + (points.at(-1).y + 10);
-  length = distance + 10;
+  const tail = points.at(-1).halfHeight - 1;
+  path += " L" + points.at(-1).x + " " + (points.at(-1).y + tail);
+  length = distance + tail;
+  ends = distances.map((distance, index) => distance + points[index].halfHeight - 1);
   track.setAttribute("d", path);
   progress.setAttribute("d", path);
   svg.setAttribute("height", String(nav.querySelector("ol").scrollHeight));
@@ -53,8 +57,10 @@ function update() {
     Math.min(1, (marker - tops[active]) / Math.max(1, end - tops[active])),
   );
   let fraction =
-    (distances[active] + section * ((distances[active + 1] ?? length) - distances[active])) /
-    length;
+    Math.max(
+      ends[active],
+      distances[active] + section * ((distances[active + 1] ?? length) - distances[active]),
+    ) / length;
   if (bottom <= innerHeight + 2) {
     active = links.length - 1;
     fraction = 1;
@@ -77,9 +83,6 @@ window.addEventListener(
   },
   { passive: true },
 );
-container.addEventListener("toggle", () => {
-  if (container.open) measure();
-});
 const resize = new ResizeObserver(measure);
 resize.observe(nav);
 resize.observe(article);

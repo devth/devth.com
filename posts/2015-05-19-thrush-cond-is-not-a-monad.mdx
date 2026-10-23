@@ -10,7 +10,7 @@ Clojure has a useful macro called
 threads an initial value through a series of predicate/function pairs only
 applying each function if its predicate returns true. In this post we're going
 to look at a Scala representation, and whether it fits the shape and laws of any
-[common algebraic structures](https://en.wikipedia.org/wiki/Outline_of_algebraic_structures#Types_of_algebraic_structures).
+[common algebraic structures](https://grokipedia.com/page/Outline_of_algebraic_structures#overview-and-study-of-algebraic-structures).
 We'll look at Functor, Monad, Semigroup, and Monoid.
 
 **TL;DR** — [view the full code listing](https://gist.github.com/devth/308da859e5b584340f93).
@@ -177,7 +177,7 @@ h(f)
 ```
 
 `guard` is associative when composed with itself because
-[function composition is associative](https://en.wikipedia.org/wiki/Function_composition#Properties).
+[function composition is associative](https://grokipedia.com/page/Function_composition#properties).
 Because of this associative binary operation we can provide evidence that
 `ThrushCond`'s
 `Semigroup` representation:

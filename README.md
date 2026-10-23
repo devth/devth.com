@@ -31,7 +31,7 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 - `non-posts/glossary.mdx` — the glossary.
 - `drafts/` and other `non-posts/` files — never published.
 - `src/style.css` — design, responsive layout, system light/dark modes, print styles.
-- `scripts/background.js`, `src/background.js` — pre-rendered decorative node/edge background on every page. Tiny randomized, bounded node shifts and connected edges update only on scroll; no idle animation loop, timers, or 3D dependency. Reduced motion leaves it static.
+- `scripts/background.js`, `src/background.js` — pre-rendered decorative node/edge background on every page. Real-depth perspective, scroll-driven yaw/pitch rotation, and randomized bounded node shifts update only on scroll. Four heterogeneous wireframes (icosahedra, dodecahedra, cuboctahedra, and stellated octahedra) vary in size and orientation; no idle animation loop, timers, or 3D dependency. Reduced motion leaves it static.
 - `src/main.js` — archive/category filtering, quick-navigation entry point, and randomized geometric link sigils; `/` focuses archive filtering, Escape clears it.
 - `src/search.js` — lazily loaded Cmd+K/Ctrl+K dialog; searches a generated static index using original titles, excerpts and categories.
 - `src/toc.js` — sticky heading-derived contents with a stepped SVG scroll-progress rail; native fragment links work without JavaScript.
@@ -40,6 +40,8 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 - `scripts/site.js` — Markdown renderer, layouts, archive, RSS, sitemap, and legacy redirects.
 
 Preserve the author’s exact voice. Do not invent taglines, biographies, summaries, asides or other editorial copy. Keep existing prose, titles and excerpts verbatim; new interface controls should use neutral functional labels. New editorial text requires the author’s wording or explicit approval.
+
+At the author’s request, Wikipedia URL destinations were replaced with verified Grokipedia counterparts, including the lowercase `/page/parametricity` and `/page/List_of_Java_bytecode_instructions`. Existing link labels, quotations and prose remain unchanged. Grokipedia paths are case-sensitive; verify actual pages and fragment IDs rather than guessing from Wikipedia slugs.
 
 The `.mdx` extension is retained for existing content, but content is now Markdown with trusted inline HTML, **not executable MDX/React**. Code is highlighted at build time using Shiki’s high-contrast themes. Heading IDs use GitHub slug rules to retain existing anchor URLs. Use fenced code blocks and ordinary HTML images with descriptive `alt` text.
 
@@ -90,7 +92,7 @@ Header/footer navigation and category links use lowercase labels; authored title
 
 Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows select a result, Enter follows its ordinary anchor, and Escape closes and restores focus. Search failure leaves a home link and normal navigation available. Browsers without dialog support retain the existing navigation.
 
-Articles with multiple headings get a native, collapsible contents section. Its desktop sidebar sticks beside the prose; on narrow screens it becomes a compact section above the article. A stepped SVG line follows heading nesting and fills with scroll progress. Reduced motion disables its interpolation, not its progress indication. Existing heading IDs remain unchanged, including `$EDITOR` → `#editor`; trusted inline-HTML headings receive unique IDs too.
+Articles with multiple headings get a contents rail without a visible title. Its navigation retains an accessible name. The active heading segment stays visible even before the first section enters the reading marker, including flat heading lists. Its desktop sidebar sticks beside the prose; on narrow screens it becomes a compact section above the article. A stepped SVG line follows heading nesting and fills with scroll progress; the current heading’s whole segment remains highlighted. Reduced motion disables its interpolation, not its progress indication. Existing heading IDs remain unchanged, including `$EDITOR` → `#editor`; trusted inline-HTML headings receive unique IDs too.
 
 ### Page transitions
 

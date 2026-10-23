@@ -15,13 +15,26 @@ for (const reduced of [false, true]) {
       await expect(graph).toBeVisible();
       await expect(graph).toHaveCSS("pointer-events", "none");
       await page.clock.install();
+      await expect(graph.locator("defs path")).toHaveCount(4);
+      const glyphBefore = await graph.locator("defs").innerHTML();
       const before = await graph.innerHTML();
       await page.clock.runFor(1000);
       expect(await graph.innerHTML()).toBe(before);
       await page.evaluate(() => window.scrollTo(0, 400));
       await page.clock.runFor(64);
       if (reduced) expect(await graph.innerHTML()).toBe(before);
-      else await expect.poll(() => graph.innerHTML()).not.toBe(before);
+      else {
+        await expect.poll(() => graph.innerHTML()).not.toBe(before);
+        await expect.poll(() => graph.locator("defs").innerHTML()).not.toBe(glyphBefore);
+        const scales = await graph
+          .locator(".graph-node")
+          .evaluateAll((nodes) =>
+            nodes.map((node) =>
+              Number(node.getAttribute("transform").split("scale(")[1].split(")")[0]),
+            ),
+          );
+        expect(Math.max(...scales) - Math.min(...scales)).toBeGreaterThan(0.2);
+      }
       const settled = await graph.innerHTML();
       await page.clock.runFor(1000);
       expect(await graph.innerHTML()).toBe(settled);
