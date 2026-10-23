@@ -215,7 +215,7 @@ function start() {
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   function updatePause() {
-    pauseButton.textContent = paused ? "Resume drift" : "Pause drift";
+    pauseButton.textContent = paused ? "Resume" : "Pause";
     pauseButton.setAttribute("aria-pressed", String(paused));
   }
   function newUniverse(nextSeed) {
@@ -227,8 +227,7 @@ function start() {
     object = sculpture(seed);
     scene.add(object.group);
     stage.dataset.seed = String(seed);
-    status.textContent =
-      "Universe " + seed.toString(16).padStart(8, "0") + ". No two nothings alike.";
+    status.textContent = "Seed: " + seed.toString(16).padStart(8, "0");
     dirty = true;
   }
   function frame(time) {
@@ -345,5 +344,5 @@ function start() {
 try {
   start();
 } catch {
-  status.textContent = "WebGL unavailable. A still universe is shown instead.";
+  status.textContent = "WebGL unavailable. Showing a static image.";
 }

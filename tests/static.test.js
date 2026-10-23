@@ -1,5 +1,6 @@
 import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { describe, it, expect } from "vite-plus/test";
 import { parseHTML } from "linkedom";
 import matter from "gray-matter";
@@ -7,6 +8,8 @@ import matter from "gray-matter";
 const files = readdirSync("posts").filter((file) => /\.mdx?$/.test(file));
 const read = (path) => readFileSync(join("dist", path), "utf8");
 const documentFor = (path) => parseHTML(read(path)).document;
+const originalCopy = JSON.parse(readFileSync("tests/fixtures/original-copy.json", "utf8"));
+const normalizeText = (text) => text.replace(/\s+/g, " ").trim();
 
 describe("static publishing contract", () => {
   it("publishes the complete writing archive, newest first", () => {
@@ -31,6 +34,55 @@ describe("static publishing contract", () => {
       );
     });
   }
+
+  it("retains the original authored words, titles and excerpts without editorial additions", () => {
+    for (const [slug, original] of Object.entries({
+      ...originalCopy.posts,
+      ...originalCopy.pages,
+    })) {
+      const doc = documentFor(slug + "/index.html");
+      expect(doc.querySelector("h1").textContent, slug).toBe(original.title);
+      const body = normalizeText(doc.querySelector("article").textContent);
+      expect(createHash("sha256").update(body).digest("hex"), slug).toBe(original.bodySha256);
+      if (original.excerpt) {
+        expect(doc.querySelector(".article-deck").textContent, slug).toBe(original.excerpt);
+        expect(doc.querySelector("meta[name=description]").content, slug).toBe(original.excerpt);
+      }
+    }
+    for (const link of documentFor("index.html").querySelectorAll(".entry-link")) {
+      const original = originalCopy.posts[link.getAttribute("href").slice(1)];
+      expect(link.querySelector(".entry-title").textContent).toBe(original.title);
+      expect(link.querySelector(".entry-body p").textContent).toBe(original.excerpt);
+    }
+  });
+
+  it("keeps the homepage an archive, uses original metadata and removes invented asides", () => {
+    const home = documentFor("index.html");
+    expect(home.querySelector("main").children).toHaveLength(1);
+    expect(home.querySelector("main > section").id).toBe("writing");
+    expect(home.querySelector("meta[name=description]").content).toBe(originalCopy.description);
+    expect(read("feed.xml")).toContain(
+      "<description>" + originalCopy.description + "</description>",
+    );
+    expect(home.querySelector(".site-footer").textContent).toContain("Trevor C. Hartman");
+    expect(home.querySelector(".site-footer a[href*=Soli_Deo_gloria]").textContent).toBe(
+      "Soli Deo Gloria",
+    );
+    for (const slug of ["about", "overture", "glossary"]) {
+      const doc = documentFor(slug + "/index.html");
+      expect(doc.querySelector(".reading-aside")).toBeNull();
+      expect(doc.querySelector(".article-kicker")).toBeNull();
+      if (slug !== "glossary") {
+        expect(normalizeText(doc.querySelector("article p").textContent)).toContain(
+          doc.querySelector("meta[name=description]").content,
+        );
+      }
+    }
+    const cosmos = documentFor("cosmos/index.html");
+    expect(cosmos.querySelector("h1").textContent).toBe("Cosmos");
+    expect(cosmos.querySelector(".cosmos-heading").textContent.trim()).toBe("Cosmos");
+    expect(cosmos.querySelector(".cosmos-colophon").textContent.trim()).toBe("Home ↗");
+  });
 
   it("retains the standalone public pages but never publishes drafts", () => {
     for (const slug of ["about", "overture", "glossary"]) {
@@ -134,7 +186,7 @@ describe("static publishing contract", () => {
     const feed = read("feed.xml");
     expect(feed.match(/<item>/g) || []).toHaveLength(17);
     expect(read("sitemap.xml")).toContain("https://devth.com/glossary");
-    expect(documentFor("404.html").querySelector("h1").textContent).toBe("Nothing here.");
+    expect(documentFor("404.html").querySelector("h1").textContent).toBe("Page not found");
     expect(read("robots.txt")).toContain("Sitemap: https://devth.com/sitemap.xml");
   });
 });

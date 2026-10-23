@@ -1,6 +1,6 @@
 ---
 title: Overture
-excerpt: A search for better ways to build, think, and write. Recommended works and things worth returning to.
+excerpt: Programming, tools, and processes are stuck in the past, held in place by hordes of OO-wielding proletariats collectively chanting "good enough".
 ---
 
 <p>

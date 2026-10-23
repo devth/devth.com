@@ -27,6 +27,7 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 
 - `posts/YYYY-MM-DD-slug.mdx` — all 17 existing posts, including the 2016 Yetibot post missing from the old live index.
 - `content/about.md`, `content/overture.md` — standalone pages, migrated from JSX without changing the original prose.
+- `tests/fixtures/original-copy.json` — original titles, excerpts and prose-text hashes from pre-rebuild commit `3f2089d`. Regression tests ignore whitespace and markup changes, but preserve the authored words and punctuation. The homepage remains an archive, without added taglines or biography; page descriptions quote the original text.
 - `non-posts/glossary.mdx` — the glossary.
 - `drafts/` and other `non-posts/` files — never published.
 - `src/style.css` — design, responsive layout, system light/dark modes, print styles.
@@ -34,6 +35,8 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 - `src/cosmos.js`, `src/cosmos.css` — the isolated 3D sculpture experiment.
 - `counter/worker.js` — per-page hit counters, independent of static asset serving.
 - `scripts/site.js` — Markdown renderer, layouts, archive, RSS, sitemap, and legacy redirects.
+
+Preserve the author’s exact voice. Do not invent taglines, biographies, summaries, asides or other editorial copy. Keep existing prose, titles and excerpts verbatim; new interface controls should use neutral functional labels. New editorial text requires the author’s wording or explicit approval.
 
 The `.mdx` extension is retained for existing content, but content is now Markdown with trusted inline HTML, **not executable MDX/React**. Code is highlighted at build time using Shiki’s high-contrast themes. Heading IDs use GitHub slug rules to retain existing anchor URLs. Use fenced code blocks and ordinary HTML images with descriptive `alt` text.
 
@@ -72,7 +75,7 @@ After the preview is approved, production promotion requires explicitly attachin
 
 ### Cosmos
 
-Open [/cosmos](https://preview.devth.com/cosmos). Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or generate another seeded universe. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
+Open [/cosmos](https://preview.devth.com/cosmos). Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or randomize the sculpture. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
 
 Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs, and a still SVG appears without JavaScript or WebGL. Only this page downloads the 3D renderer; ordinary pages load about 1.6 KB gzipped of JavaScript.
 
@@ -80,7 +83,7 @@ Link hovers draw a short, randomized node/edge sigil beside the link without mov
 
 ### Falling page transitions
 
-Internal same-origin navigation uses native cross-document View Transitions: the old page lifts into a thick-edged pane, tilts, and tumbles down through a wire-grid void while the next page swings forward from behind it. The direction varies between page loads. There is no client-side router, intercepted link navigation, or artificial loading delay; the effect takes under a second after the next document is ready.
+Internal same-origin navigation uses native cross-document View Transitions: the old page lifts, wavers and rotates out of the viewport while the next page appears behind it. Each navigation—including restored history entries—gets a random direction across the full circle, sideways bend, 3D tilt, spin, pivot and duration. There is no client-side router, intercepted link navigation, or artificial loading delay; the effect takes under a second after the next document is ready.
 
 The CSS transition also works without JavaScript (with a fixed direction). Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation; fragment links, downloads, external links, modified clicks, and browser history retain native behavior.
 
@@ -92,4 +95,4 @@ These count counter-image requests, not unique people: reloads and bots can coun
 
 Set `COUNTER_ORIGIN` at build time to point at another instance. Local Playwright tests use port 4174; live tests can also set `COUNTER_ORIGIN` to override the deployed counter. The counter’s source page list is regenerated before Wrangler builds; `counter/.generated-pages.json` is ignored.
 
-The 2016 Yetibot article referenced an IRC screenshot absent from both Git history and the live site. Its broken image is replaced by an availability note. All other local images and article content are retained.
+The 2016 Yetibot article referenced an IRC screenshot absent from both Git history and the live site. The broken image is omitted without adding editorial text. All other local images and article content are retained.

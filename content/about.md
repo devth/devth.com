@@ -1,6 +1,6 @@
 ---
 title: About Trevor Hartman
-excerpt: Software engineer, open source builder, and maker of things. Based in Montana.
+excerpt: Full stack software engineer with over two decades experience growing web and mobile apps.
 ---
 
 <p>

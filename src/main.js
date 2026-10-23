@@ -1,4 +1,25 @@
-document.documentElement.style.setProperty("--pane-spin", Math.random() < 0.5 ? "-1" : "1");
+function randomizePageWind() {
+  const angle = Math.random() * Math.PI * 2;
+  const between = (min, max) => min + Math.random() * (max - min);
+  const signed = (min, max) => between(min, max) * (Math.random() < 0.5 ? -1 : 1);
+  const properties = {
+    "--wind-x": Math.cos(angle),
+    "--wind-y": Math.sin(angle),
+    "--wind-bend": signed(0.5, 1.5),
+    "--wind-pitch": signed(38, 76),
+    "--wind-yaw": signed(18, 55),
+    "--wind-spin": signed(25, 95),
+    "--wind-origin-x": between(20, 80) + "%",
+    "--wind-origin-y": between(15, 85) + "%",
+    "--wind-duration": between(660, 860) + "ms",
+  };
+  for (const [name, value] of Object.entries(properties)) {
+    document.documentElement.style.setProperty(name, value);
+  }
+}
+randomizePageWind();
+// pagereveal also runs on restored documents, so history navigation gets a new gust.
+window.addEventListener("pagereveal", randomizePageWind);
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
 const sigil = document.createElementNS(namespace, "svg");
@@ -86,7 +107,7 @@ if (search) {
     for (const group of groups) group.hidden = !group.querySelector(".entry:not([hidden])");
     const count = entries.filter((entry) => !entry.hidden).length;
     document.querySelector("[data-no-results]").hidden = count !== 0;
-    status.textContent = count + (count === 1 ? " note found." : " notes found.");
+    status.textContent = count + (count === 1 ? " post found." : " posts found.");
   }
   search.addEventListener("input", filter);
   window.addEventListener("pageshow", filter);

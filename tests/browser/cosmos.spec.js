@@ -10,7 +10,7 @@ test("sculpture supports keyboard, orbit, shuffle, recenter and pause", async ({
   const stage = page.locator("[data-cosmos-stage]");
   await expect(stage).toHaveAttribute("data-ready", "");
   await expect(stage).toHaveAttribute("data-seed", "123");
-  const pause = page.getByRole("button", { name: "Resume drift" });
+  const pause = page.getByRole("button", { name: "Resume", exact: true });
   await expect(pause).toHaveAttribute("aria-pressed", "true");
   const canvas = page.getByLabel(/Interactive 3D ribbon/);
   const readout = page.locator("[data-cosmos-readout]");
@@ -27,17 +27,17 @@ test("sculpture supports keyboard, orbit, shuffle, recenter and pause", async ({
   await expect(readout).not.toHaveText(beforeOrbit);
   await page.getByRole("button", { name: "Recenter" }).click();
   await expect(readout).toContainText("Y 0.60");
-  await page.getByRole("button", { name: "New universe" }).click();
+  await page.getByRole("button", { name: "Randomize" }).click();
   await expect(stage).not.toHaveAttribute("data-seed", "123");
   await expect(page).toHaveURL(/seed=\d+/);
-  await expect(page.getByRole("status")).toContainText("No two nothings alike.");
-  await page.getByRole("button", { name: "Resume drift" }).click();
-  await expect(page.getByRole("button", { name: "Pause drift" })).toHaveAttribute(
+  await expect(page.getByRole("status")).toHaveText(/^Seed: [0-9a-f]{8}$/);
+  await page.getByRole("button", { name: "Resume", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Pause", exact: true })).toHaveAttribute(
     "aria-pressed",
     "false",
   );
-  await page.getByRole("button", { name: "Pause drift" }).click();
-  await expect(page.getByRole("button", { name: "Resume drift" })).toHaveAttribute(
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Resume", exact: true })).toHaveAttribute(
     "aria-pressed",
     "true",
   );
@@ -49,11 +49,9 @@ test("cosmos remains a viewable page without JavaScript", async ({ browser, base
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(baseURL + "/cosmos");
-  await expect(page.getByRole("heading", { name: /A knot in/ })).toBeVisible();
-  await expect(
-    page.getByRole("img", { name: "A tangled ribbon drifting among stars" }),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pause drift" })).toBeHidden();
+  await expect(page.getByRole("heading", { name: "Cosmos", exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Static ribbon sculpture" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeHidden();
   await context.close();
 });
 
@@ -65,12 +63,8 @@ test("cosmos shows a still sculpture when WebGL is unavailable", async ({ page }
     };
   });
   await page.goto("/cosmos");
-  await expect(page.getByRole("status")).toHaveText(
-    "WebGL unavailable. A still universe is shown instead.",
-  );
-  await expect(
-    page.getByRole("img", { name: "A tangled ribbon drifting among stars" }),
-  ).toBeVisible();
+  await expect(page.getByRole("status")).toHaveText("WebGL unavailable. Showing a static image.");
+  await expect(page.getByRole("img", { name: "Static ribbon sculpture" })).toBeVisible();
 });
 
 test("link sigils randomize without moving text and respect reduced motion", async ({ page }) => {

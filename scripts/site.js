@@ -10,8 +10,7 @@ import { cosmosBody } from "./cosmos-page.js";
 const origin = "https://devth.com";
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, ".site");
-const description =
-  "Trevor Hartman on software, systems, and finding a better way. Independent writing from Montana.";
+const description = "The blog of Trevor Hartman";
 const escape = (value) =>
   String(value).replace(
     /[&<>"']/g,
@@ -107,9 +106,9 @@ function layout({
     </header>
     <main id="main" tabindex="-1">${body}</main>
     <footer class="site-footer">
-      <p>Trevor Hartman <span class="muted">/</span> Montana, USA</p>
+      <p>© ${new Date().getFullYear()} Trevor C. Hartman<br><a href="https://en.wikipedia.org/wiki/Soli_Deo_gloria">Soli Deo Gloria</a></p>
       <span class="hit-counter" title="Page loads, not unique visitors. No cookies."><span>HITS</span><img src="${escape(counter.href)}" width="126" height="24" alt="Page hit counter" referrerpolicy="no-referrer"></span>
-      <div><a href="/cosmos">Cosmos ◇</a><a href="/feed.xml">RSS ↗</a><a href="https://github.com/devth/devth.com">Source ↗</a><a href="#top" aria-label="Back to top">↑ Top</a></div>
+      <div><a href="/cosmos">Cosmos ◇</a><a href="/feed.xml">RSS ↗</a><a href="https://github.com/devth/devth.com">view source ↗</a><a href="#top" aria-label="Back to top">↑ Top</a></div>
     </footer>
   </div>
 </body>
@@ -118,32 +117,23 @@ function layout({
 
 function home(posts) {
   const years = [...new Set(posts.map((post) => post.date.slice(0, 4)))];
-  return `<section class="intro" aria-labelledby="intro-title">
-    <div class="intro-label"><span class="status-mark" aria-hidden="true"></span> INDEPENDENT NOTES ON SOFTWARE & SYSTEMS</div>
-    <div class="intro-grid">
-      <h1 id="intro-title">Build things.<br>Question things.</h1>
-      <div class="intro-aside"><p>I’m <a href="/about">Trevor Hartman</a>.<br>Engineer, open source builder,<br>perpetual beginner.</p><p class="muted">Looking for a better way<br>to make things work.</p></div>
-    </div>
-    <div class="hero-wordmark" aria-hidden="true">devth<span>↗</span></div>
-    <div class="intro-bottom"><span>SOFTWARE / SYSTEMS / THE HUMAN PART</span><a href="#writing">READ THE NOTES <span aria-hidden="true">↓</span></a></div>
-  </section>
-  <section id="writing" class="writing" aria-labelledby="writing-title">
-    <div class="section-heading"><h2 id="writing-title">Writing<span class="count">[${String(posts.length).padStart(2, "0")}]</span></h2><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
+  return `<section id="writing" class="writing" aria-labelledby="writing-title">
+    <div class="section-heading"><h1 id="writing-title">Writing<span class="count">[${String(posts.length).padStart(2, "0")}]</span></h1><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
     <p class="sr-only" role="status" data-search-status></p>
     <div class="archive">${years
       .map(
         (year) =>
-          `<section class="year-group" aria-labelledby="year-${year}"><h3 id="year-${year}" class="year">${year}</h3><ol class="entries">${posts
+          `<section class="year-group" aria-labelledby="year-${year}"><h2 id="year-${year}" class="year">${year}</h2><ol class="entries">${posts
             .filter((post) => post.date.startsWith(year))
             .map(
               (post) =>
-                `<li class="entry" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><a class="entry-link" href="/${post.slug}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${escape(post.categories[0] || "notes")}</span></div><div class="entry-body"><h4 class="entry-title">${escape(post.title)}</h4><p>${escape(post.excerpt)}</p></div><span class="entry-arrow" aria-hidden="true">↗</span></a></li>`,
+                `<li class="entry" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><a class="entry-link" href="/${post.slug}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${escape(post.categories[0] || "")}</span></div><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div><span class="entry-arrow" aria-hidden="true">↗</span></a></li>`,
             )
             .join("")}</ol></section>`,
       )
       .join("")}</div>
-    <p class="no-results" data-no-results hidden>No matching notes. Try a different word.</p>
-    <div class="archive-end"><span>END OF INDEX</span><a href="/feed.xml">Follow along via RSS ↗</a></div>
+    <p class="no-results" data-no-results hidden>No matching posts.</p>
+    <div class="archive-end"><a href="/feed.xml">RSS ↗</a></div>
   </section>`;
 }
 
@@ -151,12 +141,12 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
   const rendered = markdown.render(page.content);
   return `<header class="article-header">
     <a class="back-link" href="/">← ALL WRITING</a>
-    <div class="article-kicker">${isPost ? `<time datetime="${page.date}">${dateLabel(page.date)}</time><span>/</span><span>${page.minutes} MIN READ</span>` : "<span>FIELD NOTES / " + escape(page.slug.toUpperCase()) + "</span>"}</div>
+    ${isPost ? `<div class="article-kicker"><time datetime="${page.date}">${dateLabel(page.date)}</time><span>/</span><span>${page.minutes} MIN READ</span></div>` : ""}
     <h1>${escape(page.title)}</h1>
     ${isPost ? `<p class="article-deck">${escape(page.excerpt)}</p><p class="byline">BY <a href="/about">TREVOR HARTMAN</a></p>` : ""}
   </header>
-  <div class="reading-layout"><aside class="reading-aside"><span>${isPost ? "FILE UNDER" : "ON THIS SITE"}</span><p>${isPost ? page.categories.map(escape).join("<br>") || "notes" : "Software.<br>Curiosity.<br>A better way."}</p></aside><article class="prose">${rendered}</article></div>
-  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← OLDER NOTE</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>NEWER NOTE →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← Back to the writing</a></div>'}`;
+  <div class="reading-layout${isPost ? "" : " standalone-reading"}">${isPost ? `<aside class="reading-aside"><span>Categories</span><p>${page.categories.map(escape).join("<br>")}</p></aside>` : ""}<article class="prose">${rendered}</article></div>
+  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← Older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>Newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← Back to the writing</a></div>'}`;
 }
 
 export async function generateSite() {
@@ -204,7 +194,7 @@ export async function generateSite() {
   pages.push({
     path: "cosmos/index.html",
     html: layout({
-      title: "Cosmos / an experiment",
+      title: "Cosmos",
       slug: "cosmos",
       body: cosmosBody,
       noindex: true,
@@ -216,7 +206,7 @@ export async function generateSite() {
       title: "Page not found",
       slug: "404",
       noindex: true,
-      body: '<section class="not-found"><p class="eyebrow">404 / NOT FOUND</p><h1>Nothing here.</h1><p>That path doesn’t lead anywhere.<br>The writing is a better place to start.</p><a class="solid-link" href="/">← Back to the index</a></section>',
+      body: '<section class="not-found"><p class="eyebrow">404</p><h1>Page not found</h1><a class="solid-link" href="/">← Home</a></section>',
     }),
   });
   const redirects =

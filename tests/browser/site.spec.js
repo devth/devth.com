@@ -36,13 +36,13 @@ test("archive filtering and keyboard shortcuts", async ({ page }) => {
   const input = page.getByRole("searchbox", { name: "Filter writing" });
   await expect(input).toBeFocused();
   await input.fill("monorepo");
-  await expect(page.getByRole("status")).toHaveText("1 note found.");
+  await expect(page.getByRole("status")).toHaveText("1 post found.");
   await expect(page.getByRole("link", { name: /You might not want a Monorepo/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeHidden();
   await input.fill("this-does-not-exist");
-  await expect(page.getByText("No matching notes. Try a different word.")).toBeVisible();
+  await expect(page.getByText("No matching posts.")).toBeVisible();
   await input.press("Escape");
-  await expect(page.getByRole("status")).toHaveText("17 notes found.");
+  await expect(page.getByRole("status")).toHaveText("17 posts found.");
   await expect(input).toHaveValue("");
   await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeVisible();
 });
@@ -85,7 +85,7 @@ test("legacy routes redirect permanently and preserve fragments", async ({ page,
 test("unknown paths return a true 404 page", async ({ page }) => {
   const response = await page.goto("/there-is-no-such-page");
   expect(response.status()).toBe(404);
-  await expect(page.getByRole("heading", { name: "Nothing here." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
 });
 
 test("light and dark renderings", async ({ page }, testInfo) => {

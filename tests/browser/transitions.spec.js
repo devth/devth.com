@@ -39,7 +39,7 @@ async function observeTransitions(page, capture = false) {
   );
 }
 
-test("native navigation makes the old page a falling 3D pane", async ({ page }, testInfo) => {
+test("native navigation makes the old page a wind-blown 3D pane", async ({ page }, testInfo) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await observeTransitions(page, true);
   await page.goto("/");
@@ -70,6 +70,58 @@ test("native navigation makes the old page a falling 3D pane", async ({ page }, 
   await page.goForward();
   await expect(page).toHaveURL(/\/about$/);
   await expect(page.getByRole("heading", { name: "About Trevor Hartman" })).toBeVisible();
+});
+
+test("wind can carry the actual page into any quadrant", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.addInitScript(() => {
+    const angle = sessionStorage.getItem("test-wind-angle");
+    if (angle !== null) Math.random = () => Number(angle);
+  });
+  await observeTransitions(page, true);
+  await page.goto("/");
+  for (const [angle, destination, xSign, ySign] of [
+    [0.125, "About", 1, 1],
+    [0.375, "Overture", -1, 1],
+    [0.625, "About", -1, -1],
+    [0.875, "Overture", 1, -1],
+  ]) {
+    await page.evaluate((angle) => {
+      sessionStorage.setItem("test-wind-angle", String(angle));
+      sessionStorage.removeItem("transition-captured");
+    }, angle);
+    await page.getByRole("link", { name: destination, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp("/" + destination.toLowerCase() + "$"));
+    await expect(page.locator("html")).toHaveAttribute("data-transition", "ready");
+    const flight = await page.evaluate(() => {
+      const root = document.documentElement;
+      const animation = document.getAnimations().find((a) => a.animationName === "pane-breakaway");
+      const duration = animation.effect.getTiming().duration;
+      const positionAt = (progress) => {
+        animation.currentTime = duration * progress;
+        const matrix = new DOMMatrixReadOnly(
+          getComputedStyle(root, "::view-transition-old(root)").transform,
+        );
+        return { x: matrix.m41 / innerWidth, y: matrix.m42 / innerHeight };
+      };
+      return {
+        middle: positionAt(0.44),
+        later: positionAt(0.7),
+        end: positionAt(0.99),
+        x: Number(root.style.getPropertyValue("--wind-x")),
+        y: Number(root.style.getPropertyValue("--wind-y")),
+      };
+    });
+    expect(Math.sign(flight.end.x)).toBe(xSign);
+    expect(Math.sign(flight.end.y)).toBe(ySign);
+    expect(Math.abs(flight.end.x)).toBeGreaterThan(0.9);
+    expect(Math.abs(flight.end.y)).toBeGreaterThan(0.9);
+    // The perpendicular bend reverses, rather than following a straight exit vector.
+    const cross = (point) => point.x * flight.y - point.y * flight.x;
+    expect(cross(flight.middle) * cross(flight.later)).toBeLessThan(0);
+    await page.evaluate(() => document.getAnimations().forEach((a) => a.finish()));
+    await expect(page.locator("html")).toHaveAttribute("data-transition", "finished");
+  }
 });
 
 test("reduced motion disables page transitions rather than shortening them", async ({ page }) => {
