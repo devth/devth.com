@@ -36,7 +36,7 @@ jobs:
           start=$(date +%s%N)
           npm run build
           elapsed=$(( ($(date +%s%N) - start) / 1000000 ))
-          printf '### Static build\n\n**%s ms** end-to-end, including content rendering, code highlighting, and Vite+.\n\nDependency cache hit: `%s`\n' "$elapsed" '${{ steps.deps.outputs.cache-hit }}' >> "$GITHUB_STEP_SUMMARY"
+          printf '### Static build\n\n**%s ms** end-to-end, including content rendering, code highlighting, and Vite+.\n\nDependency cache hit: `%s`\n' "$elapsed" '${{ steps.deps.outputs.cache-hit }}' | tee -a "$GITHUB_STEP_SUMMARY"
       - run: npm test
 
   browser:
