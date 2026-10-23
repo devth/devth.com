@@ -5,7 +5,7 @@ export const cosmosBody = `
   </header>
   <div class="cosmos-stage" data-cosmos-stage>
     <canvas class="cosmos-canvas" aria-label="Interactive 3D ribbon knot and orbital node graph. Drag to rotate. Use the arrow keys to turn, plus and minus to zoom." tabindex="0"></canvas>
-    <svg class="cosmos-fallback" viewBox="0 0 800 600" role="img" aria-labelledby="fallback-title">
+    <svg class="cosmos-fallback" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" role="img" aria-labelledby="fallback-title">
       <title id="fallback-title">Static ribbon sculpture</title>
       <g fill="none" stroke="#d3cec1" stroke-width="0.7">
         <ellipse cx="400" cy="300" rx="235" ry="90" transform="rotate(-35 400 300)"/>

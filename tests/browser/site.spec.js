@@ -47,6 +47,20 @@ test("archive filtering and keyboard shortcuts", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeVisible();
 });
 
+test("category links open a filtered archive", async ({ page }) => {
+  await page.goto("/you-might-not-want-a-monorepo");
+  const category = page.getByRole("link", { name: "infrastructure", exact: true });
+  await expect(category).toBeVisible();
+  await category.click();
+  await expect(page).toHaveURL(/category=infrastructure#writing$/);
+  await expect(
+    page.getByRole("link", { name: /YAML was a bad idea for CI pipelines/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeHidden();
+  await page.getByRole("link", { name: "all posts", exact: true }).click();
+  await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeVisible();
+});
+
 test("index navigation opens the actual article", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: /Iteration and Play/ }).click();

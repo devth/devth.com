@@ -84,6 +84,48 @@ describe("static publishing contract", () => {
     expect(cosmos.querySelector(".cosmos-colophon").textContent.trim()).toBe("Home ↗");
   });
 
+  it("uses the approved tagline and lowercase navigation with real category links", () => {
+    const home = documentFor("index.html");
+    expect(home.querySelector(".brand-tagline").textContent).toBe("work in progress");
+    for (const link of home.querySelectorAll(".site-header nav a")) {
+      expect(link.textContent).toBe(link.textContent.toLowerCase());
+    }
+    for (const category of home.querySelectorAll(".category-link")) {
+      expect(new URL(category.href, "https://devth.com").searchParams.get("category")).toBeTruthy();
+      expect(category.closest(".entry-link")).toBeNull();
+    }
+  });
+
+  it("indexes original titles and excerpts for lazy global search", () => {
+    const index = JSON.parse(read("search.json"));
+    expect(index).toHaveLength(22);
+    for (const [slug, original] of Object.entries(originalCopy.posts)) {
+      expect(index.find((page) => page.path === "/" + slug)).toMatchObject({
+        title: original.title,
+        excerpt: original.excerpt,
+      });
+    }
+    expect(documentFor("index.html").querySelector("#quick-nav")).not.toBeNull();
+  });
+
+  it("derives contents links from the original heading fragments", () => {
+    for (const slug of [
+      "beautiful-constraint",
+      "compiled-queries-in-scala",
+      "glossary",
+      "overture",
+    ]) {
+      const doc = documentFor(slug + "/index.html");
+      const headings = [...doc.querySelectorAll("article h2, article h3, article h4")];
+      const links = [...doc.querySelectorAll(".article-toc a")];
+      expect(links).toHaveLength(headings.length);
+      links.forEach((link, index) => {
+        expect(link.getAttribute("href")).toBe("#" + headings[index].id);
+        expect(link.textContent).toBe(headings[index].textContent);
+      });
+    }
+  });
+
   it("retains the standalone public pages but never publishes drafts", () => {
     for (const slug of ["about", "overture", "glossary"]) {
       expect(

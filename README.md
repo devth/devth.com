@@ -1,6 +1,6 @@
 # devth.com
 
-Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive filtering and geometric link hovers; the isolated `/cosmos` experiment loads Three.js only on that page. A separate Cloudflare Worker with Durable Object storage serves the retro per-page hit-counter images.
+Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, and geometric link hovers; the isolated `/cosmos` experiment loads Three.js only on that page. A separate Cloudflare Worker with Durable Object storage serves the retro per-page hit-counter images.
 
 ## Develop
 
@@ -27,11 +27,13 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 
 - `posts/YYYY-MM-DD-slug.mdx` — all 17 existing posts, including the 2016 Yetibot post missing from the old live index.
 - `content/about.md`, `content/overture.md` — standalone pages, migrated from JSX without changing the original prose.
-- `tests/fixtures/original-copy.json` — original titles, excerpts and prose-text hashes from pre-rebuild commit `3f2089d`. Regression tests ignore whitespace and markup changes, but preserve the authored words and punctuation. The homepage remains an archive, without added taglines or biography; page descriptions quote the original text.
+- `tests/fixtures/original-copy.json` — original titles, excerpts and prose-text hashes from pre-rebuild commit `3f2089d`. Regression tests ignore whitespace and markup changes, but preserve the authored words and punctuation. The homepage remains an archive, without an invented biography; page descriptions quote the original text. The exact, author-approved tagline “work in progress” appears under the logo.
 - `non-posts/glossary.mdx` — the glossary.
 - `drafts/` and other `non-posts/` files — never published.
 - `src/style.css` — design, responsive layout, system light/dark modes, print styles.
-- `src/main.js` — index filtering and randomized geometric link sigils; `/` focuses search, Escape clears it.
+- `src/main.js` — archive/category filtering, quick-navigation entry point, and randomized geometric link sigils; `/` focuses archive filtering, Escape clears it.
+- `src/search.js` — lazily loaded Cmd+K/Ctrl+K dialog; searches a generated static index using original titles, excerpts and categories.
+- `src/toc.js` — sticky heading-derived contents with a stepped SVG scroll-progress rail; native fragment links work without JavaScript.
 - `src/cosmos.js`, `src/cosmos.css` — the isolated 3D sculpture experiment.
 - `counter/worker.js` — per-page hit counters, independent of static asset serving.
 - `scripts/site.js` — Markdown renderer, layouts, archive, RSS, sitemap, and legacy redirects.
@@ -67,7 +69,7 @@ npx wrangler login
 npm run deploy
 ```
 
-`npm run deploy` publishes the small counter Worker first, then Wrangler runs `npm run build` and uploads `dist/` directly. `npm run deploy:counter` updates only the counter service. Missing URLs use `404.html`; post URLs have no trailing slash. `_redirects` retains both forms of the old year-prefixed URLs. The preview sends `X-Robots-Tag: noindex` via `public/_headers`; canonical URLs, RSS links, and sitemap URLs continue to identify `https://devth.com`.
+`npm run deploy` publishes the small counter Worker first, then Wrangler runs `npm run build` and uploads `dist/` directly. `npm run deploy:counter` updates only the counter service. Use `npx wrangler deploy` for a site-only update that leaves the counter Worker untouched. Missing URLs use `404.html`; post URLs have no trailing slash. `_redirects` retains both forms of the old year-prefixed URLs. The preview sends `X-Robots-Tag: noindex` via `public/_headers`; canonical URLs, RSS links, and sitemap URLs continue to identify `https://devth.com`.
 
 After the preview is approved, production promotion requires explicitly attaching `devth.com` (and deciding the `www` redirect), removing the preview-only `X-Robots-Tag` header, and verifying the domain. **No production DNS, routes, email records, or Vercel settings have been changed.** Automatic Cloudflare deployments are intentionally not enabled during preview review; CI only validates.
 
@@ -75,17 +77,25 @@ After the preview is approved, production promotion requires explicitly attachin
 
 ### Cosmos
 
-Open [/cosmos](https://preview.devth.com/cosmos). Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or randomize the sculpture. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
+Open [/cosmos](https://preview.devth.com/cosmos). The scene fills the viewport behind overlaid navigation and controls: shader-deformed interlocking ribbons, additive wire meshes, instanced nodes, rotating cages, orbital loops and 2,600 stars. Drag to orbit; pinch to zoom, or focus the canvas and use arrow keys and +/−. Pause, recenter, or randomize the sculpture. The seed stays in the URL so a particular sculpture can be shared. The page is linked in the footer, not promoted into the main navigation or homepage. It is excluded from the sitemap and marked noindex.
 
-Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs, and a still SVG appears without JavaScript or WebGL. Only this page downloads the 3D renderer; ordinary pages load about 1.6 KB gzipped of JavaScript.
+Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs, and a still SVG appears without JavaScript or WebGL. Only this page downloads the 3D renderer. Other pages never request Three.js; search code and its static index load only when the dialog is first opened, and the contents tracker loads only on pages with a ToC.
 
 Link hovers draw a short, randomized node/edge sigil beside the link without moving or obscuring its text. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
 
-### Falling page transitions
+### Navigation and contents
 
-Internal same-origin navigation uses native cross-document View Transitions: the old page lifts, wavers and rotates out of the viewport while the next page appears behind it. Each navigation—including restored history entries—gets a random direction across the full circle, sideways bend, 3D tilt, spin, pivot and duration. There is no client-side router, intercepted link navigation, or artificial loading delay; the effect takes under a second after the next document is ready.
+Header/footer navigation and category links use lowercase labels; authored titles retain their original casing. Category labels link to `/?category=…#writing`, where the enhanced archive applies an exact category filter. With JavaScript disabled, these remain native links to the complete, readable archive.
 
-The CSS transition also works without JavaScript (with a fixed direction). Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation; fragment links, downloads, external links, modified clicks, and browser history retain native behavior.
+Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows select a result, Enter follows its ordinary anchor, and Escape closes and restores focus. Search failure leaves a home link and normal navigation available. Browsers without dialog support retain the existing navigation.
+
+Articles with multiple headings get a native, collapsible contents section. Its desktop sidebar sticks beside the prose; on narrow screens it becomes a compact section above the article. A stepped SVG line follows heading nesting and fills with scroll progress. Reduced motion disables its interpolation, not its progress indication. Existing heading IDs remain unchanged, including `$EDITOR` → `#editor`; trusted inline-HTML headings receive unique IDs too.
+
+### Page transitions
+
+Internal same-origin navigation uses native cross-document View Transitions: a 200 ms crossfade with a small depth shift. Only opacity and transforms animate. There is no wind simulation, tumbling, animated shadow, filter or grid background.
+
+The CSS enhancement needs no JavaScript. Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation. There is no client-side router, intercepted link navigation or artificial loading delay; fragment links, downloads, external links, modified clicks and browser history retain native behavior.
 
 ### Hit counters
 

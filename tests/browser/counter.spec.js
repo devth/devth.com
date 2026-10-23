@@ -46,6 +46,6 @@ test("counter failure does not break the writing or navigation", async ({ page }
   await page.route("**/counter.svg?*", (route) => route.abort());
   await page.goto("/iteration-and-play");
   await expect(page.getByRole("article")).toContainText("Engineers should be having fun.");
-  await page.getByRole("link", { name: "About", exact: true }).click();
+  await page.getByRole("link", { name: "about", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("About Trevor Hartman");
 });

@@ -5,6 +5,9 @@ test("sculpture supports keyboard, orbit, shuffle, recenter and pause", async ({
 }, testInfo) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/cosmos?seed=123");
   const stage = page.locator("[data-cosmos-stage]");
@@ -45,6 +48,28 @@ test("sculpture supports keyboard, orbit, shuffle, recenter and pause", async ({
   await page.screenshot({ path: testInfo.outputPath("cosmos.png"), fullPage: true });
 });
 
+test("cosmos fills the viewport without a frame and resizes with it", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/cosmos?seed=123");
+  const stage = page.locator("[data-cosmos-stage]");
+  await expect(stage).toHaveAttribute("data-ready", "");
+  await expect(stage).toHaveCSS("position", "fixed");
+  await expect(stage).toHaveCSS("border-top-width", "0px");
+  for (const viewport of [page.viewportSize(), { width: 844, height: 390 }]) {
+    await page.setViewportSize(viewport);
+    await expect
+      .poll(() => stage.boundingBox())
+      .toEqual({
+        x: 0,
+        y: 0,
+        width: viewport.width,
+        height: viewport.height,
+      });
+    await expect(page.getByRole("button", { name: "Randomize" })).toBeInViewport();
+    await expect(page.getByRole("link", { name: "devth home" })).toBeInViewport();
+  }
+});
+
 test("cosmos remains a viewable page without JavaScript", async ({ browser, baseURL }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
@@ -70,7 +95,7 @@ test("cosmos shows a still sculpture when WebGL is unavailable", async ({ page }
 test("link sigils randomize without moving text and respect reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
-  const about = page.getByRole("link", { name: "About", exact: true });
+  const about = page.getByRole("link", { name: "about", exact: true });
   const before = await about.boundingBox();
   await about.hover();
   const sigil = page.locator(".link-sigil");
@@ -78,7 +103,7 @@ test("link sigils randomize without moving text and respect reduced motion", asy
   expect(await about.boundingBox()).toEqual(before);
   await expect(sigil.locator("circle")).toHaveCount(5);
   const first = await sigil.locator("path").getAttribute("d");
-  await page.getByRole("link", { name: "Overture", exact: true }).hover();
+  await page.getByRole("link", { name: "overture", exact: true }).hover();
   await expect(sigil.locator("path")).not.toHaveAttribute("d", first);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await about.hover();

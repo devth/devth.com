@@ -6,6 +6,7 @@ import anchor from "markdown-it-anchor";
 import { slug as slugify } from "github-slugger";
 import { createHighlighter } from "shiki";
 import { cosmosBody } from "./cosmos-page.js";
+import { parseHTML } from "linkedom";
 
 const origin = "https://devth.com";
 const root = resolve(import.meta.dirname, "..");
@@ -68,10 +69,10 @@ function layout({
   );
   counter.searchParams.set("page", slug ? `/${slug}` : "/");
   const nav = [
-    ["/", "Writing"],
-    ["/about", "About"],
-    ["/overture", "Overture"],
-    ["/glossary", "Glossary"],
+    ["/", "writing"],
+    ["/about", "about"],
+    ["/overture", "overture"],
+    ["/glossary", "glossary"],
   ];
   return `<!doctype html>
 <html lang="en">
@@ -96,13 +97,14 @@ function layout({
   <script type="module" src="/main.js"></script>
   ${slug === "cosmos" ? '<link rel="stylesheet" href="/cosmos.css"><script type="module" src="/cosmos.js"></script>' : ""}
 </head>
-<body id="top">
+<body id="top"${slug === "cosmos" ? ' class="cosmos-page"' : ""}>
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="site-shell">
     <header class="site-header">
-      <a class="brand" href="/" aria-label="devth home">devth<span aria-hidden="true">_</span></a>
+      <a class="brand" href="/" aria-label="devth home">devth<span aria-hidden="true">_</span><span class="brand-tagline">work in progress</span></a>
       <nav aria-label="Main navigation">${nav.map(([href, label]) => `<a href="${href}"${href === `/${slug}` ? ' aria-current="page"' : ""}>${label}</a>`).join("")}</nav>
-      <a class="header-github" href="https://github.com/devth">GitHub <span aria-hidden="true">↗</span></a>
+      <button class="header-search" type="button" data-quick-nav-trigger aria-label="Search" aria-haspopup="dialog" aria-controls="quick-nav" aria-keyshortcuts="Meta+K Control+K" hidden><span aria-hidden="true">⌕</span><kbd aria-hidden="true">⌘K</kbd></button>
+      <a class="header-github" href="https://github.com/devth">github <span aria-hidden="true">↗</span></a>
     </header>
     <main id="main" tabindex="-1">${body}</main>
     <footer class="site-footer">
@@ -111,14 +113,26 @@ function layout({
       <div><a href="/cosmos">Cosmos ◇</a><a href="/feed.xml">RSS ↗</a><a href="https://github.com/devth/devth.com">view source ↗</a><a href="#top" aria-label="Back to top">↑ Top</a></div>
     </footer>
   </div>
+  <dialog id="quick-nav" class="quick-nav" aria-labelledby="quick-nav-title">
+    <h2 id="quick-nav-title" class="sr-only">Search</h2>
+    <div class="quick-nav-input"><label class="sr-only" for="quick-nav-query">Search pages</label><input id="quick-nav-query" type="search" role="combobox" placeholder="Search pages" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-expanded="true" aria-controls="quick-nav-results" aria-describedby="quick-nav-status" autofocus><button type="button" data-quick-nav-close aria-label="Close search">esc</button></div>
+    <p id="quick-nav-status" role="status">Loading…</p>
+    <ul id="quick-nav-results" role="listbox" aria-label="Pages"></ul>
+    <a class="quick-nav-fallback" href="/" hidden>home</a>
+  </dialog>
 </body>
 </html>`;
+}
+
+function categoryLink(category) {
+  return `<a class="category-link" href="/?category=${encodeURIComponent(category)}#writing">${escape(category)}</a>`;
 }
 
 function home(posts) {
   const years = [...new Set(posts.map((post) => post.date.slice(0, 4)))];
   return `<section id="writing" class="writing" aria-labelledby="writing-title">
     <div class="section-heading"><h1 id="writing-title">Writing<span class="count">[${String(posts.length).padStart(2, "0")}]</span></h1><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
+    <div class="category-filter" data-category-filter hidden><span data-category-label></span><a href="/">all posts</a></div>
     <p class="sr-only" role="status" data-search-status></p>
     <div class="archive">${years
       .map(
@@ -127,7 +141,7 @@ function home(posts) {
             .filter((post) => post.date.startsWith(year))
             .map(
               (post) =>
-                `<li class="entry" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><a class="entry-link" href="/${post.slug}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${escape(post.categories[0] || "")}</span></div><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div><span class="entry-arrow" aria-hidden="true">↗</span></a></li>`,
+                `<li class="entry" data-categories="${escape(JSON.stringify(post.categories))}" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${post.categories.map(categoryLink).join(" / ")}</span></div><a class="entry-link" href="/${post.slug}"><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div><span class="entry-arrow" aria-hidden="true">↗</span></a></li>`,
             )
             .join("")}</ol></section>`,
       )
@@ -138,15 +152,33 @@ function home(posts) {
 }
 
 function articleBody(page, { isPost = false, previous, next } = {}) {
-  const rendered = markdown.render(page.content);
+  const doc = parseHTML("<article>" + markdown.render(page.content) + "</article>").document;
+  const article = doc.querySelector("article");
+  const usedIds = new Set([...article.querySelectorAll("[id]")].map((node) => node.id));
+  const headings = [...article.querySelectorAll("h2, h3, h4")].map((heading) => {
+    if (!heading.id) {
+      const base = slugify(heading.textContent) || "section";
+      let id = base;
+      let suffix = 1;
+      while (usedIds.has(id)) id = base + "-" + suffix++;
+      heading.id = id;
+      usedIds.add(id);
+    }
+    return { id: heading.id, title: heading.textContent, depth: Number(heading.tagName[1]) - 2 };
+  });
+  const rendered = article.innerHTML;
+  const toc =
+    headings.length > 1
+      ? `<details class="article-toc" data-toc open><summary>on this page</summary><nav aria-label="on this page"><svg aria-hidden="true" width="24"><path class="toc-track"/><path class="toc-progress" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><ol>${headings.map(({ id, title, depth }) => `<li><a href="#${escape(id)}" data-depth="${depth}" style="--toc-depth:${depth}">${escape(title)}</a></li>`).join("")}</ol></nav></details>`
+      : "";
   return `<header class="article-header">
-    <a class="back-link" href="/">← ALL WRITING</a>
+    <a class="back-link" href="/">← all writing</a>
     ${isPost ? `<div class="article-kicker"><time datetime="${page.date}">${dateLabel(page.date)}</time><span>/</span><span>${page.minutes} MIN READ</span></div>` : ""}
     <h1>${escape(page.title)}</h1>
     ${isPost ? `<p class="article-deck">${escape(page.excerpt)}</p><p class="byline">BY <a href="/about">TREVOR HARTMAN</a></p>` : ""}
   </header>
-  <div class="reading-layout${isPost ? "" : " standalone-reading"}">${isPost ? `<aside class="reading-aside"><span>Categories</span><p>${page.categories.map(escape).join("<br>")}</p></aside>` : ""}<article class="prose">${rendered}</article></div>
-  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← Older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>Newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← Back to the writing</a></div>'}`;
+  <div class="reading-layout${isPost ? "" : " standalone-reading"}${toc ? " with-toc" : ""}">${isPost ? `<aside class="reading-aside"><span>categories</span><p>${page.categories.map(categoryLink).join("<br>")}</p></aside>` : ""}${toc}<article class="prose">${rendered}</article></div>
+  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← back to the writing</a></div>'}`;
 }
 
 export async function generateSite() {
@@ -171,6 +203,7 @@ export async function generateSite() {
   );
   posts.sort((a, b) => b.date.localeCompare(a.date));
   const pages = [{ path: "index.html", html: layout({ title: "Writing", body: home(posts) }) }];
+  const navigationPages = [{ title: "Writing", path: "/", excerpt: description }];
   for (const [index, post] of posts.entries()) {
     pages.push({
       path: `${post.slug}/index.html`,
@@ -189,6 +222,7 @@ export async function generateSite() {
     const file = slug === "glossary" ? "non-posts/glossary.mdx" : `content/${slug}.md`;
     const { data, content } = matter(await readFile(resolve(root, file), "utf8"));
     const page = { ...data, title: data.title || "Glossary", slug, content };
+    navigationPages.push({ title: page.title, path: `/${slug}`, excerpt: page.excerpt || "" });
     pages.push({ path: `${slug}/index.html`, html: layout({ ...page, body: articleBody(page) }) });
   }
   pages.push({
@@ -220,6 +254,16 @@ export async function generateSite() {
   const urls = ["/", "/about", "/overture", "/glossary", ...posts.map((post) => `/${post.slug}`)];
   const assets = {
     _redirects: redirects,
+    "search.json": JSON.stringify([
+      ...navigationPages,
+      ...posts.map(({ title, slug, excerpt, categories }) => ({
+        title,
+        path: `/${slug}`,
+        excerpt,
+        categories,
+      })),
+      { title: "Cosmos", path: "/cosmos", excerpt: "" },
+    ]),
     "feed.xml": rss,
     "sitemap.xml": `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((url) => `<url><loc>${origin}${url}</loc></url>`).join("")}</urlset>`,
     "robots.txt": `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`,
@@ -234,7 +278,7 @@ export async function generateSite() {
     Object.entries(assets).map(([name, content]) => writeFile(resolve(output, name), content)),
   );
   await Promise.all(
-    ["style.css", "main.js", "cosmos.css", "cosmos.js"].map((name) =>
+    ["style.css", "main.js", "search.js", "toc.js", "cosmos.css", "cosmos.js"].map((name) =>
       copyFile(resolve(root, "src", name), resolve(output, name)),
     ),
   );

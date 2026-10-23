@@ -1,25 +1,3 @@
-function randomizePageWind() {
-  const angle = Math.random() * Math.PI * 2;
-  const between = (min, max) => min + Math.random() * (max - min);
-  const signed = (min, max) => between(min, max) * (Math.random() < 0.5 ? -1 : 1);
-  const properties = {
-    "--wind-x": Math.cos(angle),
-    "--wind-y": Math.sin(angle),
-    "--wind-bend": signed(0.5, 1.5),
-    "--wind-pitch": signed(38, 76),
-    "--wind-yaw": signed(18, 55),
-    "--wind-spin": signed(25, 95),
-    "--wind-origin-x": between(20, 80) + "%",
-    "--wind-origin-y": between(15, 85) + "%",
-    "--wind-duration": between(660, 860) + "ms",
-  };
-  for (const [name, value] of Object.entries(properties)) {
-    document.documentElement.style.setProperty(name, value);
-  }
-}
-randomizePageWind();
-// pagereveal also runs on restored documents, so history navigation gets a new gust.
-window.addEventListener("pagereveal", randomizePageWind);
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
 const sigil = document.createElementNS(namespace, "svg");
@@ -94,21 +72,75 @@ document.addEventListener("focusout", clearSigil);
 document.addEventListener("scroll", clearSigil, { passive: true, capture: true });
 motion.addEventListener("change", clearSigil);
 
+const quickNav = document.querySelector("#quick-nav");
+if (quickNav?.showModal) {
+  const query = quickNav.querySelector("input");
+  function toggleQuickNav() {
+    clearSigil();
+    if (quickNav.open) {
+      quickNav.close();
+      return;
+    }
+    query.value = "";
+    quickNav.showModal();
+    import("./search.js")
+      .then(({ initializeSearch }) => {
+        initializeSearch(quickNav);
+        query.dispatchEvent(new Event("input"));
+      })
+      .catch(() => {
+        quickNav.querySelector("[role=status]").textContent = "Search unavailable.";
+        quickNav.querySelector(".quick-nav-fallback").hidden = false;
+      });
+  }
+  const trigger = document.querySelector("[data-quick-nav-trigger]");
+  trigger.hidden = false;
+  trigger.addEventListener("click", toggleQuickNav);
+  quickNav
+    .querySelector("[data-quick-nav-close]")
+    .addEventListener("click", () => quickNav.close());
+  quickNav.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      quickNav.close();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      toggleQuickNav();
+    }
+  });
+}
+
+if (document.querySelector("[data-toc]")) import("./toc.js");
+
 const search = document.querySelector("#search");
 if (search) {
   document.querySelector("[data-search]").hidden = false;
   const entries = [...document.querySelectorAll(".entry")];
   const groups = [...document.querySelectorAll(".year-group")];
   const status = document.querySelector("[data-search-status]");
+  const category = new URLSearchParams(location.search).get("category");
+  const categories = entries.map((entry) => JSON.parse(entry.dataset.categories));
+  if (category) {
+    document.querySelector("[data-category-filter]").hidden = false;
+    document.querySelector("[data-category-label]").textContent = category;
+  }
   function filter() {
     const words = search.value.toLowerCase().trim().split(/\s+/);
-    for (const entry of entries)
-      entry.hidden = !words.every((word) => entry.dataset.searchText.includes(word));
+    entries.forEach((entry, index) => {
+      const inCategory =
+        !category ||
+        categories[index].some((name) => name.toLowerCase() === category.toLowerCase());
+      entry.hidden = !inCategory || !words.every((word) => entry.dataset.searchText.includes(word));
+    });
     for (const group of groups) group.hidden = !group.querySelector(".entry:not([hidden])");
     const count = entries.filter((entry) => !entry.hidden).length;
     document.querySelector("[data-no-results]").hidden = count !== 0;
     status.textContent = count + (count === 1 ? " post found." : " posts found.");
   }
+  filter();
   search.addEventListener("input", filter);
   window.addEventListener("pageshow", filter);
   document.addEventListener("keydown", (event) => {
