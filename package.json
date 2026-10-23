@@ -1,43 +1,33 @@
 {
+  "name": "devth.com",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next",
-    "dev:watch": "next-remote-watch ./posts",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "@code-hike/mdx": "^0.9.0",
-    "@date-fns/utc": "^2.1.0",
-    "@emotion/cache": "^11.14.0",
-    "@emotion/react": "^11.14.0",
-    "@emotion/server": "^11.11.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^7.3.2",
-    "@mui/lab": "^7.0.0-beta.17",
-    "@mui/material": "^7.3.2",
-    "framer-motion": "^12.23.18",
-    "gray-matter": "^4.0.2",
-    "lodash": "^4.17.21",
-    "next": "^15.1.7",
-    "next-mdx-remote": "^5.0.0",
-    "next-remote-watch": "2.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "rehype-autolink-headings": "^7.1.0",
-    "rehype-slug": "^6.0.0"
+    "dev": "vp dev --host 127.0.0.1",
+    "build": "vp build",
+    "preview": "vp preview --host 127.0.0.1",
+    "test": "vp test run --config vite.test.config.js",
+    "check": "vp check",
+    "test:browser": "playwright test",
+    "deploy:counter": "wrangler deploy --config wrangler.counter.jsonc",
+    "deploy": "npm run deploy:counter && wrangler deploy"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.15",
-    "@types/node": "22.13.4",
-    "@types/react": "18.3.1",
-    "eslint": "^9.20.1",
-    "eslint-config-next": "^15.1.7",
-    "eslint-config-prettier": "^10.0.1",
-    "eslint-plugin-next": "^0.0.0",
-    "eslint-plugin-react": "^7.37.1",
-    "eslint-plugin-react-hooks": "^5.1.0",
-    "typescript": "5.7.3"
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.64.1",
+    "github-slugger": "^2.0.0",
+    "gray-matter": "^4.0.3",
+    "linkedom": "^0.18.12",
+    "markdown-it": "^15.0.3",
+    "markdown-it-anchor": "^10.0.0",
+    "shiki": "^4.5.0",
+    "three": "^0.186.1",
+    "vite-plus": "1.4.0",
+    "wrangler": "4.152.0"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "engines": {
+    "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
+  },
+  "packageManager": "npm@11.20.0"
 }

@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "devth-hit-counter-preview",
+  "account_id": "f1ca5a657f85b1dfa8e4ce92a64aa3db",
+  "main": "counter/worker.js",
+  "compatibility_date": "2026-10-23",
+  "build": { "command": "node scripts/counter-pages.js" },
+  "workers_dev": true,
+  "preview_urls": false,
+  "durable_objects": {
+    "bindings": [{ "name": "COUNTERS", "class_name": "PageCounter" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PageCounter"] }],
+}
