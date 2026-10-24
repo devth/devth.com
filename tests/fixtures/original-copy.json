@@ -1,0 +1,105 @@
+{
+  "sourceCommit": "3f2089db2f6a70c769c12ebb01d2be13f5f8abc1",
+  "description": "The blog of Trevor Hartman",
+  "posts": {
+    "open-source-culture": {
+      "title": "Corporate process should mirror open source",
+      "excerpt": "Within any big tech corporation are many disparate teams. Most of these teams know very little about the work, makeup or very existence of other teams, yet they depend on each other's output, directly or indirectly.",
+      "bodySha256": "303d503a6ff7f4ca6c53129473d6ae7acdb529ca964d36b4b38b1bd94767091a"
+    },
+    "on-learning": {
+      "title": "On learning",
+      "excerpt": "It wasn't until I was well into my twenties that I learned how to really learn",
+      "bodySha256": "52ff527079d44a4ce46fa6185aefc7fd8e2b4b51b213937807fa54b4ce3c0022"
+    },
+    "beautiful-constraint": {
+      "title": "Beautiful constraint",
+      "excerpt": "The freedom to do anything you wish is rarely a good thing, whether you're an experienced engineer or a 2-year-old child.",
+      "bodySha256": "2eec677434f876701576f4273e4284c09a82ea3764357871a828e39618ae9f33"
+    },
+    "monad-laws-in-scala": {
+      "title": "Monad laws in Scala",
+      "excerpt": "The three Monad laws may seem pretty abstract at first, but they're quite practical. Let's try to internalize the laws by running through two of Scala's most popular monads and making sure they adhere.",
+      "bodySha256": "5bccd2bd2b71a096ce96159c974d59a0eb064416bacc9d5bf13c27db4886777c"
+    },
+    "thrush-cond-is-not-a-monad": {
+      "title": "ThrushCond is not a Monad",
+      "excerpt": "Clojure has a useful macro called cond-> — let's explore a Scala equivalent",
+      "bodySha256": "62f4f15fbb1ec32b00b1503c1bf5dbcb3a72888bb5176b890f57c2599288da3b"
+    },
+    "a-simple-type-class": {
+      "title": "A Simple type class",
+      "excerpt": "Type classes provide a way of achieving ad hoc polymorphism",
+      "bodySha256": "c441c0239c429edc8fde77d00916704d6f95d8542a5cfa09a75542a729e60ca5"
+    },
+    "yetibot-on-docker": {
+      "title": "Yetibot on Docker in 𝓧 minutes or less",
+      "excerpt": "Yetibot is now on Docker!",
+      "bodySha256": "e70feff8ccc58f2d78b89811f97a55b27d48914b16e68a5ecb1d19d38ee414e3"
+    },
+    "compiled-queries-in-scala": {
+      "title": "Compiled queries in Scala",
+      "excerpt": "Compile a data structure representing a query into native code to speed up a query loop using ASM.",
+      "bodySha256": "4d1fe1cf90f8739f78b5fa37e852daefd0d3202bc6aa483a2a1fb624895b7f79"
+    },
+    "dec-deep-environmental-config": {
+      "title": "dec: Deep Environmental Config",
+      "excerpt": "dec is a tiny library that embraces constraints to afford users equivalency between multiple ways of setting environment variables according to their particular requirements.",
+      "bodySha256": "fc6d6fa6fbcc160ad71baadf5c03d78c5baecb008fa55e082b1d17ce4ac170cd"
+    },
+    "fast-app-deploy-guide-for-startup-weekend": {
+      "title": "Fast app generation and deployment",
+      "excerpt": "The aim of this guide is to demonstrate the fastest way to create a client-side web app and get it deployed.",
+      "bodySha256": "089fae8484a4e6f6e47818f1ab408c0dcd7e7858dde03439bca2d5b634bb5ea5"
+    },
+    "unison-talk-at-strangeloop": {
+      "title": "Notes on Unison",
+      "excerpt": "Notes on the Strange Loop talk 'Unison: a new distributed programming language' by Paul Chiusano. Warning: mind expanding future tech 🤯",
+      "bodySha256": "8db4e9b2ceb8c06f9190ec4ec64e3e1e4faf93f2ab98b673cd253c6f9ae46142"
+    },
+    "essentiality-of-open-source": {
+      "title": "Essentiality of Open Source",
+      "excerpt": "Open source is the foundation we build upon.",
+      "bodySha256": "ac610b330c0fe48373d573f2406843f163b704b2b7b1ed828d20bc606d868cac"
+    },
+    "leave-it-better": {
+      "title": "Leave it better",
+      "excerpt": "Great engineers improve everything they touch.",
+      "bodySha256": "dd2baacfbab6c5c698db9fcdb240005e2f60bd3971bf92cce9c9e94f0c5b2376"
+    },
+    "survive-entropy": {
+      "title": "Will it survive entropy?",
+      "excerpt": "For every component that makes up a modern web app engineers must decide where on the spectrum of fully-managed to custom-built the solution should lie. It can be useful to think through the lens of entropy and extropy.",
+      "bodySha256": "39e9735a0f9329c03385d4f3830d13c7a18abaac5d124911c5dc16457d5c4aea"
+    },
+    "you-might-not-want-a-monorepo": {
+      "title": "You might not want a Monorepo",
+      "excerpt": "Monorepos have become popular in recent years. What problems are they solving, and what problems are they introducing?",
+      "bodySha256": "8f4809f1365bb812936b2bcb0f80083db8cfad24e0474389c10b4bc0d681e901"
+    },
+    "dumb-yaml-ci": {
+      "title": "YAML was a bad idea for CI pipelines",
+      "excerpt": "YAML was a bad idea for CI pipelines",
+      "bodySha256": "839281433c05b82679ccd5fd094cacd7e564bcca9f697840f2d816d4d36ba1ac"
+    },
+    "iteration-and-play": {
+      "title": "Iteration and Play",
+      "excerpt": "Engineers should be having fun. Tweaking, tinkering, endless play.",
+      "bodySha256": "d7846085cf38c5777d12d4cc58ecd6153b4d4220fb0d67072a6e51272943594a"
+    }
+  },
+  "pages": {
+    "about": {
+      "title": "About Trevor Hartman",
+      "bodySha256": "9aa60ed497641b4b9cabaa7179bdc5b3bb869aceec90e3e3b04316d744eccc0f"
+    },
+    "overture": {
+      "title": "Overture",
+      "bodySha256": "7fce1f0ad38a06e66d92f321166a6af8326b95ace6de1e0e573d20f3d1258537"
+    },
+    "glossary": {
+      "title": "Glossary",
+      "bodySha256": "907cee373d0586ec494f1072f5592f929474902562eb17165d8d049988bf7a2b"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "devth-com-www",
+  "account_id": "ab80ed3a83c85462eff2a15e7b38a884",
+  "main": "production/redirect.js",
+  "compatibility_date": "2026-10-23",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "www.devth.com",
+      "custom_domain": true,
+    },
+  ],
+}

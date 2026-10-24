@@ -1,0 +1,223 @@
+body.cosmos-page {
+  --paper: #06070b;
+  --ink: #f4f3ec;
+  --muted: #bfc4d1;
+  --accent: #fba388;
+  --line: #626a7b;
+  --code: #151925;
+  --cosmos-gutter: clamp(18px, 3vw, 48px);
+  background: var(--paper);
+  color: var(--ink);
+  color-scheme: dark;
+  overflow: hidden;
+}
+.cosmos-page .site-shell {
+  max-width: none;
+  padding: 0;
+}
+.cosmos {
+  min-height: 100svh;
+  height: 100dvh;
+}
+.cosmos::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(#06070b99, transparent 25%, transparent 65%, #06070bd9);
+}
+.cosmos-page .site-header {
+  position: fixed;
+  inset: env(safe-area-inset-top) 0 auto;
+  z-index: 3;
+  min-height: 80px;
+  padding: 18px var(--cosmos-gutter);
+  border: 0;
+  pointer-events: none;
+  text-shadow: 0 1px 8px #000;
+}
+.cosmos-page .site-header a,
+.cosmos-page .site-header button {
+  pointer-events: auto;
+}
+.cosmos-heading {
+  position: fixed;
+  top: calc(104px + env(safe-area-inset-top));
+  left: var(--cosmos-gutter);
+  z-index: 2;
+  pointer-events: none;
+}
+.cosmos-heading h1 {
+  font: 13px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+.cosmos-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: transparent;
+  color: #e6e6ec;
+  overflow: hidden;
+  border: 0;
+}
+.cosmos-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cosmos-canvas {
+  display: none;
+  touch-action: none;
+  cursor: grab;
+}
+.cosmos-canvas:active {
+  cursor: grabbing;
+}
+.cosmos-canvas:focus-visible {
+  outline-offset: -5px;
+  outline-color: var(--accent);
+}
+.cosmos-stage[data-ready] .cosmos-canvas {
+  display: block;
+}
+.cosmos-coordinate {
+  position: fixed;
+  top: calc(130px + env(safe-area-inset-top));
+  left: var(--cosmos-gutter);
+  z-index: 2;
+  font: 9px/1.6 var(--mono);
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  text-shadow: 0 1px 8px #000;
+}
+.cosmos-crosshair {
+  position: absolute;
+  font: 18px var(--mono);
+  color: #888d9d;
+  pointer-events: none;
+}
+.cosmos-crosshair-a {
+  right: var(--cosmos-gutter);
+  top: 50%;
+}
+.cosmos-crosshair-b {
+  left: var(--cosmos-gutter);
+  top: 50%;
+}
+.cosmos-controls {
+  position: fixed;
+  inset: auto var(--cosmos-gutter) calc(68px + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+  pointer-events: none;
+  text-shadow: 0 1px 8px #000;
+}
+.cosmos-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  pointer-events: auto;
+}
+.cosmos-buttons button {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font: 12px var(--mono);
+  min-height: 44px;
+  padding: 12px 0;
+  cursor: pointer;
+  border-radius: 0;
+  text-shadow: inherit;
+}
+.cosmos-buttons button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.cosmos-controls p {
+  font: 9px/1.8 var(--mono);
+  color: var(--muted);
+  margin: 0;
+}
+.cosmos-controls p span {
+  padding: 0 6px;
+}
+.cosmos-status {
+  position: fixed;
+  bottom: calc(23px + env(safe-area-inset-bottom));
+  left: var(--cosmos-gutter);
+  z-index: 2;
+  max-width: calc(100% - 210px);
+  font: 10px/1.7 var(--mono);
+  color: var(--muted);
+  margin: 0;
+  pointer-events: none;
+}
+.cosmos-colophon {
+  display: none;
+}
+.cosmos-page .site-footer {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: var(--cosmos-gutter);
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  pointer-events: none;
+}
+.cosmos-page .site-footer > p,
+.cosmos-page .site-footer > div {
+  display: none;
+}
+@media (max-width: 700px) {
+  .cosmos-page .site-header {
+    gap: 12px;
+  }
+  .cosmos-page .site-header nav {
+    gap: 12px;
+  }
+  .cosmos-controls {
+    align-items: start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .cosmos-status {
+    font-size: 9px;
+  }
+}
+@media (max-height: 500px) {
+  .cosmos-controls p {
+    display: none;
+  }
+}
+@media (max-width: 370px) {
+  .cosmos-heading {
+    top: calc(144px + env(safe-area-inset-top));
+  }
+  .cosmos-coordinate {
+    top: calc(170px + env(safe-area-inset-top));
+  }
+}
+@media print {
+  .cosmos-page {
+    overflow: visible;
+  }
+  .cosmos-canvas,
+  .cosmos-controls,
+  .cosmos::after {
+    display: none !important;
+  }
+  .cosmos-stage {
+    position: relative;
+    height: 80vh;
+  }
+}

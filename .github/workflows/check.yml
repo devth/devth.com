@@ -1,0 +1,117 @@
+name: Check static site
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.event.pull_request.number || github.ref }}
+  # Cancel stale PR checks, but never interrupt an in-flight production release.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  build:
+    name: Build + checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache@v4
+        id: deps
+        with:
+          path: node_modules
+          key: deps-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json', 'package.json') }}
+      - name: Install dependencies (cold cache only)
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - run: npm run check
+      - name: Build static site
+        run: |
+          start=$(date +%s%N)
+          npm run build
+          elapsed=$(( ($(date +%s%N) - start) / 1000000 ))
+          printf '### Static build\n\n**%s ms** end-to-end, including content rendering, code highlighting, and Vite+.\n\nDependency cache hit: `%s`\n' "$elapsed" '${{ steps.deps.outputs.cache-hit }}' | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: npm test
+      - name: Verify production build
+        run: npm run build:production
+
+  browser:
+    name: Browser + counter tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache@v4
+        id: deps
+        with:
+          path: node_modules
+          key: deps-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json', 'package.json') }}
+      - name: Install dependencies (cold cache only)
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(node -p 'require("@playwright/test/package.json").version')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: browsers
+        with:
+          path: ~/.cache/ms-playwright
+          key: chromium-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
+      - name: Install Chromium (cold cache only)
+        if: steps.browsers.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - name: Test production routing, indexing, and isolated counters
+        run: npm run test:production
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-failures
+          path: test-results/
+          retention-days: 7
+
+  deploy:
+    name: Deploy production
+    needs: [build, browser]
+    if: >-
+      github.repository == 'devth/devth.com' &&
+      github.ref == 'refs/heads/master' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment:
+      name: Production
+      url: https://devth.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: actions/cache@v4
+        id: deps
+        with:
+          path: node_modules
+          key: deps-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json', 'package.json') }}
+      - name: Install dependencies (cold cache only)
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Publish production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Set CLOUDFLARE_API_TOKEN in the Production environment."
+            exit 1
+          fi
+          start=$(date +%s%N)
+          npm run deploy:production
+          elapsed=$(( ($(date +%s%N) - start) / 1000000 ))
+          printf '### Production deploy\n\n**%s ms** for www redirect, production build, asset upload, and activation.\n\n[devth.com](https://devth.com) · commit `%s`\n' "$elapsed" "$GITHUB_SHA" | tee -a "$GITHUB_STEP_SUMMARY"

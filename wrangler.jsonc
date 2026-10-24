@@ -1,0 +1,15 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "devth-com-preview",
+  "account_id": "ab80ed3a83c85462eff2a15e7b38a884",
+  "compatibility_date": "2026-10-23",
+  "build": { "command": "npm run build" },
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [{ "pattern": "preview.devth.com", "custom_domain": true }],
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+  },
+}
