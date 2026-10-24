@@ -62,6 +62,9 @@ input {
   font-family: var(--mono);
   font-size: 12px;
 }
+.site-header:has(+ main .article-header) {
+  border-bottom: 0;
+}
 .brand {
   font-family: var(--sans);
   font-size: 26px;
@@ -321,7 +324,6 @@ kbd {
 }
 .article-header {
   padding: 40px 0 44px;
-  border-bottom: 1px solid var(--ink);
 }
 .back-link {
   text-decoration: none;

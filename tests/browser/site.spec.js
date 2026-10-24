@@ -39,6 +39,18 @@ test("archive header is minimal without a post count or lower divider", async ({
   await expect(page.getByRole("img", { name: "Page hit counter" })).toBeVisible();
 });
 
+for (const route of ["/you-might-not-want-a-monorepo", "/about"]) {
+  test(`${route} uses whitespace instead of full-width header dividers`, async ({
+    page,
+  }, testInfo) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto(route);
+    await expect(page.locator(".site-header")).toHaveCSS("border-bottom-width", "0px");
+    await expect(page.locator(".article-header")).toHaveCSS("border-bottom-width", "0px");
+    await page.screenshot({ path: testInfo.outputPath("reading-header.png") });
+  });
+}
+
 test("archive filtering and keyboard shortcuts", async ({ page }) => {
   await page.goto("/");
   await page.keyboard.press("/");
