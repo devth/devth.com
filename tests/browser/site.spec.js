@@ -30,6 +30,15 @@ for (const route of routes) {
   });
 }
 
+test("archive header is minimal without a post count or lower divider", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".archive-count")).toHaveCount(0);
+  await expect(page.locator(".section-heading")).toHaveCSS("border-bottom-width", "0px");
+  await expect(page.locator(".site-header")).toHaveCSS("border-bottom-width", "1px");
+  await expect(page.getByRole("searchbox", { name: "Filter writing" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Page hit counter" })).toBeVisible();
+});
+
 test("archive filtering and keyboard shortcuts", async ({ page }) => {
   await page.goto("/");
   await page.keyboard.press("/");
