@@ -133,10 +133,9 @@ input {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 24px;
   padding-bottom: 20px;
-  border-bottom: 2px solid var(--ink);
 }
 h2 {
   letter-spacing: -0.035em;
@@ -1073,10 +1072,6 @@ body {
 .home-page .header-github {
   grid-column: 3;
   grid-row: 2;
-}
-.archive-count {
-  color: var(--muted);
-  font: 10px var(--mono);
 }
 ::view-transition-group(site-brand) {
   animation-duration: 200ms;

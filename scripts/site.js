@@ -133,7 +133,7 @@ function categoryLink(category) {
 function home(posts) {
   const years = [...new Set(posts.map((post) => post.date.slice(0, 4)))];
   return `<section id="writing" class="writing" aria-label="Posts">
-    <div class="section-heading"><span class="archive-count" aria-label="${posts.length} posts">[${String(posts.length).padStart(2, "0")}]</span><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
+    <div class="section-heading"><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
     <div class="category-filter" data-category-filter hidden><span data-category-label></span><a href="/">all posts</a></div>
     <p class="sr-only" role="status" data-search-status></p>
     <div class="archive">${years
