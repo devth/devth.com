@@ -6,12 +6,15 @@
   "scripts": {
     "dev": "vp dev --host 127.0.0.1",
     "build": "vp build",
+    "build:production": "node scripts/counter-pages.js && SITE_ENV=production vp build && node scripts/verify-production.js",
     "preview": "vp preview --host 127.0.0.1",
     "test": "vp test run --config vite.test.config.js",
     "check": "vp check",
     "test:browser": "playwright test",
+    "test:production": "playwright test --config playwright.production.config.js",
     "deploy:counter": "wrangler deploy --config wrangler.counter.jsonc",
-    "deploy": "npm run deploy:counter && wrangler deploy"
+    "deploy": "npm run deploy:counter && wrangler deploy",
+    "deploy:production": "wrangler deploy --config wrangler.www.jsonc && wrangler deploy --config wrangler.production.jsonc"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

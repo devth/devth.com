@@ -8,6 +8,9 @@ import { createHighlighter } from "shiki";
 import { cosmosBody } from "./cosmos-page.js";
 import { parseHTML } from "linkedom";
 import { background } from "./background.js";
+import { publishingSettings } from "./publishing.js";
+
+const publishing = publishingSettings(process.env.SITE_ENV, process.env.COUNTER_ORIGIN);
 
 const origin = "https://devth.com";
 const root = resolve(import.meta.dirname, "..");
@@ -64,10 +67,7 @@ function layout({
   noindex = false,
 }) {
   const pageTitle = slug ? `${title} — devth` : "devth — Trevor Hartman";
-  const counter = new URL(
-    "/counter.svg",
-    process.env.COUNTER_ORIGIN || "https://devth-hit-counter-preview.devth.workers.dev",
-  );
+  const counter = new URL("/counter.svg", publishing.counterOrigin);
   counter.searchParams.set("page", slug ? `/${slug}` : "/");
   const nav = [
     ["/", "writing"],
@@ -255,6 +255,7 @@ export async function generateSite() {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>devth — Trevor Hartman</title><link>${origin}/</link><description>${escape(description)}</description><language>en</language><atom:link href="${origin}/feed.xml" rel="self" type="application/rss+xml"/>${posts.map((post) => `<item><title>${escape(post.title)}</title><link>${origin}/${post.slug}</link><guid isPermaLink="true">${origin}/${post.slug}</guid><pubDate>${new Date(post.date).toUTCString()}</pubDate><description>${escape(post.excerpt)}</description></item>`).join("")}</channel></rss>`;
   const urls = ["/", "/about", "/overture", "/glossary", ...posts.map((post) => `/${post.slug}`)];
   const assets = {
+    _headers: publishing.headers,
     _redirects: redirects,
     "search.json": JSON.stringify([
       ...navigationPages,

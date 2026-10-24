@@ -1,6 +1,6 @@
 # devth.com
 
-Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page. A separate Cloudflare Worker with Durable Object storage serves the retro per-page hit-counter images.
+Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
 
 ## Develop
 
@@ -18,10 +18,12 @@ npm run check        # Vite+ format and lint checks
 npm run build        # Generate HTML, then bundle assets with Vite+
 npm test             # Validate the built site, all posts, links, images, feed
 npm run test:browser # Desktop/mobile, accessibility, filtering, no-JS, redirects
+npm run test:production # Local production Workers: indexing, counters, www redirects
+npm run build:production # Indexable production HTML with first-party counters
 npm run preview      # Vite's static build preview
 ```
 
-Browser tests run against local Wrangler so routing, redirects, and true HTTP 404 responses match Cloudflare. Install the matching Chromium build on a new machine with `npx playwright install chromium`. Set `BASE_URL` to test an existing deployment without starting a local server. Local tests start both the static site and counter service. Screenshots are written to `test-results/`. CI runs build/checks and browser/counter tests in parallel jobs, caches lockfile-matched dependencies and the exact Chromium version, and uploads failure artifacts for seven days. Each build writes its measured end-to-end time to the GitHub job summary. Only PRs and pushes to `master` run automatically, avoiding duplicate feature-branch runs; newer runs cancel stale ones.
+Browser tests run against local Wrangler so routing, redirects, and true HTTP 404 responses match Cloudflare. Install the matching Chromium build on a new machine with `npx playwright install chromium`. Set `BASE_URL` to test an existing deployment without starting a local server. Local tests start both the static site and counter service. Screenshots are written to `test-results/`. CI runs build/checks and browser/counter tests in parallel jobs, caches lockfile-matched dependencies and the exact Chromium version, and uploads failure artifacts for seven days. Each build writes its measured end-to-end time to the GitHub job summary. Only PRs and pushes to `master` run automatically, avoiding duplicate feature-branch runs. Newer PR runs cancel stale checks; master runs serialize without interrupting an in-flight release. Both jobs must pass before the production deployment job runs. PRs never deploy or receive the Production environment secret.
 
 ## Content
 
@@ -72,9 +74,30 @@ npx wrangler login
 npm run deploy
 ```
 
-`npm run deploy` publishes the small counter Worker first, then Wrangler runs `npm run build` and uploads `dist/` directly. `npm run deploy:counter` updates only the counter service. Use `npx wrangler deploy` for a site-only update that leaves the counter Worker untouched. Missing URLs use `404.html`; post URLs have no trailing slash. `_redirects` retains both forms of the old year-prefixed URLs. The preview sends `X-Robots-Tag: noindex` via `public/_headers`; canonical URLs, RSS links, and sitemap URLs continue to identify `https://devth.com`.
+`npm run deploy` publishes the small counter Worker first, then Wrangler runs `npm run build` and uploads `dist/` directly. `npm run deploy:counter` updates only the counter service. Use `npx wrangler deploy` for a site-only update that leaves the counter Worker untouched. Missing URLs use `404.html`; post URLs have no trailing slash. `_redirects` retains both forms of the old year-prefixed URLs. The default build generates `X-Robots-Tag: noindex` in `_headers`; canonical URLs, RSS links, and sitemap URLs continue to identify `https://devth.com`.
 
-After the preview is approved, production promotion requires explicitly attaching `devth.com` (and deciding the `www` redirect), removing the preview-only `X-Robots-Tag` header, and verifying the domain. **No production DNS, routes, email records, or Vercel settings have been changed.** Automatic Cloudflare deployments are intentionally not enabled during preview review; CI only validates.
+## Production and automatic deployments
+
+Production: <https://devth.com>
+
+On each push to `master`, GitHub Actions runs both validation jobs, including production routing/indexing/counter integration tests, then publishes through the pinned Wrangler dependency. A manual workflow dispatch on `master` follows the same checks. Other branches and PRs cannot publish.
+
+The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_API_TOKEN` secret. Limit that environment to the `master` branch. The token is scoped to the **Trevor Hartman** account and **devth.com** zone: Account → Workers Scripts Edit and Account Settings Read; Zone → Workers Routes Edit, Zone Read and DNS Read. DNS Read is for backing up and auditing the old origin records; deployments do not need broad DNS-edit access. Do not use a global API key or a personal Wrangler OAuth token in CI.
+
+- `wrangler.production.jsonc` deploys **devth-com** at **devth.com**, with indexable static assets and a new production-only `PageCounter` namespace.
+- `/counter.svg` is first-party. Only this path runs Worker code before assets; ordinary pages remain direct static asset responses.
+- `wrangler.www.jsonc` deploys **devth-com-www**, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
+- Both production configs pin the Trevor Hartman account, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched.
+- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 23 HTML pages before publishing. Cosmos and the 404 retain their own noindex metadata.
+- `npm run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
+
+Nameservers and email records are unchanged. The existing Vercel project is retained for rollback, not used by the new deployment workflow; its legacy GitHub integration is separate from the passing Cloudflare checks.
+
+### Rollback
+
+For a code-only rollback, use `npx wrangler rollback --config wrangler.production.jsonc` and select the previous version, or revert the offending master commit so the checked workflow redeploys it. Do not delete the production Durable Object namespace: counts persist independently of asset/code versions.
+
+For a hosting rollback to Vercel, first remove only the **devth.com** and **www.devth.com** Worker custom-domain bindings, then restore their saved pre-cutover A/AAAA/CNAME records in Cloudflare DNS. The private origin-record backup is stored locally, outside Git. Leave preview bindings, MX/TXT email records, nameservers, and counter namespaces alone. Record the exact saved DNS values before any first cutover; do not guess the former origin from proxied public IPs.
 
 ## Experiments
 
@@ -104,9 +127,9 @@ The CSS enhancement needs no JavaScript. Reduced-motion users opt out entirely. 
 
 ### Hit counters
 
-Every page embeds an SVG from `devth-hit-counter-preview.devth.workers.dev`. Each GET increments that page’s Durable Object counter atomically; HEAD reads without incrementing. Responses use `Cache-Control: no-store`. Only generated, published page paths are accepted, so arbitrary URLs cannot create new counter objects.
+Production pages embed an SVG from `https://devth.com/counter.svg`. Preview pages continue to use `devth-hit-counter-preview.devth.workers.dev`. Each GET increments that page’s Durable Object counter atomically; HEAD reads without incrementing. Responses use `Cache-Control: no-store`. Only generated, published page paths are accepted, so arbitrary URLs cannot create new counter objects.
 
-These count counter-image requests, not unique people: reloads and bots can count; disabled images, blockers, and back/forward-cache restores may not. There are no cookies, visitor identifiers, or analytics scripts. Counts start with this deployment, persist across counter-code deployments, and belong to the preview Worker’s namespace. A production counter should use its own namespace rather than inherit preview/test hits. A failed counter cannot prevent the static writing from loading.
+These count counter-image requests, not unique people: reloads and bots can count; disabled images, blockers, and back/forward-cache restores may not. There are no cookies, visitor identifiers, or analytics scripts. Production counts start fresh in the `devth-com` Worker’s namespace and persist across deployments. Existing preview/test totals remain in the separate original preview namespace; production never imports or resets them. A failed counter cannot prevent the static writing from loading.
 
 Set `COUNTER_ORIGIN` at build time to point at another instance. Local Playwright tests use port 4174; live tests can also set `COUNTER_ORIGIN` to override the deployed counter. The counter’s source page list is regenerated before Wrangler builds; `counter/.generated-pages.json` is ignored.
 
