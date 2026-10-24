@@ -8,8 +8,8 @@
   "preview_urls": false,
   "routes": [
     {
-      "pattern": "www.devth.com",
-      "custom_domain": true,
+      "pattern": "www.devth.com/*",
+      "zone_id": "4626752ff620f7d6044acd9eed6ba82d",
     },
   ],
 }

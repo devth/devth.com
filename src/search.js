@@ -66,10 +66,14 @@ export function initializeSearch(dialog) {
 
   query.addEventListener("input", render);
   query.addEventListener("keydown", (event) => {
-    if (event.isComposing || event.metaKey || event.ctrlKey || event.altKey) return;
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    if (event.isComposing || event.metaKey || event.altKey) return;
+    const controlKey = event.ctrlKey && !event.shiftKey ? event.key.toLowerCase() : "";
+    if (event.ctrlKey && !["n", "p"].includes(controlKey)) return;
+    const next = event.key === "ArrowDown" || controlKey === "n";
+    const previous = event.key === "ArrowUp" || controlKey === "p";
+    if (next || previous) {
       event.preventDefault();
-      select(active + (event.key === "ArrowDown" ? 1 : -1));
+      select(active + (next ? 1 : -1));
     } else if (event.key === "Enter") {
       event.preventDefault();
       results.querySelector('[aria-selected="true"]')?.click();

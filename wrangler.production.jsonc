@@ -11,8 +11,8 @@
   },
   "routes": [
     {
-      "pattern": "devth.com",
-      "custom_domain": true,
+      "pattern": "devth.com/*",
+      "zone_id": "4626752ff620f7d6044acd9eed6ba82d",
     },
   ],
   "assets": {

@@ -27,7 +27,9 @@ describe("production publishing", () => {
     const production = config("wrangler.production.jsonc");
     expect(production.account_id).toBe("ab80ed3a83c85462eff2a15e7b38a884");
     expect(production.name).toBe("devth-com");
-    expect(production.routes).toEqual([{ pattern: "devth.com", custom_domain: true }]);
+    expect(production.routes).toEqual([
+      { pattern: "devth.com/*", zone_id: "4626752ff620f7d6044acd9eed6ba82d" },
+    ]);
     expect(production.workers_dev).toBe(false);
     expect(production.preview_urls).toBe(false);
     expect(production.assets.run_worker_first).toEqual(["/counter.svg"]);
@@ -41,7 +43,9 @@ describe("production publishing", () => {
   it("limits the redirect Worker to www without touching preview", () => {
     const redirect = config("wrangler.www.jsonc");
     expect(redirect.account_id).toBe("ab80ed3a83c85462eff2a15e7b38a884");
-    expect(redirect.routes).toEqual([{ pattern: "www.devth.com", custom_domain: true }]);
+    expect(redirect.routes).toEqual([
+      { pattern: "www.devth.com/*", zone_id: "4626752ff620f7d6044acd9eed6ba82d" },
+    ]);
     expect(redirect.workers_dev).toBe(false);
     expect(redirect.preview_urls).toBe(false);
   });
