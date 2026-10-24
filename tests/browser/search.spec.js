@@ -64,6 +64,34 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   await expect(trigger).toBeFocused();
 });
 
+test("Ctrl+N/P selects next and previous search results without changing the query", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.keyboard.press("Meta+k");
+  const dialog = page.getByRole("dialog", { name: "Search", exact: true });
+  const query = dialog.getByRole("combobox", { name: "Search pages" });
+  const selected = dialog.locator('[role="option"][aria-selected="true"]');
+  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await query.press("Control+n");
+  await expect(selected).toContainText("About Trevor Hartman");
+  await query.press("Control+n");
+  await expect(selected).toContainText("Overture");
+  await query.press("Control+p");
+  await expect(selected).toContainText("About Trevor Hartman");
+  await query.press("Control+p");
+  await expect(selected).toContainText("Writing");
+  await query.press("Control+p");
+  await expect(selected).toHaveText("Cosmos");
+  await query.press("Control+n");
+  await expect(selected).toContainText("Writing");
+  await expect(query).toHaveValue("");
+  await expect(query).toBeFocused();
+  await query.press("Control+n");
+  await query.press("Enter");
+  await expect(page).toHaveURL(/\/about$/);
+});
+
 test("unavailable search leaves normal navigation usable", async ({ page }) => {
   await page.route("**/search.json", (route) => route.abort());
   await page.goto("/overture");

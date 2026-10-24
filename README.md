@@ -84,10 +84,10 @@ On each push to `master`, GitHub Actions runs both validation jobs, including pr
 
 The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_API_TOKEN` secret. Limit that environment to the `master` branch. The token is scoped to the **Trevor Hartman** account and **devth.com** zone: Account → Workers Scripts Edit and Account Settings Read; Zone → Workers Routes Edit, Zone Read and DNS Read. DNS Read is for backing up and auditing the old origin records; deployments do not need broad DNS-edit access. Do not use a global API key or a personal Wrangler OAuth token in CI.
 
-- `wrangler.production.jsonc` deploys **devth-com** at **devth.com**, with indexable static assets and a new production-only `PageCounter` namespace.
+- `wrangler.production.jsonc` deploys **devth-com** on the **devth.com/\*** Worker route, with indexable static assets and a new production-only `PageCounter` namespace. The route overrides the old origin without changing its DNS record.
 - `/counter.svg` is first-party. Only this path runs Worker code before assets; ordinary pages remain direct static asset responses.
-- `wrangler.www.jsonc` deploys **devth-com-www**, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
-- Both production configs pin the Trevor Hartman account, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched.
+- `wrangler.www.jsonc` deploys **devth-com-www** on **www.devth.com/\***, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
+- Both production configs pin the Trevor Hartman account and devth.com zone, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched. Root and www DNS must remain Cloudflare-proxied for these routes to run.
 - `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 23 HTML pages before publishing. Cosmos and the 404 retain their own noindex metadata.
 - `npm run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
 
@@ -97,7 +97,7 @@ Nameservers and email records are unchanged. The existing Vercel project is reta
 
 For a code-only rollback, use `npx wrangler rollback --config wrangler.production.jsonc` and select the previous version, or revert the offending master commit so the checked workflow redeploys it. Do not delete the production Durable Object namespace: counts persist independently of asset/code versions.
 
-For a hosting rollback to Vercel, first remove only the **devth.com** and **www.devth.com** Worker custom-domain bindings, then restore their saved pre-cutover A/AAAA/CNAME records in Cloudflare DNS. The private origin-record backup is stored locally, outside Git. Leave preview bindings, MX/TXT email records, nameservers, and counter namespaces alone. Record the exact saved DNS values before any first cutover; do not guess the former origin from proxied public IPs.
+For a hosting rollback to Vercel, ensure the old Vercel deployment is active, then remove only the **devth.com/\*** and **www.devth.com/\*** Worker routes. The original DNS records are left untouched by the cutover, so removing the routes exposes the former origin again. Leave preview bindings, MX/TXT email records, nameservers, and counter namespaces alone. Keep any private origin-record backup outside Git; do not guess the former origin from proxied public IPs.
 
 ## Experiments
 
@@ -113,7 +113,7 @@ Link hovers draw a short, randomized node/edge sigil beside the link without mov
 
 Header/footer navigation and category links use lowercase labels; authored titles retain their original casing. Category labels link to `/?category=…#writing`, where the enhanced archive applies an exact category filter. With JavaScript disabled, these remain native links to the complete, readable archive.
 
-Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows select a result, Enter follows its ordinary anchor, and Escape closes and restores focus. Search failure leaves a home link and normal navigation available. Browsers without dialog support retain the existing navigation.
+Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows or Ctrl+N/Ctrl+P select the next/previous result, Enter follows its ordinary anchor, and Escape closes and restores focus. Search failure leaves a home link and normal navigation available. Browsers without dialog support retain the existing navigation.
 
 Articles with multiple headings get a contents rail without a visible title. Its navigation retains an accessible name. The active heading segment stays visible even before the first section enters the reading marker, including flat heading lists. Its desktop sidebar sticks beside the prose; on narrow screens it becomes a compact section above the article. A stepped SVG line follows heading nesting and fills with scroll progress; the current heading’s whole segment remains highlighted. Reduced motion disables its interpolation, not its progress indication. Existing heading IDs remain unchanged, including `$EDITOR` → `#editor`; trusted inline-HTML headings receive unique IDs too.
 
