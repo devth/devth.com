@@ -446,7 +446,7 @@ kbd {
   max-width: 100%;
   overflow-x: auto;
   padding: 22px;
-  border: 1px solid var(--line);
+  border: 0;
   background: var(--code);
   margin: 2em 0;
   font: 13px/1.8 var(--mono);
