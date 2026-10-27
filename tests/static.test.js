@@ -85,6 +85,20 @@ describe("static publishing contract", () => {
     expect(cosmos.querySelector(".cosmos-colophon").textContent.trim()).toBe("Home ↗");
   });
 
+  it("adds the consent-based X section only outside the authored About article", () => {
+    const about = documentFor("about/index.html");
+    const section = about.querySelector("[data-x-timeline]");
+    expect(section).not.toBeNull();
+    expect(section.closest("article")).toBeNull();
+    expect(section.querySelector("a").href).toBe("https://x.com/devth");
+    expect(section.querySelector("button").hasAttribute("hidden")).toBe(true);
+    expect(about.querySelector('script[src*="twitter.com"]')).toBeNull();
+    expect(about.querySelector('link[rel="preconnect"][href*="twitter"]')).toBeNull();
+    for (const slug of ["overture", "glossary", "beautiful-constraint"]) {
+      expect(documentFor(slug + "/index.html").querySelector("[data-x-timeline]")).toBeNull();
+    }
+  });
+
   it("uses the approved tagline and lowercase navigation with real category links", () => {
     const home = documentFor("index.html");
     expect(home.querySelector(".brand-tagline").textContent).toBe("work in progress");

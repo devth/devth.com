@@ -27,9 +27,11 @@ describe("published MCP content", () => {
   it("bundles only public metadata and content, never unpublished files or arbitrary frontmatter", async () => {
     const catalog = JSON.parse(readFileSync("production/.generated-content.json", "utf8"));
     expect(catalog).toHaveLength(20);
-    expect(catalog.map((entry) => entry.path)).toContain("/glossary");
-    expect(catalog.map((entry) => entry.path)).not.toEqual(
-      expect.arrayContaining(["/cosmos", "/404", "/next-guy"]),
+    const paths = readdirSync("posts")
+      .filter((file) => /\.mdx?$/.test(file))
+      .map((file) => "/" + file.slice(11).replace(/\.mdx?$/, ""));
+    expect(catalog.map((entry) => entry.path).sort()).toEqual(
+      [...paths, "/about", "/overture", "/glossary"].sort(),
     );
     expect(catalog.filter((entry) => entry.type === "post")).toHaveLength(17);
     for (const entry of catalog) {

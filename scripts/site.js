@@ -181,6 +181,7 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
     ${isPost ? `<p class="article-deck">${escape(page.excerpt)}</p><p class="byline">BY <a href="/about">TREVOR HARTMAN</a></p>` : ""}
   </header>
   <div class="reading-layout${isPost ? "" : " standalone-reading"}${toc ? " with-toc" : ""}">${isPost ? `<aside class="reading-aside"><span>categories</span><p>${page.categories.map(categoryLink).join("<br>")}</p></aside>` : ""}${toc}<article class="prose">${rendered}</article></div>
+  ${page.slug === "about" ? '<section class="x-timeline" aria-labelledby="x-posts-title" data-x-timeline><h2 id="x-posts-title">X posts</h2><p><a href="https://x.com/devth">@devth on X</a></p><p>Loads content from X only when you choose to.</p><button type="button" data-load-timeline hidden>Load @devth timeline</button><p role="status" data-timeline-status></p><div data-timeline-content></div></section>' : ""}
   ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← back to the writing</a></div>'}`;
 }
 
@@ -265,6 +266,7 @@ export async function generateSite() {
     [
       "style.css",
       "main.js",
+      "x-timeline.js",
       "background.js",
       "graph-geometry.js",
       "search.js",

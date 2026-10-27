@@ -117,6 +117,26 @@ if (quickNav?.showModal) {
 
 if (document.querySelector("[data-toc]")) import("./toc.js");
 
+const timeline = document.querySelector("[data-x-timeline]");
+if (timeline) {
+  const button = timeline.querySelector("[data-load-timeline]");
+  const status = timeline.querySelector("[data-timeline-status]");
+  button.hidden = false;
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    status.textContent = "Loading timeline…";
+    try {
+      const { loadTimeline } = await import("./x-timeline.js");
+      await loadTimeline(timeline);
+      status.textContent = "Timeline loaded.";
+      button.textContent = "Timeline loaded";
+    } catch {
+      status.textContent = "Timeline unavailable. You can view @devth on X.";
+      button.disabled = false;
+    }
+  });
+}
+
 const search = document.querySelector("#search");
 if (search) {
   document.querySelector("[data-search]").hidden = false;
