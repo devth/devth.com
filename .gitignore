@@ -1,6 +1,7 @@
 node_modules/
 .site/
 counter/.generated-pages.json
+production/.generated-content.json
 dist/
 .wrangler/
 .playwright-cli/
