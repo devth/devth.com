@@ -1,6 +1,7 @@
-import { mkdir, readdir, readFile, writeFile, copyFile, rm } from "node:fs/promises";
+import { mkdir, writeFile, copyFile, rm } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
-import matter from "gray-matter";
+import { loadContent } from "./content.js";
+import { writeMcpContent } from "./mcp-content.js";
 import MarkdownIt from "markdown-it";
 import anchor from "markdown-it-anchor";
 import { slug as slugify } from "github-slugger";
@@ -180,30 +181,13 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
     ${isPost ? `<p class="article-deck">${escape(page.excerpt)}</p><p class="byline">BY <a href="/about">TREVOR HARTMAN</a></p>` : ""}
   </header>
   <div class="reading-layout${isPost ? "" : " standalone-reading"}${toc ? " with-toc" : ""}">${isPost ? `<aside class="reading-aside"><span>categories</span><p>${page.categories.map(categoryLink).join("<br>")}</p></aside>` : ""}${toc}<article class="prose">${rendered}</article></div>
+  ${page.slug === "about" ? '<section class="x-timeline" aria-labelledby="x-posts-title" data-x-timeline><h2 id="x-posts-title">X posts</h2><p><a href="https://x.com/devth">@devth on X</a></p><p>Loads content from X only when you choose to.</p><button type="button" data-load-timeline hidden>Load @devth timeline</button><p role="status" data-timeline-status></p><div data-timeline-content></div></section>' : ""}
   ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← back to the writing</a></div>'}`;
 }
 
 export async function generateSite() {
-  const files = (await readdir(resolve(root, "posts"))).filter((file) => /\.mdx?$/.test(file));
-  const posts = await Promise.all(
-    files.map(async (file) => {
-      const [, date, slug] = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.mdx?$/);
-      const { data, content } = matter(await readFile(resolve(root, "posts", file), "utf8"));
-      return {
-        ...data,
-        title: data.title.trim(),
-        excerpt: (data.excerpt || "").trim().replace(/\s+/g, " "),
-        categories: Array.isArray(data.categories)
-          ? data.categories
-          : [data.categories].filter(Boolean),
-        date,
-        slug,
-        content,
-        minutes: Math.max(1, Math.ceil(content.split(/\s+/).length / 220)),
-      };
-    }),
-  );
-  posts.sort((a, b) => b.date.localeCompare(a.date));
+  const { posts, pages: contentPages } = await loadContent();
+  await writeMcpContent({ posts, pages: contentPages });
   const pages = [{ path: "index.html", html: layout({ title: "Writing", body: home(posts) }) }];
   const navigationPages = [{ title: "Writing", path: "/", excerpt: description }];
   for (const [index, post] of posts.entries()) {
@@ -220,10 +204,8 @@ export async function generateSite() {
       }),
     });
   }
-  for (const slug of ["about", "overture", "glossary"]) {
-    const file = slug === "glossary" ? "non-posts/glossary.mdx" : `content/${slug}.md`;
-    const { data, content } = matter(await readFile(resolve(root, file), "utf8"));
-    const page = { ...data, title: data.title || "Glossary", slug, content };
+  for (const page of contentPages) {
+    const { slug } = page;
     navigationPages.push({ title: page.title, path: `/${slug}`, excerpt: page.excerpt || "" });
     pages.push({ path: `${slug}/index.html`, html: layout({ ...page, body: articleBody(page) }) });
   }
@@ -284,6 +266,7 @@ export async function generateSite() {
     [
       "style.css",
       "main.js",
+      "x-timeline.js",
       "background.js",
       "graph-geometry.js",
       "search.js",

@@ -39,7 +39,9 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 - `src/toc.js` — sticky heading-derived contents with a stepped SVG scroll-progress rail; native fragment links work without JavaScript.
 - `src/cosmos.js`, `src/cosmos.css` — the isolated 3D sculpture experiment.
 - `counter/worker.js` — per-page hit counters, independent of static asset serving.
+- `scripts/content.js` — shared allowlist and loader for published posts and authored pages.
 - `scripts/site.js` — Markdown renderer, layouts, archive, RSS, sitemap, and legacy redirects.
+- `production/mcp.js` — public read-only MCP resources and tools, backed by the same published content.
 
 Preserve the author’s exact voice. Do not invent taglines, biographies, summaries, asides or other editorial copy. Keep existing prose, titles and excerpts verbatim; new interface controls should use neutral functional labels. New editorial text requires the author’s wording or explicit approval.
 
@@ -85,7 +87,7 @@ On each push to `master`, GitHub Actions runs both validation jobs, including pr
 The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_API_TOKEN` secret. Limit that environment to the `master` branch. The token is scoped to the **Trevor Hartman** account and **devth.com** zone: Account → Workers Scripts Edit and Account Settings Read; Zone → Workers Routes Edit, Zone Read and DNS Read. DNS Read is for backing up and auditing the old origin records; deployments do not need broad DNS-edit access. Do not use a global API key or a personal Wrangler OAuth token in CI.
 
 - `wrangler.production.jsonc` deploys **devth-com** on the **devth.com/\*** Worker route, with indexable static assets and a new production-only `PageCounter` namespace. The route overrides the old origin without changing its DNS record.
-- `/counter.svg` is first-party. Only this path runs Worker code before assets; ordinary pages remain direct static asset responses.
+- `/counter.svg` is first-party. Only this path and `/mcp` run Worker code before assets; ordinary pages remain direct static asset responses.
 - `wrangler.www.jsonc` deploys **devth-com-www** on **www.devth.com/\***, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
 - Both production configs pin the Trevor Hartman account and devth.com zone, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched. Root and www DNS must remain Cloudflare-proxied for these routes to run.
 - `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 23 HTML pages before publishing. Cosmos and the 404 retain their own noindex metadata.
@@ -124,6 +126,31 @@ The homepage restores an oversized responsive **devth** logo rather than a visib
 Internal same-origin navigation uses native cross-document View Transitions: a 200 ms crossfade with a small depth shift. Only opacity and transforms animate. There is no wind simulation, tumbling, animated shadow, filter or grid background.
 
 The CSS enhancement needs no JavaScript. Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation. There is no client-side router, intercepted link navigation or artificial loading delay; fragment links, downloads, external links, modified clicks and browser history retain native behavior.
+
+### X timeline on About
+
+About includes an optional **@devth** profile timeline. The initial page contains only a profile link and a load button; there are no requests to X until the visitor activates **Load @devth timeline**. This consent is per page load, not saved in a cookie or local storage. With JavaScript disabled, the profile link remains usable and the load button stays hidden.
+
+Only after activation does `src/main.js` import `src/x-timeline.js`, which loads X's official `platform.twitter.com/widgets.js` and calls `twttr.widgets.createTimeline` with `dnt: true`, the current light/dark preference, and a 600px height. Do-not-track mode requests reduced personalization, not a guarantee of zero third-party tracking after loading. X controls the embedded content, availability and login requirements; blockers or X restrictions can prevent it from appearing. Script errors, an unavailable widget or a 15-second timeout leave the profile link and a retryable load button. Other pages never initialize the timeline.
+
+`tests/browser/x-timeline.spec.js` verifies pre-consent isolation, keyboard activation, mobile sizing, blocked loading, timeouts and no-JavaScript fallback with a stub of the external widget API. These tests do not depend on live X availability or claim to verify X's current feed contents.
+
+### Public content MCP
+
+Connect an MCP client using **Streamable HTTP** to **`https://devth.com/mcp`**. No login or API key is needed. This is a protocol endpoint, not a browser page; ordinary GET requests return 405. Production serves MCP through its Worker; preview remains asset-only.
+
+- **Resources:** every published post plus About, Overture, and Glossary, identified by the page's canonical HTTPS URL and served as `text/markdown`. Resource reads return the original Markdown body and allowlisted content metadata in `_meta["devth.com/content"]`.
+- **`list_content`** — list titles, canonical URLs, dates, categories, and excerpts without full article bodies.
+- **`search_content`** — pass `query` and optionally `limit` (1–20, default 10). Searches titles, categories, excerpts and full bodies using case-insensitive literal terms; every term must match. Returns metadata and passages from matching articles, in archive order.
+- **`read_content`** — pass `identifier`, an exact canonical URL or path from the other tools, such as `https://devth.com/beautiful-constraint` or `/beautiful-constraint`. Returns metadata and the complete original Markdown body. Relative links resolve against the returned canonical URL.
+
+Both the website and MCP catalog use `scripts/content.js`. Each site build writes `production/.generated-content.json`, an ignored build input bundled into the Worker, not a new public asset. Only `posts/` and the three explicit authored pages are loaded. Drafts, unpublished non-posts, the homepage's generated archive, Cosmos application source and error pages are not MCP documents. Frontmatter is allowlisted into public metadata rather than returned wholesale. Content reads never fetch user-supplied URLs or access the filesystem at runtime, and do not increment hit counters.
+
+The official MCP SDK handles initialization, protocol errors and JSON responses. The endpoint is stateless, with a fresh server and transport per request; no new Durable Object or database. POST bodies are limited to 32 KiB, queries to 200 characters, and read identifiers to 2,048 characters. There is no persistent GET/SSE stream or session deletion. Responses are `noindex` and `no-store`.
+
+Native/server-side clients can connect without an Origin header. Browser clients must send the endpoint's exact Origin; same-origin OPTIONS preflight is supported, but arbitrary cross-origin browser embeds are not. Local testing permits localhost-class hosts. Adding another browser client origin requires an explicit allowlist change, not wildcard CORS. Existing Cloudflare protections still apply; anonymous access is not an unlimited-use guarantee.
+
+`tests/production/mcp.spec.js` connects the official SDK client to the built Worker under local Wrangler and checks resource discovery, full-text search, original Markdown reads, and HTTP protections. Run it with `npm run test:production`.
 
 ### Hit counters
 

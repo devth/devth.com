@@ -23,7 +23,7 @@ describe("production publishing", () => {
     expect(() => publishingSettings("typo")).toThrow();
   });
 
-  it("uses a fresh production namespace and runs code only for counter requests", () => {
+  it("uses a fresh production namespace and runs code only for counters and MCP", () => {
     const production = config("wrangler.production.jsonc");
     expect(production.account_id).toBe("ab80ed3a83c85462eff2a15e7b38a884");
     expect(production.name).toBe("devth-com");
@@ -32,7 +32,7 @@ describe("production publishing", () => {
     ]);
     expect(production.workers_dev).toBe(false);
     expect(production.preview_urls).toBe(false);
-    expect(production.assets.run_worker_first).toEqual(["/counter.svg"]);
+    expect(production.assets.run_worker_first).toEqual(["/counter.svg", "/mcp"]);
     expect(production.assets.not_found_handling).toBe("404-page");
     expect(production.durable_objects.bindings).toEqual([
       { name: "COUNTERS", class_name: "PageCounter" },
