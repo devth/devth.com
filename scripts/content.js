@@ -4,7 +4,6 @@ import matter from "gray-matter";
 
 const root = resolve(import.meta.dirname, "..");
 
-// These are the only standalone authored pages published by the site.
 const pageFiles = [
   ["about", "content/about.md"],
   ["overture", "content/overture.md"],

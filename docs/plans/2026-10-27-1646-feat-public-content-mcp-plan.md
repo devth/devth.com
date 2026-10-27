@@ -83,7 +83,7 @@ References: https://ts.sdk.modelcontextprotocol.io/server and https://github.com
 - `npm run build && npm test`: existing site and catalog/protocol unit tests pass; exact prose regression hashes remain intact.
 - `npm run build:production`: production asset and indexing checks pass.
 - `npm run test:production`: real SDK client and production Worker integration pass alongside existing counters and www redirects.
-- `npm run test:browser`: existing browser behavior remains intact; no new UI is introduced.
+- `npm run test:browser`: existing browser behavior remains intact; About timeline consent, failure states and responsive layout pass.
 - `npx wrangler deploy --config wrangler.production.jsonc --dry-run`: Worker bundles successfully without Node-only transport requirements or uploaded secrets.
 
 ## Definition of Done

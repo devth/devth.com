@@ -36,6 +36,7 @@ function createServer() {
     { jsonSchemaValidator: new CfWorkerJsonSchemaValidator() },
   );
   for (const entry of catalog) {
+    const { content, ...info } = entry;
     server.registerResource(
       entry.path,
       entry.url,
@@ -45,7 +46,14 @@ function createServer() {
         mimeType: "text/markdown",
       },
       async () => ({
-        contents: [{ uri: entry.url, mimeType: "text/markdown", text: entry.content }],
+        contents: [
+          {
+            uri: entry.url,
+            mimeType: "text/markdown",
+            text: content,
+            _meta: { "devth.com/content": info },
+          },
+        ],
       }),
     );
   }
@@ -74,14 +82,14 @@ function createServer() {
       const terms = query.toLowerCase().split(/\s+/);
       const items = searchIndex
         .filter(({ text }) => terms.every((term) => text.includes(term)))
+        .slice(0, limit)
         .map(({ entry, body }) => {
           const lower = body.toLowerCase();
           const positions = terms.map((term) => lower.indexOf(term)).filter((index) => index >= 0);
           const start = Math.max(0, (positions.length ? Math.min(...positions) : 0) - 80);
           const { content: _content, ...info } = entry;
           return { ...info, snippet: body.slice(start, start + 320) };
-        })
-        .slice(0, limit);
+        });
       return result({ items });
     },
   );
@@ -126,7 +134,6 @@ export async function handleMcp(request) {
   if (!local && url.hostname !== "devth.com") return reject(403, "Forbidden host");
   const origin = request.headers.get("Origin");
   if (origin !== null) {
-    // Native clients omit Origin. Browser clients must use this site's exact origin.
     if (origin !== url.origin) return reject(403, "Forbidden origin");
     headers.set("Access-Control-Allow-Origin", origin);
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");

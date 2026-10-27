@@ -139,7 +139,7 @@ Only after activation does `src/main.js` import `src/x-timeline.js`, which loads
 
 Connect an MCP client using **Streamable HTTP** to **`https://devth.com/mcp`**. No login or API key is needed. This is a protocol endpoint, not a browser page; ordinary GET requests return 405. Production serves MCP through its Worker; preview remains asset-only.
 
-- **Resources:** every published post plus About, Overture, and Glossary, identified by the page's canonical HTTPS URL and served as `text/markdown`. Resource reads return the original Markdown body.
+- **Resources:** every published post plus About, Overture, and Glossary, identified by the page's canonical HTTPS URL and served as `text/markdown`. Resource reads return the original Markdown body and allowlisted content metadata in `_meta["devth.com/content"]`.
 - **`list_content`** — list titles, canonical URLs, dates, categories, and excerpts without full article bodies.
 - **`search_content`** — pass `query` and optionally `limit` (1–20, default 10). Searches titles, categories, excerpts and full bodies using case-insensitive literal terms; every term must match. Returns metadata and passages from matching articles, in archive order.
 - **`read_content`** — pass `identifier`, an exact canonical URL or path from the other tools, such as `https://devth.com/beautiful-constraint` or `/beautiful-constraint`. Returns metadata and the complete original Markdown body. Relative links resolve against the returned canonical URL.

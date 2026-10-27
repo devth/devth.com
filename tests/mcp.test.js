@@ -72,7 +72,13 @@ describe("public content MCP", () => {
     ).content;
     const uri = "https://devth.com/beautiful-constraint";
     const resource = (await rpc("resources/read", { uri })).result.contents[0];
-    expect(resource).toEqual({ uri, mimeType: "text/markdown", text: expected });
+    const metadata = data(await call("list_content")).items.find((item) => item.url === uri);
+    expect(resource).toEqual({
+      uri,
+      mimeType: "text/markdown",
+      text: expected,
+      _meta: { "devth.com/content": metadata },
+    });
     for (const identifier of [uri, "/beautiful-constraint"]) {
       const article = data(await call("read_content", { identifier }));
       expect(article.url).toBe(uri);

@@ -31,7 +31,9 @@ test("a real MCP client discovers, searches and reads published writing through 
       name: "read_content",
       arguments: { identifier: found.url },
     });
-    expect(JSON.parse(read.content[0].text).content).toBe(resource.contents[0].text);
+    const { content, ...metadata } = JSON.parse(read.content[0].text);
+    expect(content).toBe(resource.contents[0].text);
+    expect(resource.contents[0]._meta).toEqual({ "devth.com/content": metadata });
     const unknown = await client.callTool({
       name: "read_content",
       arguments: { identifier: "/drafts/private" },
