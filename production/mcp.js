@@ -3,6 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/cfworker-provider.js";
 import { z } from "zod";
 import catalog from "./.generated-content.json";
+import { mcpHelp } from "./mcp-help.js";
 
 const metadata = catalog.map(({ content: _content, ...entry }) => entry);
 const byIdentifier = new Map(
@@ -30,7 +31,17 @@ const result = (value) => ({
   structuredContent: value,
 });
 
-function createServer() {
+const notFound = () => ({
+  isError: true,
+  content: [
+    {
+      type: "text",
+      text: "Published content not found. Use list_content to find a canonical URL or path.",
+    },
+  ],
+});
+
+function createServer(env) {
   const server = new McpServer(
     { name: "devth.com", version: "1.0.0", websiteUrl: "https://devth.com" },
     { jsonSchemaValidator: new CfWorkerJsonSchemaValidator() },
@@ -103,17 +114,22 @@ function createServer() {
     },
     async ({ identifier }) => {
       const entry = byIdentifier.get(identifier);
-      return entry
-        ? result(entry)
-        : {
-            isError: true,
-            content: [
-              {
-                type: "text",
-                text: "Published content not found. Use list_content to find a canonical URL or path.",
-              },
-            ],
-          };
+      return entry ? result(entry) : notFound();
+    },
+  );
+  server.registerTool(
+    "get_hit_count",
+    {
+      description:
+        "Read the current persistent hit count for a published post or authored page without incrementing it. Pass an exact canonical URL or path from list_content. Counts image requests, not unique visitors.",
+      inputSchema: { identifier: z.string().min(1).max(2048) },
+      annotations,
+    },
+    async ({ identifier }) => {
+      const entry = byIdentifier.get(identifier);
+      if (!entry) return notFound();
+      const hitCount = await env.COUNTERS.getByName(entry.path).visit(false);
+      return result({ path: entry.path, url: entry.url, hitCount });
     },
   );
   return server;
@@ -123,10 +139,10 @@ const responseHeaders = {
   "Cache-Control": "no-store",
   "X-Robots-Tag": "noindex",
   "X-Content-Type-Options": "nosniff",
-  Vary: "Origin",
+  Vary: "Origin, Accept",
 };
 
-export async function handleMcp(request) {
+export async function handleMcp(request, env) {
   const url = new URL(request.url);
   const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
   const headers = new Headers(responseHeaders);
@@ -136,18 +152,32 @@ export async function handleMcp(request) {
   if (origin !== null) {
     if (origin !== url.origin) return reject(403, "Forbidden origin");
     headers.set("Access-Control-Allow-Origin", origin);
-    headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     headers.set(
       "Access-Control-Allow-Headers",
       "Content-Type, Accept, MCP-Protocol-Version, MCP-Session-Id",
     );
   }
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (request.method === "GET") {
+    const types = (request.headers.get("Accept") || "").split(",").flatMap((value) => {
+      const [type, ...parameters] = value
+        .toLowerCase()
+        .split(";")
+        .map((part) => part.trim());
+      const quality = parameters.find((part) => part.startsWith("q="));
+      return quality && !(Number(quality.slice(2)) > 0) ? [] : [type];
+    });
+    if (types.includes("text/html") && !types.includes("text/event-stream")) {
+      headers.set("Content-Type", "text/html; charset=utf-8");
+      return new Response(mcpHelp, { headers });
+    }
+  }
   if (request.method !== "POST") {
-    headers.set("Allow", "POST, OPTIONS");
+    headers.set("Allow", "GET, POST, OPTIONS");
     return reject(405, "Use an MCP Streamable HTTP client with POST /mcp.");
   }
-  const server = createServer();
+  const server = createServer(env);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
