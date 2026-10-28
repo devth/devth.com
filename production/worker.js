@@ -7,7 +7,7 @@ export default {
     if (new URL(request.url).pathname === "/counter.svg") {
       return counter.fetch(request, env);
     }
-    if (new URL(request.url).pathname === "/mcp") return handleMcp(request);
+    if (new URL(request.url).pathname === "/mcp") return handleMcp(request, env);
     return env.ASSETS.fetch(request);
   },
 };

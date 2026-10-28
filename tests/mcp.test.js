@@ -7,7 +7,7 @@ const headers = {
   Accept: "application/json, text/event-stream",
   "MCP-Protocol-Version": "2025-11-25",
 };
-async function send(body, extraHeaders = {}) {
+async function send(body, extraHeaders = {}, env) {
   const { handleMcp } = await import("../production/mcp.js");
   return handleMcp(
     new Request("https://devth.com/mcp", {
@@ -15,14 +15,15 @@ async function send(body, extraHeaders = {}) {
       headers: { ...headers, ...extraHeaders },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
+    env,
   );
 }
-async function rpc(method, params = {}, id = 1) {
-  const response = await send({ jsonrpc: "2.0", id, method, params });
+async function rpc(method, params = {}, env) {
+  const response = await send({ jsonrpc: "2.0", id: 1, method, params }, {}, env);
   expect(response.status).toBe(200);
   return response.json();
 }
-const call = (name, args = {}) => rpc("tools/call", { name, arguments: args });
+const call = (name, args = {}, env) => rpc("tools/call", { name, arguments: args }, env);
 const data = (reply) => JSON.parse(reply.result.content[0].text);
 
 describe("public content MCP", () => {
@@ -48,6 +49,7 @@ describe("public content MCP", () => {
       "list_content",
       "search_content",
       "read_content",
+      "get_hit_count",
     ]);
     expect(tools.every((tool) => tool.annotations.readOnlyHint)).toBe(true);
   });
@@ -84,6 +86,59 @@ describe("public content MCP", () => {
       expect(article.url).toBe(uri);
       expect(article.content).toBe(expected);
     }
+  });
+
+  it("reads persistent hit counts without incrementing them and validates identifiers before storage access", async () => {
+    let views = 123;
+    const lookups = [];
+    const env = {
+      COUNTERS: {
+        getByName(path) {
+          lookups.push(path);
+          return {
+            async visit(increment) {
+              if (increment) views += 1;
+              return views;
+            },
+          };
+        },
+      },
+    };
+    for (const identifier of ["/about", "https://devth.com/about"]) {
+      expect(data(await call("get_hit_count", { identifier }, env))).toEqual({
+        path: "/about",
+        url: "https://devth.com/about",
+        hitCount: 123,
+      });
+    }
+    expect(views).toBe(123);
+    for (const identifier of [
+      "/",
+      "/drafts/next-guy",
+      "/../about",
+      "https://example.com/",
+      "/cosmos",
+    ]) {
+      expect((await call("get_hit_count", { identifier }, env)).result.isError).toBe(true);
+    }
+    expect(lookups).toEqual(["/about", "/about"]);
+  });
+
+  it("reports unavailable counter storage as an error rather than a zero count", async () => {
+    const env = {
+      COUNTERS: {
+        getByName() {
+          return {
+            async visit() {
+              throw new Error("Counter storage unavailable");
+            },
+          };
+        },
+      },
+    };
+    const reply = await call("get_hit_count", { identifier: "/about" }, env);
+    expect(reply.result.isError).toBe(true);
+    expect(reply.result.content[0].text).toContain("Counter storage unavailable");
   });
 
   it("searches full bodies literally and case-insensitively with matching passages and bounded results", async () => {
@@ -125,6 +180,40 @@ describe("public content MCP", () => {
     expect(replies.map((reply) => data(reply).path)).toEqual(["/about", "/overture", "/glossary"]);
   });
 
+  it("serves noindex setup instructions to browsers without changing MCP stream behavior", async () => {
+    const { handleMcp } = await import("../production/mcp.js");
+    const response = await handleMcp(
+      new Request("https://devth.com/mcp", {
+        headers: { Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8" },
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("text/html; charset=utf-8");
+    expect(response.headers.get("x-robots-tag")).toBe("noindex");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(response.headers.get("vary")).toBe("Origin, Accept");
+    const html = await response.text();
+    expect(html).toContain("devth.com MCP");
+    expect(html).toContain("https://devth.com/mcp");
+    expect(html).toContain("pi mcp add devth --url https://devth.com/mcp");
+    for (const tool of ["list_content", "search_content", "read_content", "get_hit_count"]) {
+      expect(html).toContain(tool);
+    }
+    expect(html).not.toMatch(/<script|<iframe|<img/i);
+    for (const Accept of ["text/event-stream", "text/html, text/event-stream", "text/html;q=0"]) {
+      expect(
+        (await handleMcp(new Request("https://devth.com/mcp", { headers: { Accept } }))).status,
+      ).toBe(405);
+    }
+    expect(
+      (
+        await handleMcp(
+          new Request("https://evil.example/mcp", { headers: { Accept: "text/html" } }),
+        )
+      ).status,
+    ).toBe(403);
+  });
+
   it("validates browser origins and supports same-origin preflight without wildcard CORS", async () => {
     const { handleMcp } = await import("../production/mcp.js");
     for (const origin of [
@@ -147,7 +236,7 @@ describe("public content MCP", () => {
     for (const method of ["GET", "DELETE", "PUT"]) {
       const result = await handleMcp(new Request("https://devth.com/mcp", { method }));
       expect(result.status).toBe(405);
-      expect(result.headers.get("allow")).toBe("POST, OPTIONS");
+      expect(result.headers.get("allow")).toBe("GET, POST, OPTIONS");
     }
     expect((await handleMcp(new Request("https://evil.example/mcp"))).status).toBe(403);
   });
