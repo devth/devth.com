@@ -7,6 +7,7 @@ export function initializeSearch(dialog) {
   const results = dialog.querySelector("[role=listbox]");
   const status = dialog.querySelector("[role=status]");
   const fallback = dialog.querySelector(".quick-nav-fallback");
+  const clear = dialog.querySelector("[data-clear-search]");
   let pages = [];
   let loaded = false;
   let failed = false;
@@ -58,12 +59,18 @@ export function initializeSearch(dialog) {
         return item;
       }),
     );
+    clear.hidden = matches.length !== 0 || !query.value.trim();
     status.textContent = matches.length
       ? matches.length + (matches.length === 1 ? " page." : " pages.")
       : "No matching pages.";
     select(0);
   }
 
+  clear.addEventListener("click", () => {
+    query.value = "";
+    render();
+    query.focus();
+  });
   query.addEventListener("input", render);
   query.addEventListener("keydown", (event) => {
     if (event.isComposing || event.metaKey || event.altKey) return;

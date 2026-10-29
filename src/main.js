@@ -21,7 +21,7 @@ function drawSigil(link) {
   if (motion.matches || link.classList.contains("skip-link")) return;
   activeLink = link;
   link.classList.add("link-distortion");
-  const rect = (link.querySelector(".entry-arrow") || link).getBoundingClientRect();
+  const rect = (link.querySelector(".entry-title") || link).getBoundingClientRect();
   sigil.style.left = Math.min(innerWidth - 72, Math.max(0, rect.right - 42)) + "px";
   sigil.style.top = Math.min(innerHeight - 72, Math.max(0, rect.top + rect.height / 2 - 36)) + "px";
   const points = Array.from({ length: 5 }, () => [
@@ -161,7 +161,13 @@ if (search) {
     const count = entries.filter((entry) => !entry.hidden).length;
     document.querySelector("[data-no-results]").hidden = count !== 0;
     status.textContent = count + (count === 1 ? " post found." : " posts found.");
+    status.classList.toggle("sr-only", !category && !search.value.trim());
   }
+  document.querySelector("[data-clear-filter]").addEventListener("click", () => {
+    search.value = "";
+    filter();
+    search.focus();
+  });
   filter();
   search.addEventListener("input", filter);
   window.addEventListener("pageshow", filter);

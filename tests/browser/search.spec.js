@@ -51,6 +51,11 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   await query.fill("no-matching-page-123456");
   await expect(dialog.getByRole("status")).toHaveText("No matching pages.");
   await expect(dialog.getByRole("option")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Clear search", exact: true }).click();
+  await expect(query).toBeFocused();
+  await expect(query).toHaveValue("");
+  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("button", { name: "Clear search", exact: true })).toBeHidden();
   await query.fill("about");
   await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("quick-search.png") });

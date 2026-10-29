@@ -106,7 +106,7 @@ function layout({
     <header class="site-header">
       <a class="brand" href="/" aria-label="devth home"><${slug === "" ? "h1" : "span"} class="brand-mark">devth<span aria-hidden="true">_</span></${slug === "" ? "h1" : "span"}><span class="brand-tagline">work in progress</span></a>
       <nav aria-label="Main navigation">${nav.map(([href, label]) => `<a href="${href}"${href === `/${slug}` ? ' aria-current="page"' : ""}>${label}</a>`).join("")}</nav>
-      <button class="header-search" type="button" data-quick-nav-trigger aria-label="Search" aria-haspopup="dialog" aria-controls="quick-nav" aria-keyshortcuts="Meta+K Control+K" hidden><span aria-hidden="true">⌕</span><kbd aria-hidden="true">⌘K</kbd></button>
+      <button class="header-search" type="button" data-quick-nav-trigger aria-label="Search" aria-haspopup="dialog" aria-controls="quick-nav" aria-keyshortcuts="Meta+K Control+K" hidden><span aria-hidden="true">⌕</span><span class="header-search-label">search</span><kbd aria-hidden="true">⌘K</kbd></button>
       <a class="header-github" href="https://github.com/devth">github <span aria-hidden="true">↗</span></a>
     </header>
     <main id="main" tabindex="-1">${body}</main>
@@ -120,6 +120,7 @@ function layout({
     <h2 id="quick-nav-title" class="sr-only">Search</h2>
     <div class="quick-nav-input"><label class="sr-only" for="quick-nav-query">Search pages</label><input id="quick-nav-query" type="search" role="combobox" placeholder="Search pages" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-expanded="true" aria-controls="quick-nav-results" aria-describedby="quick-nav-status" autofocus><button type="button" data-quick-nav-close aria-label="Close search">esc</button></div>
     <p id="quick-nav-status" role="status">Loading…</p>
+    <button class="text-action quick-nav-reset" type="button" data-clear-search hidden>Clear search</button>
     <ul id="quick-nav-results" role="listbox" aria-label="Pages"></ul>
     <a class="quick-nav-fallback" href="/" hidden>home</a>
   </dialog>
@@ -136,7 +137,7 @@ function home(posts) {
   return `<section id="writing" class="writing" aria-label="Posts">
     <div class="section-heading"><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
     <div class="category-filter" data-category-filter hidden><span data-category-label></span><a href="/">all posts</a></div>
-    <p class="sr-only" role="status" data-search-status></p>
+    <p class="archive-status sr-only" role="status" data-search-status></p>
     <div class="archive">${years
       .map(
         (year) =>
@@ -144,12 +145,12 @@ function home(posts) {
             .filter((post) => post.date.startsWith(year))
             .map(
               (post) =>
-                `<li class="entry" data-categories="${escape(JSON.stringify(post.categories))}" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${post.categories.map(categoryLink).join(" / ")}</span></div><a class="entry-link" href="/${post.slug}"><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div><span class="entry-arrow" aria-hidden="true">↗</span></a></li>`,
+                `<li class="entry" data-categories="${escape(JSON.stringify(post.categories))}" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${post.categories.map(categoryLink).join(" / ")}</span></div><a class="entry-link" href="/${post.slug}"><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div></a></li>`,
             )
             .join("")}</ol></section>`,
       )
       .join("")}</div>
-    <p class="no-results" data-no-results hidden>No matching posts.</p>
+    <div class="no-results" data-no-results hidden><p>No matching posts.</p><button class="text-action" type="button" data-clear-filter>Clear filter</button></div>
     <div class="archive-end"><a href="/feed.xml">RSS ↗</a></div>
   </section>`;
 }
