@@ -5,7 +5,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: 0,
-  workers: 3,
+  // Software WebGL and screenshot capture contend for CPU on shared CI runners.
+  workers: process.env.CI ? 1 : 3,
   reporter: "list",
   use: {
     baseURL: process.env.BASE_URL || "http://127.0.0.1:4173",
