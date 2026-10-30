@@ -43,6 +43,16 @@ test("reading pages use the shared navigation instead of redundant back links", 
   await expect(page.getByRole("link", { name: /older post/ })).toBeVisible();
 });
 
+test("wide year inscription stays out of controls on narrower desktop windows", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await page.goto("/");
+  const year = page.getByRole("heading", { name: "2025", exact: true });
+  await year.hover();
+  await expect(year.locator(".year-note")).toBeHidden();
+});
+
 test("year inscription is decorative and does not shift the archive", async ({
   page,
 }, testInfo) => {
@@ -66,6 +76,10 @@ test("year inscription is decorative and does not shift the archive", async ({
     await expect(note).toHaveCSS("right", "0px");
     await expect(note).toHaveCSS("font-weight", "900");
     await expect(note).toHaveCSS("opacity", "0.65");
+    const naturalWidth = await note.evaluate((element) =>
+      parseFloat(getComputedStyle(element).width),
+    );
+    expect(box.width).toBeCloseTo(naturalWidth * 1.45, 1);
     expect(box.x + box.width).toBeCloseTo(viewport.width, 0);
     expect(box.height).toBeGreaterThan(viewport.height * 0.75);
     expect(box.y).toBeGreaterThanOrEqual(0);

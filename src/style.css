@@ -217,7 +217,7 @@ kbd {
 .year-note {
   display: none;
 }
-@media (min-width: 1001px) and (hover: hover) and (pointer: fine) {
+@media (min-width: 1340px) and (hover: hover) and (pointer: fine) {
   .year-note {
     display: block;
     position: fixed;
@@ -232,7 +232,9 @@ kbd {
     letter-spacing: -0.04em;
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    transform: translateY(-50%) rotate(180deg);
+    --year-stretch: 1.45;
+    transform: translate(calc((1 - var(--year-stretch)) * 50%), -50%) rotate(180deg)
+      scaleX(var(--year-stretch));
     white-space: nowrap;
     pointer-events: none;
   }
