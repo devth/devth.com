@@ -508,12 +508,14 @@ button,
   position: relative;
   color: inherit;
   text-decoration: none;
+  /* The heading animates its inherited color; do not animate it a second time. */
+  transition: none;
 }
 .prose .header-anchor::before {
   content: "#" / "";
   position: absolute;
   inset-inline-start: 0;
-  margin-inline-start: -0.7em;
+  margin-inline-start: max(-0.7em, -5vw);
   color: var(--accent);
   opacity: 0;
   transition:
