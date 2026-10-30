@@ -8,19 +8,79 @@ const article = document.querySelector("article");
 const svg = nav.querySelector("svg");
 const track = nav.querySelector(".toc-track");
 const progress = nav.querySelector(".toc-progress");
+const arrival = nav.querySelector(".toc-arrival");
+const motion = matchMedia("(prefers-reduced-motion: reduce)");
+let scrollFrame = 0;
+function cancelScroll() {
+  cancelAnimationFrame(scrollFrame);
+  scrollFrame = 0;
+}
+links.forEach((link, index) =>
+  link.addEventListener("click", (event) => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+    event.preventDefault();
+    cancelScroll();
+    const heading = headings[index];
+    if (location.hash !== link.hash) history.pushState(history.state, "", link.hash);
+    const padding = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    const start = scrollY;
+    const destination = Math.max(
+      0,
+      Math.min(
+        document.documentElement.scrollHeight - innerHeight,
+        heading.getBoundingClientRect().top + start - padding,
+      ),
+    );
+    const focusHeading = () => {
+      if (!heading.hasAttribute("tabindex")) {
+        heading.tabIndex = -1;
+        heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
+      }
+      heading.focus({ preventScroll: true });
+    };
+    if (motion.matches) {
+      scrollTo({ top: destination, behavior: "instant" });
+      focusHeading();
+      return;
+    }
+    const began = performance.now();
+    function step(now) {
+      const fraction = Math.min(1, (now - began) / 220);
+      scrollTo({
+        top: start + (destination - start) * (1 - Math.pow(1 - fraction, 3)),
+        behavior: "instant",
+      });
+      if (fraction < 1) scrollFrame = requestAnimationFrame(step);
+      else {
+        scrollFrame = 0;
+        focusHeading();
+      }
+    }
+    scrollFrame = requestAnimationFrame(step);
+  }),
+);
+for (const type of ["wheel", "touchstart", "pointerdown", "keydown"])
+  window.addEventListener(type, cancelScroll, { passive: true });
+window.addEventListener("pagehide", cancelScroll);
+motion.addEventListener("change", cancelScroll);
 let distances = [];
 let ends = [];
 let length = 1;
 let queued = false;
 
 function measure() {
+  container.toggleAttribute(
+    "data-sticky",
+    innerWidth > 700 && nav.getBoundingClientRect().height <= innerHeight - 56,
+  );
   const bounds = nav.getBoundingClientRect();
   const points = links.map((link) => {
     const rect = link.getBoundingClientRect();
     return {
       x: 4 + Number(link.dataset.depth) * 8,
       halfHeight: rect.height / 2,
-      y: rect.top - bounds.top + nav.scrollTop + rect.height / 2,
+      y: rect.top - bounds.top + rect.height / 2,
     };
   });
   let path = "M" + points[0].x + " " + (points[0].y - points[0].halfHeight + 1);
@@ -40,6 +100,7 @@ function measure() {
   ends = distances.map((distance, index) => distance + points[index].halfHeight - 1);
   track.setAttribute("d", path);
   progress.setAttribute("d", path);
+  arrival.setAttribute("d", path);
   svg.setAttribute("height", String(nav.querySelector("ol").scrollHeight));
   container.dataset.enhanced = "";
   update();
@@ -83,6 +144,7 @@ window.addEventListener(
   },
   { passive: true },
 );
+window.addEventListener("resize", measure);
 const resize = new ResizeObserver(measure);
 resize.observe(nav);
 resize.observe(article);

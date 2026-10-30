@@ -10,13 +10,9 @@ const headers = {
 
 function digitsSvg(count) {
   const digits = String(count).padStart(7, "0");
-  const cells = [...digits]
-    .map(
-      (digit, index) =>
-        `<g transform="translate(${index * 18} 0)"><rect x="0.5" y="0.5" width="17" height="23" rx="1" fill="#22231f" stroke="#62635b"/><path d="M1 12H17" stroke="#10110e"/><text x="9" y="17" text-anchor="middle" fill="#f4f3ec" font-family="monospace" font-size="17">${digit}</text></g>`,
-    )
-    .join("");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${digits.length * 18}" height="24" viewBox="0 0 ${digits.length * 18} 24"><title>${count} page views</title>${cells}</svg>`;
+  const width = digits.length * 16 + 14;
+  const ticks = [...digits].map((_, index) => `M${12 + index * 16} 22v2`).join(" ");
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="24" viewBox="0 0 ${width} 24"><title>${count} page views</title><style>svg{color:#22231f}.ticks{stroke:#62635b}.signal{stroke:#bd3b19}@media(prefers-color-scheme:dark){svg{color:#e8e8de}.ticks{stroke:#a4a69a}.signal{stroke:#f68765}}</style><path class="signal" d="M2 7v10" fill="none" stroke-width="1.5"/><text x="12" y="17" textLength="${digits.length * 16 - 4}" lengthAdjust="spacing" fill="currentColor" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" font-weight="500" font-style="normal">${digits}</text><path class="ticks" d="${ticks}" fill="none" stroke-width="1" opacity=".65"/></svg>`;
 }
 
 export default {

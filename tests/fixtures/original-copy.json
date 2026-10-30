@@ -30,7 +30,7 @@
     "a-simple-type-class": {
       "title": "A Simple type class",
       "excerpt": "Type classes provide a way of achieving ad hoc polymorphism",
-      "bodySha256": "c441c0239c429edc8fde77d00916704d6f95d8542a5cfa09a75542a729e60ca5"
+      "bodySha256": "b9d978b534d89956a634df00b80c745ed8726729e4bd1403d89352eff1253f51"
     },
     "yetibot-on-docker": {
       "title": "Yetibot on Docker in 𝓧 minutes or less",

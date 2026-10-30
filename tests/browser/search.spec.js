@@ -37,7 +37,7 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   await expect(query).toBeFocused();
-  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("option")).toHaveCount(23);
   await query.press("ArrowDown");
   await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toHaveAttribute(
     "aria-selected",
@@ -51,6 +51,11 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   await query.fill("no-matching-page-123456");
   await expect(dialog.getByRole("status")).toHaveText("No matching pages.");
   await expect(dialog.getByRole("option")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Clear search", exact: true }).click();
+  await expect(query).toBeFocused();
+  await expect(query).toHaveValue("");
+  await expect(dialog.getByRole("option")).toHaveCount(23);
+  await expect(dialog.getByRole("button", { name: "Clear search", exact: true })).toBeHidden();
   await query.fill("about");
   await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("quick-search.png") });
@@ -72,7 +77,7 @@ test("Ctrl+N/P selects next and previous search results without changing the que
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   const selected = dialog.locator('[role="option"][aria-selected="true"]');
-  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("option")).toHaveCount(23);
   await query.press("Control+n");
   await expect(selected).toContainText("About Trevor Hartman");
   await query.press("Control+n");
@@ -82,7 +87,8 @@ test("Ctrl+N/P selects next and previous search results without changing the que
   await query.press("Control+p");
   await expect(selected).toContainText("Writing");
   await query.press("Control+p");
-  await expect(selected).toHaveText("Cosmos");
+  await expect(selected).toHaveAttribute("href", "/hover-lab");
+  await expect(selected.locator(":scope > span")).toHaveText("Hover Lab");
   await query.press("Control+n");
   await expect(selected).toContainText("Writing");
   await expect(query).toHaveValue("");
@@ -98,7 +104,7 @@ test("unavailable search leaves normal navigation usable", async ({ page }) => {
   await page.getByRole("button", { name: "Search", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   await expect(dialog.getByRole("status")).toHaveText("Search unavailable.");
-  await dialog.getByRole("link", { name: "home", exact: true }).click();
+  await dialog.getByRole("link", { name: "Browse writing", exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole("heading", { name: "devth", exact: true })).toBeVisible();
 });

@@ -1,6 +1,6 @@
 # devth.com
 
-Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
+Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page, and `/hover-lab` is a separate SVG hover-study board. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
 
 ## Develop
 
@@ -90,7 +90,7 @@ The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_AP
 - `/counter.svg` is first-party. Only this path and `/mcp` run Worker code before assets; ordinary pages remain direct static asset responses.
 - `wrangler.www.jsonc` deploys **devth-com-www** on **www.devth.com/\***, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
 - Both production configs pin the Trevor Hartman account and devth.com zone, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched. Root and www DNS must remain Cloudflare-proxied for these routes to run.
-- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 23 HTML pages before publishing. Cosmos and the 404 retain their own noindex metadata.
+- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 24 HTML pages before publishing. Cosmos, Hover Lab, and the 404 retain their own noindex metadata.
 - `npm run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
 
 Nameservers and email records are unchanged. The existing Vercel project is retained for rollback, not used by the new deployment workflow; its legacy GitHub integration is separate from the passing Cloudflare checks.
@@ -111,9 +111,17 @@ Reduced-motion users start with drift paused. The scene stops rendering offscree
 
 Link hovers draw a short, randomized node/edge sigil beside the link without moving or obscuring its text. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
 
+### Hover Lab
+
+Open [/hover-lab](https://preview.devth.com/hover-lab), linked beside Cosmos in the footer. Nine numbered, enlarged SVG studies compare a five-node sigil, double/triple helices, a woven braid, an elastic coil, a torus knot, a gyroscope, a cubic truss, and a geodesic cage. Hover or focus one to preview it; click or tap to hold it, and again to stop. **Compare all** animates the visible studies together. The site’s real link-hover effect is unchanged until a direction is selected.
+
+All shapes are pre-rendered and remain viewable without JavaScript. Reduced motion keeps them static; one animation loop services only active, visible studies and stops when nothing is running, the page loses focus, or it is hidden. This page is noindex, excluded from the sitemap/feed/MCP catalog, but available in quick navigation. Its counter uses its own path in the existing namespace, with no storage or identity changes.
+
 ### Navigation and contents
 
-Header/footer navigation and category links use lowercase labels; authored titles retain their original casing. Category labels link to `/?category=…#writing`, where the enhanced archive applies an exact category filter. With JavaScript disabled, these remain native links to the complete, readable archive.
+At the author’s request, on-page writing renders lowercase, except Trevor Hartman’s name, explicit acronyms, case-sensitive literals, and the oversized “WAS A GOOD YEAR” inscription, which stays ALL CAPS. `src/lettercase.js` marks known acronyms, visible URLs, and environment-variable names at build time and in dynamic search results; code blocks, inline code, keyboard labels, and user-entered fields keep their case. Add new acronyms to that list when publishing. Original Markdown, headings/anchor IDs, metadata, and MCP document bodies retain their authored content. Header/footer divider rules are removed; X and GitHub are accessible icon links in the footer. About’s complete square photo spans the browser width, without a border or crop.
+
+Header/footer navigation and category links use lowercase labels. Category labels link to `/?category=…#writing`, where the enhanced archive applies an exact category filter. With JavaScript disabled, these remain native links to the complete, readable archive.
 
 Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows or Ctrl+N/Ctrl+P select the next/previous result, Enter follows its ordinary anchor, and Escape closes and restores focus. Search failure leaves a home link and normal navigation available. Browsers without dialog support retain the existing navigation.
 
@@ -127,13 +135,11 @@ Internal same-origin navigation uses native cross-document View Transitions: a 2
 
 The CSS enhancement needs no JavaScript. Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation. There is no client-side router, intercepted link navigation or artificial loading delay; fragment links, downloads, external links, modified clicks and browser history retain native behavior.
 
-### X timeline on About
+### X profile on About
 
-About includes an optional **@devth** profile timeline. The initial page contains only a profile link and a load button; there are no requests to X until the visitor activates **Load @devth timeline**. This consent is per page load, not saved in a cookie or local storage. With JavaScript disabled, the profile link remains usable and the load button stays hidden.
+About has a direct **@devth on X** link outside its authored article. It works without JavaScript and makes no requests to X until the visitor follows the link. There is no embedded timeline, third-party loader, loading state, or local consent state.
 
-Only after activation does `src/main.js` import `src/x-timeline.js`, which loads X's official `platform.twitter.com/widgets.js` and calls `twttr.widgets.createTimeline` with `dnt: true`, the current light/dark preference, and a 600px height. Do-not-track mode requests reduced personalization, not a guarantee of zero third-party tracking after loading. X controls the embedded content, availability and login requirements; blockers or X restrictions can prevent it from appearing. Script errors, an unavailable widget or a 15-second timeout leave the profile link and a retryable load button. Other pages never initialize the timeline.
-
-`tests/browser/x-timeline.spec.js` verifies pre-consent isolation, keyboard activation, mobile sizing, blocked loading, timeouts and no-JavaScript fallback with a stub of the external widget API. These tests do not depend on live X availability or claim to verify X's current feed contents.
+The official opt-in timeline was removed after repeated live checks found X returning HTTP 429 for its feed endpoint. `tests/browser/x-profile.spec.js` verifies the direct link, no third-party requests or embed, and the no-JavaScript version. These tests do not claim to verify X’s profile availability.
 
 ### Public content MCP
 
@@ -143,9 +149,9 @@ Connect an MCP client using **Streamable HTTP** to **`https://devth.com/mcp`**. 
 - **`list_content`** — list titles, canonical URLs, dates, categories, and excerpts without full article bodies.
 - **`search_content`** — pass `query` and optionally `limit` (1–20, default 10). Searches titles, categories, excerpts and full bodies using case-insensitive literal terms; every term must match. Returns metadata and passages from matching articles, in archive order.
 - **`read_content`** — pass `identifier`, an exact canonical URL or path from the other tools, such as `https://devth.com/beautiful-constraint` or `/beautiful-constraint`. Returns metadata and the complete original Markdown body. Relative links resolve against the returned canonical URL.
-- **`get_hit_count`** — pass the same exact canonical URL or path as `read_content`, for example `{ "identifier": "/about" }`. Returns `{ "path": "/about", "url": "https://devth.com/about", "hitCount": 123 }` (illustrative count). Reads the existing production counter directly without incrementing it. These are counter-image requests, not unique visitors. Only published posts and the three authored pages are accepted, not the homepage, Cosmos or arbitrary URLs. Storage failures return a tool error, not a misleading zero.
+- **`get_hit_count`** — pass the same exact canonical URL or path as `read_content`, for example `{ "identifier": "/about" }`. Returns `{ "path": "/about", "url": "https://devth.com/about", "hitCount": 123 }` (illustrative count). Reads the existing production counter directly without incrementing it. These are counter-image requests, not unique visitors. Only published posts and the three authored pages are accepted, not the homepage, Cosmos, Hover Lab or arbitrary URLs. Storage failures return a tool error, not a misleading zero.
 
-Both the website and MCP catalog use `scripts/content.js`. Each site build writes `production/.generated-content.json`, an ignored build input bundled into the Worker, not a new public asset. Only `posts/` and the three explicit authored pages are loaded. Drafts, unpublished non-posts, the homepage's generated archive, Cosmos application source and error pages are not MCP documents. Frontmatter is allowlisted into public metadata rather than returned wholesale. Content reads never fetch user-supplied URLs or access the filesystem at runtime, and do not increment hit counters. `get_hit_count` uses the existing `COUNTERS` Durable Object binding with `visit(false)`; it does not request the SVG or create another counter namespace.
+Both the website and MCP catalog use `scripts/content.js`. Each site build writes `production/.generated-content.json`, an ignored build input bundled into the Worker, not a new public asset. Only `posts/` and the three explicit authored pages are loaded. Drafts, unpublished non-posts, the homepage's generated archive, Cosmos/Hover Lab application source and error pages are not MCP documents. Frontmatter is allowlisted into public metadata rather than returned wholesale. Content reads never fetch user-supplied URLs or access the filesystem at runtime, and do not increment hit counters. `get_hit_count` uses the existing `COUNTERS` Durable Object binding with `visit(false)`; it does not request the SVG or create another counter namespace.
 
 The official MCP SDK handles initialization, protocol errors and JSON responses. The endpoint is stateless, with a fresh server and transport per request; no new Durable Object or database. POST bodies are limited to 32 KiB, queries to 200 characters, and read identifiers to 2,048 characters. There is no persistent GET/SSE stream or session deletion. Responses are `noindex` and `no-store`.
 
@@ -157,7 +163,7 @@ Native/server-side clients can connect without an Origin header. Browser clients
 
 Production pages embed an SVG from `https://devth.com/counter.svg`. Preview pages continue to use `devth-hit-counter-preview.devth.workers.dev`. Each GET increments that page’s Durable Object counter atomically; HEAD reads without incrementing. Responses use `Cache-Control: no-store`. Only generated, published page paths are accepted, so arbitrary URLs cannot create new counter objects.
 
-These count counter-image requests, not unique people: reloads and bots can count; disabled images, blockers, and back/forward-cache restores may not. There are no cookies, visitor identifiers, or analytics scripts. Production counts start fresh in the `devth-com` Worker’s namespace and persist across deployments. Existing preview/test totals remain in the separate original preview namespace; production never imports or resets them. A failed counter cannot prevent the static writing from loading.
+These count counter-image requests, not unique people: reloads and bots can count; disabled images, blockers, and back/forward-cache restores may not. This counter itself uses no cookies, visitor identifiers, or analytics script. Cloudflare Web Analytics is separately enabled at the edge, rather than embedded in this repository’s HTML. Its dashboard currently includes production and preview traffic; filter by hostname when interpreting those reports. Absence of a beacon in the source or a single fetched response is not sufficient to establish whether edge analytics is enabled. Production counts start fresh in the `devth-com` Worker’s namespace and persist across deployments. Existing preview/test totals remain in the separate original preview namespace; production never imports or resets them. A failed counter cannot prevent the static writing from loading.
 
 Set `COUNTER_ORIGIN` at build time to point at another instance. Local Playwright tests use port 4174; live tests can also set `COUNTER_ORIGIN` to override the deployed counter. The counter’s source page list is regenerated before Wrangler builds; `counter/.generated-pages.json` is ignored.
 

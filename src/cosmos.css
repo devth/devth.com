@@ -51,7 +51,7 @@ body.cosmos-page {
 .cosmos-heading h1 {
   font: 13px var(--mono);
   letter-spacing: 0.08em;
-  text-transform: uppercase;
+  text-transform: lowercase;
   margin: 0;
 }
 .cosmos-stage {

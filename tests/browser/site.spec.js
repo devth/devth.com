@@ -7,6 +7,7 @@ const routes = [
   "/overture",
   "/glossary",
   "/cosmos",
+  "/hover-lab",
   "/iteration-and-play",
   "/compiled-queries-in-scala",
 ];
@@ -34,7 +35,7 @@ test("archive header is minimal without a post count or lower divider", async ({
   await page.goto("/");
   await expect(page.locator(".archive-count")).toHaveCount(0);
   await expect(page.locator(".section-heading")).toHaveCSS("border-bottom-width", "0px");
-  await expect(page.locator(".site-header")).toHaveCSS("border-bottom-width", "1px");
+  await expect(page.locator(".site-header")).toHaveCSS("border-bottom-width", "0px");
   await expect(page.getByRole("searchbox", { name: "Filter writing" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Page hit counter" })).toBeVisible();
 });
@@ -62,6 +63,12 @@ test("archive filtering and keyboard shortcuts", async ({ page }) => {
   await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeHidden();
   await input.fill("this-does-not-exist");
   await expect(page.getByText("No matching posts.")).toBeVisible();
+  await page.getByRole("button", { name: "Clear filter", exact: true }).click();
+  await expect(input).toBeFocused();
+  await expect(input).toHaveValue("");
+  await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeVisible();
+  await input.fill("monorepo");
+  await expect(page.getByRole("status")).toBeVisible();
   await input.press("Escape");
   await expect(page.getByRole("status")).toHaveText("17 posts found.");
   await expect(input).toHaveValue("");

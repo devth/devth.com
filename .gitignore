@@ -5,6 +5,7 @@ production/.generated-content.json
 dist/
 .wrangler/
 .playwright-cli/
+.impeccable/critique/
 playwright-report/
 test-results/
 coverage/

@@ -85,17 +85,17 @@ describe("static publishing contract", () => {
     expect(cosmos.querySelector(".cosmos-colophon").textContent.trim()).toBe("Home ↗");
   });
 
-  it("adds the consent-based X section only outside the authored About article", () => {
+  it("offers a script-free X profile link only outside the authored About article", () => {
     const about = documentFor("about/index.html");
-    const section = about.querySelector("[data-x-timeline]");
+    const section = about.querySelector(".x-profile");
     expect(section).not.toBeNull();
     expect(section.closest("article")).toBeNull();
     expect(section.querySelector("a").href).toBe("https://x.com/devth");
-    expect(section.querySelector("button").hasAttribute("hidden")).toBe(true);
+    expect(about.querySelector("[data-x-timeline]")).toBeNull();
     expect(about.querySelector('script[src*="twitter.com"]')).toBeNull();
     expect(about.querySelector('link[rel="preconnect"][href*="twitter"]')).toBeNull();
     for (const slug of ["overture", "glossary", "beautiful-constraint"]) {
-      expect(documentFor(slug + "/index.html").querySelector("[data-x-timeline]")).toBeNull();
+      expect(documentFor(slug + "/index.html").querySelector(".x-profile")).toBeNull();
     }
   });
 
@@ -178,7 +178,7 @@ describe("static publishing contract", () => {
 
   it("indexes original titles and excerpts for lazy global search", () => {
     const index = JSON.parse(read("search.json"));
-    expect(index).toHaveLength(22);
+    expect(index).toHaveLength(23);
     for (const [slug, original] of Object.entries(originalCopy.posts)) {
       expect(index.find((page) => page.path === "/" + slug)).toMatchObject({
         title: original.title,
@@ -290,6 +290,19 @@ describe("static publishing contract", () => {
     expect(home.querySelector('nav[aria-label="Main navigation"]').textContent).not.toContain(
       "Cosmos",
     );
+  });
+
+  it("keeps the hover design board isolated from published writing", () => {
+    const lab = documentFor("hover-lab/index.html");
+    expect(lab.querySelectorAll("[data-hover-study]")).toHaveLength(9);
+    expect(lab.querySelector("meta[name=robots]").content).toContain("noindex");
+    expect(documentFor("index.html").querySelector('a[href="/hover-lab"]')).not.toBeNull();
+    expect(new URL(lab.querySelector(".hit-counter img").src).searchParams.get("page")).toBe(
+      "/hover-lab",
+    );
+    expect(read("sitemap.xml")).not.toContain("/hover-lab");
+    expect(read("feed.xml")).not.toContain("/hover-lab");
+    expect(JSON.parse(read("search.json")).some((page) => page.path === "/hover-lab")).toBe(true);
   });
 
   it("deploys only the preview hostname and preserves the counter account", () => {

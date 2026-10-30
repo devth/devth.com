@@ -5,7 +5,7 @@ export const cosmosBody = `
   </header>
   <div class="cosmos-stage" data-cosmos-stage>
     <canvas class="cosmos-canvas" aria-label="Interactive 3D ribbon sculpture. Drag to rotate. Use the arrow keys to turn, plus and minus to zoom." tabindex="0"></canvas>
-    <span class="cosmos-coordinate" data-cosmos-readout aria-hidden="true">X +0.00 / Y +0.00 / Z +0.00</span>
+    <span class="cosmos-coordinate keep-case" data-cosmos-readout aria-hidden="true">X +0.00 / Y +0.00 / Z +0.00</span>
     <span class="cosmos-crosshair cosmos-crosshair-a" aria-hidden="true">+</span>
     <span class="cosmos-crosshair cosmos-crosshair-b" aria-hidden="true">+</span>
   </div>

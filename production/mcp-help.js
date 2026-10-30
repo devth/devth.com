@@ -7,7 +7,8 @@ export const mcpHelp = `<!doctype html>
   <title>MCP setup — devth.com</title>
   <style>
     :root { color-scheme: light dark; font-family: system-ui, sans-serif; line-height: 1.6; }
-    body { max-width: 48rem; margin: 0 auto; padding: 2rem 1.25rem; }
+    body { max-width: 48rem; margin: 0 auto; padding: 2rem 1.25rem; text-transform: lowercase; }
+    code, .keep-case, h1 { text-transform: none; }
     a { color: inherit; text-underline-offset: .2em; }
     h1, h2 { line-height: 1.2; }
     h2 { margin-top: 2rem; }
@@ -22,14 +23,14 @@ export const mcpHelp = `<!doctype html>
   <nav aria-label="Site"><a href="/">devth.com</a> · <a href="/about">About</a></nav>
   <main>
     <h1>devth.com MCP</h1>
-    <p>Connect an MCP client to search and read the site's published writing and check its hit counts. No login or API key is required.</p>
+    <p>Connect an <span class="keep-case">MCP</span> client to search and read the site's published writing and check its hit counts. No login or <span class="keep-case">API</span> key is required.</p>
     <h2>Connection</h2>
     <dl>
       <dt>Endpoint</dt><dd><code>https://devth.com/mcp</code></dd>
-      <dt>Transport</dt><dd>Streamable HTTP, using POST requests</dd>
+      <dt>Transport</dt><dd>Streamable <span class="keep-case">HTTP</span>, using <code>POST</code> requests</dd>
     </dl>
     <h2>Set up a client</h2>
-    <p>Add this remote server in your client's MCP settings:</p>
+    <p>Add this remote server in your client's <span class="keep-case">MCP</span> settings:</p>
     <pre><code>{
   "mcpServers": {
     "devth": {
@@ -37,20 +38,20 @@ export const mcpHelp = `<!doctype html>
     }
   }
 }</code></pre>
-    <p>With Pi's built-in MCP support, you can run:</p>
+    <p>With Pi's built-in <span class="keep-case">MCP</span> support, you can run:</p>
     <pre><code>pi mcp add devth --url https://devth.com/mcp</code></pre>
-    <p>Then run <code>/reload</code> in an existing Pi session. If an extension manages MCP instead, add the endpoint through that extension.</p>
+    <p>Then run <code>/reload</code> in an existing Pi session. If an extension manages <span class="keep-case">MCP</span> instead, add the endpoint through that extension.</p>
     <h2>Available tools</h2>
     <dl>
-      <dt><code>list_content</code></dt><dd>List published posts and authored pages with their canonical URLs and metadata.</dd>
+      <dt><code>list_content</code></dt><dd>List published posts and authored pages with their canonical <span class="keep-case">URLs</span> and metadata.</dd>
       <dt><code>search_content</code></dt><dd>Search titles, categories, excerpts and full Markdown bodies. Pass <code>query</code> and optionally <code>limit</code> (1–20).</dd>
-      <dt><code>read_content</code></dt><dd>Read original Markdown and metadata. Pass an exact canonical URL or path as <code>identifier</code>.</dd>
+      <dt><code>read_content</code></dt><dd>Read original Markdown and metadata. Pass an exact canonical <span class="keep-case">URL</span> or path as <code>identifier</code>.</dd>
       <dt><code>get_hit_count</code></dt><dd>Read a published document's current hit count without incrementing it. Pass the same <code>identifier</code>. Counts image requests, not unique visitors.</dd>
     </dl>
     <h2>Resources and limits</h2>
-    <p>Published posts, About, Overture and Glossary are also available as Markdown resources identified by their canonical HTTPS URLs. Drafts, unpublished files and Cosmos source are excluded.</p>
-    <p>Everything is read-only. MCP requests do not increment hit counters. POST bodies are limited to 32 KiB; browser clients must use the endpoint's exact origin.</p>
-    <p>This HTML page is for browser visits. MCP clients should use POST; persistent GET event streams are not supported.</p>
+    <p>Published posts, About, Overture and Glossary are also available as Markdown resources identified by their canonical <span class="keep-case">HTTPS URLs</span>. Drafts, unpublished files and Cosmos source are excluded.</p>
+    <p>Everything is read-only. <span class="keep-case">MCP</span> requests do not increment hit counters. <code>POST</code> bodies are limited to <span class="keep-case">32 KiB</span>; browser clients must use the endpoint's exact origin.</p>
+    <p>This <span class="keep-case">HTML</span> page is for browser visits. <span class="keep-case">MCP</span> clients should use <code>POST</code>; persistent <code>GET</code> event streams are not supported.</p>
   </main>
 </body>
 </html>`;

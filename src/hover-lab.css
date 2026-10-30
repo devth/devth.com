@@ -1,0 +1,122 @@
+.hover-board {
+  padding: 48px 0 0;
+}
+.hover-heading h1 {
+  margin: 0;
+  font-size: clamp(48px, 7vw, 88px);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+.hover-heading > p {
+  max-width: 65ch;
+  margin: 20px 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.6;
+}
+.hover-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 28px;
+}
+.hover-controls p,
+.hover-heading [data-hover-static] {
+  margin: 0;
+  font: 12px/1.6 var(--mono);
+  color: var(--muted);
+  max-width: 70ch;
+}
+.hover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 48px 40px;
+  margin-top: 32px;
+}
+.hover-study {
+  min-width: 0;
+  margin: 0;
+}
+.hover-sample {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 196px;
+  padding: 8px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  font: 16px/1.4 var(--sans);
+  text-transform: inherit;
+}
+.hover-sample:disabled {
+  cursor: default;
+}
+.hover-sample-label {
+  display: block;
+  margin-top: 4px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.hover-sample svg {
+  display: block;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.study-back {
+  opacity: 0.24;
+}
+.study-front {
+  opacity: 0.85;
+}
+.study-accent {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.hover-study h2 {
+  margin: 12px 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.study-number {
+  display: inline-block;
+  margin-right: 10px;
+  color: var(--accent);
+  font: 12px/1.5 var(--mono);
+  vertical-align: middle;
+}
+.hover-study figcaption p {
+  margin: 0;
+  max-width: 38ch;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+@media (max-width: 1000px) {
+  .hover-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .hover-board {
+    padding-top: 32px;
+  }
+  .hover-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 36px;
+  }
+  .hover-sample {
+    min-height: 188px;
+  }
+}

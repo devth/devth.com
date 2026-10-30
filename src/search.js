@@ -1,3 +1,5 @@
+import { preserveCase } from "./lettercase.js";
+
 let initialized = false;
 
 export function initializeSearch(dialog) {
@@ -7,6 +9,7 @@ export function initializeSearch(dialog) {
   const results = dialog.querySelector("[role=listbox]");
   const status = dialog.querySelector("[role=status]");
   const fallback = dialog.querySelector(".quick-nav-fallback");
+  const clear = dialog.querySelector("[data-clear-search]");
   let pages = [];
   let loaded = false;
   let failed = false;
@@ -49,7 +52,7 @@ export function initializeSearch(dialog) {
         const title = document.createElement("span");
         title.textContent = page.title;
         link.append(title);
-        if (page.excerpt) {
+        if (page.excerpt && page.excerpt.trim().toLowerCase() !== page.title.trim().toLowerCase()) {
           const excerpt = document.createElement("small");
           excerpt.textContent = page.excerpt;
           link.append(excerpt);
@@ -58,12 +61,19 @@ export function initializeSearch(dialog) {
         return item;
       }),
     );
+    preserveCase(results);
+    clear.hidden = matches.length !== 0 || !query.value.trim();
     status.textContent = matches.length
       ? matches.length + (matches.length === 1 ? " page." : " pages.")
       : "No matching pages.";
     select(0);
   }
 
+  clear.addEventListener("click", () => {
+    query.value = "";
+    render();
+    query.focus();
+  });
   query.addEventListener("input", render);
   query.addEventListener("keydown", (event) => {
     if (event.isComposing || event.metaKey || event.altKey) return;
