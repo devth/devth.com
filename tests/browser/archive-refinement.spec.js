@@ -10,8 +10,8 @@ for (const width of [320, 393, 768, 1440]) {
       await expect(page.locator(".entry")).toHaveCount(17);
       await expect(page.locator(".year-group")).toHaveCount(11);
       await expect(page.locator(".entry-arrow")).toHaveCount(0);
-      await expect(page.locator(".site-header")).toHaveCSS("border-bottom-width", "1px");
-      await expect(page.locator(".site-footer")).toHaveCSS("border-top-width", "1px");
+      await expect(page.locator(".site-header")).toHaveCSS("border-bottom-width", "0px");
+      await expect(page.locator(".site-footer")).toHaveCSS("border-top-width", "0px");
       const geometry = await page.evaluate(() => {
         const year = document.querySelector(".year");
         const trigger = document.querySelector(".header-search");

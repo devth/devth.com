@@ -58,12 +58,8 @@ input {
   align-items: center;
   gap: 44px;
   min-height: 100px;
-  border-bottom: 1px solid var(--ink);
   font-family: var(--mono);
   font-size: 12px;
-}
-.site-header:has(+ main .article-header) {
-  border-bottom: 0;
 }
 .brand {
   font-family: var(--sans);
@@ -81,18 +77,13 @@ input {
   align-items: center;
   gap: 26px;
 }
-.site-header nav a,
-.header-github {
+.site-header nav a {
   text-decoration: none;
   padding: 10px 0;
 }
 .site-header [aria-current] {
   text-decoration: underline;
   text-underline-offset: 6px;
-}
-.header-github {
-  padding-left: 30px;
-  border-left: 1px solid var(--line);
 }
 .skip-link {
   position: fixed;
@@ -311,7 +302,6 @@ kbd {
   flex-wrap: wrap;
   margin-top: 90px;
   padding: 25px 0 32px;
-  border-top: 1px solid var(--ink);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -362,7 +352,21 @@ kbd {
 }
 .site-footer div {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 25px;
+}
+.footer-social {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+}
+.footer-social svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 .site-footer a {
   text-decoration: none;
@@ -518,6 +522,15 @@ kbd {
   margin: 2em 0;
   border: 1px solid var(--line);
 }
+.about-page {
+  overflow-x: clip;
+}
+.about-page .prose img[src="/images/dakota-50.jpg"] {
+  width: 100vw;
+  max-width: none;
+  margin-inline: calc(50% - 50vw);
+  border: 0;
+}
 .prose table {
   display: block;
   max-width: 100%;
@@ -647,9 +660,6 @@ kbd {
   .site-header nav {
     gap: 18px;
     font-size: 11px;
-  }
-  .header-github {
-    display: none;
   }
   .brand {
     font-size: 24px;
@@ -795,7 +805,6 @@ kbd {
   font-size: 22px;
 }
 .site-header nav,
-.header-github,
 .site-footer a,
 .back-link,
 .post-navigation span,
@@ -1203,7 +1212,7 @@ body {
 }
 .home-page .site-header {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 1fr auto;
   gap: 24px;
   padding: 36px 0 24px;
 }
@@ -1226,10 +1235,6 @@ body {
 }
 .home-page .header-search {
   grid-column: 2;
-  grid-row: 2;
-}
-.home-page .header-github {
-  grid-column: 3;
   grid-row: 2;
 }
 ::view-transition-group(site-brand) {

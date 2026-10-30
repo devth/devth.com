@@ -19,10 +19,10 @@ test("typeclass further reading links to the author's original article", async (
   );
 });
 
-test("reading footer has only its one bookend rule", async ({ page }) => {
+test("reading footer has no divider rules", async ({ page }) => {
   await page.goto("/about");
   await expect(page.locator(".page-bottom")).toHaveCSS("border-top-width", "0px");
-  await expect(page.locator(".site-footer")).toHaveCSS("border-top-width", "1px");
+  await expect(page.locator(".site-footer")).toHaveCSS("border-top-width", "0px");
 });
 
 test("year inscription is decorative and does not shift the archive", async ({
