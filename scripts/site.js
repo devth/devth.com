@@ -290,6 +290,7 @@ export async function generateSite() {
       "style.css",
       "main.js",
       "link-sigil.js",
+      "heading-hover.js",
       "lettercase.js",
       "background.js",
       "graph-geometry.js",

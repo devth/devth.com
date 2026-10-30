@@ -1,3 +1,5 @@
+import { activateHeading } from "./heading-hover.js";
+
 const container = document.querySelector("[data-toc]");
 const nav = container.querySelector("nav");
 const links = [...nav.querySelectorAll("a")];
@@ -38,6 +40,7 @@ links.forEach((link, index) =>
         heading.addEventListener("blur", () => heading.removeAttribute("tabindex"), { once: true });
       }
       heading.focus({ preventScroll: true });
+      activateHeading(heading);
     };
     if (motion.matches) {
       scrollTo({ top: destination, behavior: "instant" });
