@@ -46,6 +46,7 @@ test("year inscription is decorative and does not shift the archive", async ({
     await expect(note).toHaveCSS("position", "fixed");
     await expect(note).toHaveCSS("right", "0px");
     await expect(note).toHaveCSS("font-weight", "900");
+    await expect(note).toHaveCSS("opacity", "0.65");
     expect(box.x + box.width).toBeCloseTo(viewport.width, 0);
     expect(box.height).toBeGreaterThan(viewport.height * 0.75);
     expect(box.y).toBeGreaterThanOrEqual(0);

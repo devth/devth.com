@@ -221,6 +221,7 @@ kbd {
     right: 0;
     margin: 0;
     visibility: hidden;
+    opacity: 0.65;
     font: 900 min(8dvh, 6vw, 160px) / 0.78 var(--sans);
     letter-spacing: -0.04em;
     writing-mode: vertical-rl;
