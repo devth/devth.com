@@ -1,6 +1,15 @@
 import "./background.js";
 
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
+const footerTop = document.querySelector('.site-footer a[href="#top"]');
+footerTop?.addEventListener("click", (event) => {
+  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+    return;
+  event.preventDefault();
+  if (location.hash !== footerTop.hash) history.pushState(history.state, "", footerTop.hash);
+  document.querySelector(".site-header nav a")?.focus({ preventScroll: true });
+  scrollTo({ top: 0, behavior: motion.matches ? "instant" : "smooth" });
+});
 let sigils;
 function clearSigil() {
   sigils?.clearSigil();
