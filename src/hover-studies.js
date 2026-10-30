@@ -1,4 +1,5 @@
 import { rotate } from "./graph-geometry.js";
+import { organicCurves } from "./organic-growth.js";
 
 export const studies = [
   {
@@ -33,6 +34,36 @@ export const studies = [
     id: "geodesic",
     name: "Geodesic cage",
     description: "A subdivided shell with front-to-back depth.",
+  },
+  {
+    id: "mycelium",
+    name: "Mycelium",
+    description: "Uneven runners split into a creeping fungal network.",
+  },
+  {
+    id: "bramble",
+    name: "Bramble",
+    description: "Crooked canes carry thorns, leaves, and small blossoms.",
+  },
+  {
+    id: "coral",
+    name: "Coral",
+    description: "An off-center fan of forked branches and rounded polyps.",
+  },
+  {
+    id: "tendril",
+    name: "Tendril",
+    description: "A curling vine sends out sparse shoots and asymmetric leaves.",
+  },
+  {
+    id: "spore",
+    name: "Spore",
+    description: "Unequal stalks open into clusters of spore-bearing lobes.",
+  },
+  {
+    id: "storm",
+    name: "Storm",
+    description: "Jagged leaders fracture into an irregular branching discharge.",
   },
 ];
 
@@ -165,7 +196,41 @@ function geodesic() {
 }
 const geometries = { sigil, double, triple, braid, knot, orbit, lattice, geodesic: geodesic() };
 
+const organicGeometries = Object.fromEntries(
+  studies.slice(9).map(({ id }) => [id, organicCurves(id, 2)]),
+);
+
+function organicStudyFrame(curves, time) {
+  const radius = Math.max(
+    ...curves.flatMap(({ start, control, end }) =>
+      [start, control, end].map((point) => Math.hypot(...point)),
+    ),
+  );
+  const pitch = 0.35 + time * 0.19 + Math.sin(time * 0.37) * 0.2;
+  const yaw = 0.55 + time * 0.38 + Math.sin(time * 0.53) * 0.17;
+  const project = ([x, y, z]) => {
+    const point = rotate(
+      { x: (x * 46) / radius, y: (y * 46) / radius, z: (z * 46) / radius },
+      pitch,
+      yaw,
+    );
+    const scale = 220 / (220 - point.z);
+    return { x: point.x * scale, y: point.y * scale, z: point.z };
+  };
+  const coordinate = ({ x, y }) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+  const frame = { back: "", front: "", accent: "" };
+  for (const curve of curves) {
+    const start = project(curve.start);
+    const control = project(curve.control);
+    const end = project(curve.end);
+    const layer = curve.accent ? "accent" : start.z + end.z < 0 ? "back" : "front";
+    frame[layer] += `M${coordinate(start)}Q${coordinate(control)} ${coordinate(end)}`;
+  }
+  return frame;
+}
+
 export function studyFrame(id, time = 0) {
+  if (organicGeometries[id]) return organicStudyFrame(organicGeometries[id], time);
   const source =
     id === "spring" ? helix(1, 4, 22, 78 + Math.sin(time * 1.2) * 14, false) : geometries[id];
   const radius = Math.max(...source.vertices.map((point) => Math.hypot(...point)));

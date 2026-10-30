@@ -294,7 +294,7 @@ describe("static publishing contract", () => {
 
   it("keeps the hover design board isolated from published writing", () => {
     const lab = documentFor("hover-lab/index.html");
-    expect(lab.querySelectorAll("[data-hover-study]")).toHaveLength(9);
+    expect(lab.querySelectorAll("[data-hover-study]")).toHaveLength(15);
     expect(lab.querySelector("meta[name=robots]").content).toContain("noindex");
     expect(documentFor("index.html").querySelector('a[href="/hover-lab"]')).not.toBeNull();
     expect(new URL(lab.querySelector(".hit-counter img").src).searchParams.get("page")).toBe(

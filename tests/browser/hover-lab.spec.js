@@ -6,11 +6,11 @@ test("numbered studies render distinct structures and animate only the requested
   await page.goto("/hover-lab");
   await expect(page.getByRole("heading", { name: "Hover Lab", exact: true })).toBeVisible();
   const samples = page.locator("[data-hover-study]");
-  await expect(samples).toHaveCount(9);
+  await expect(samples).toHaveCount(15);
   const paths = await samples.evaluateAll((items) =>
     items.map((item) => item.querySelector("svg").innerHTML),
   );
-  expect(new Set(paths).size).toBe(9);
+  expect(new Set(paths).size).toBe(15);
   const first = samples.first();
   const button = first.getByRole("button");
   await expect(button).toBeEnabled();
@@ -79,10 +79,10 @@ test("static board remains readable without JavaScript", async ({ browser, baseU
     const page = await context.newPage();
     const response = await page.goto(baseURL + "/hover-lab");
     expect(response.status()).toBe(200);
-    await expect(page.locator("[data-hover-study]")).toHaveCount(9);
-    await expect(page.locator("[data-hover-study] path[d]")).toHaveCount(27);
+    await expect(page.locator("[data-hover-study]")).toHaveCount(15);
+    await expect(page.locator("[data-hover-study] path[d]")).toHaveCount(45);
     await expect(page.getByRole("button", { name: "Compare all", exact: true })).toBeHidden();
-    await expect(page.locator("[data-hover-study] button:disabled")).toHaveCount(9);
+    await expect(page.locator("[data-hover-study] button:disabled")).toHaveCount(15);
     await expect(page.locator("main")).toContainText("JavaScript");
   } finally {
     await context.close();
