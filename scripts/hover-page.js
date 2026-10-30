@@ -3,7 +3,7 @@ import { studies, studyFrame } from "../src/hover-studies.js";
 export const hoverBody = `<section class="hover-board" data-hover-board aria-labelledby="hover-title">
   <header class="hover-heading">
     <h1 id="hover-title">Hover Lab</h1>
-    <p>${studies.length} wire studies, from orderly structures to unruly growth. The site’s actual hover effect is unchanged.</p>
+    <p>${studies.length} wire studies, from orderly structures to unruly growth.</p>
     <div class="hover-controls">
       <button type="button" class="text-action" data-compare-all aria-pressed="false" hidden>Compare all</button>
       <button type="button" class="text-action generator-toggle" role="switch" aria-label="Generator mode" aria-checked="false" data-generator-toggle hidden>generator mode</button>
