@@ -79,6 +79,7 @@ test("clicking the actual heading permalink text renews the five-second activati
   await page.goto("/on-learning");
   const heading = page.locator(".prose #memory");
   const permalink = heading.locator(".header-anchor");
+  const original = await permalink.evaluate((link) => getComputedStyle(link).color);
   await permalink.click();
   await expect(page).toHaveURL(/#memory$/);
   await expect(heading).toHaveClass(active);
@@ -88,6 +89,7 @@ test("clicking the actual heading permalink text renews the five-second activati
   await expect(heading).toHaveClass(active);
   await page.clock.runFor(1300);
   await expect(heading).not.toHaveClass(active);
+  await expect(permalink).toHaveCSS("color", original);
   await expect(page.locator(".heading-sigil")).toBeHidden();
 });
 
