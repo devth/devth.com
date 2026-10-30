@@ -13,6 +13,10 @@ test("About offers a direct X profile link with no embed or third-party requests
     page.locator(".x-profile").getByRole("link", { name: "@devth on X ↗", exact: true }),
   ).toHaveAttribute("href", "https://x.com/devth");
   await expect(page.locator(".x-profile")).toBeVisible();
+  const profile = await page.locator(".x-profile").boundingBox();
+  const prose = await page.locator(".prose").boundingBox();
+  expect(profile.x).toBeCloseTo(prose.x, 0);
+  expect(profile.width).toBeCloseTo(prose.width, 0);
   await expect(page.locator("[data-x-timeline], iframe, script[src*=twitter]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Load @devth timeline" })).toHaveCount(0);
   expect(requests).toEqual([]);
