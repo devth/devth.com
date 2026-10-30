@@ -184,14 +184,13 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
       ? `<div class="article-toc" data-toc><nav aria-label="on this page"><svg aria-hidden="true" width="24"><path class="toc-track"/><path class="toc-progress" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/><path class="toc-arrival" pathLength="1"/></svg><ol>${headings.map(({ id, title, depth }) => `<li><a href="#${escape(id)}" data-depth="${depth}" style="--toc-depth:${depth}">${escape(title)}</a></li>`).join("")}</ol></nav></div>`
       : "";
   return `<header class="article-header">
-    <a class="back-link" href="/">← all writing</a>
     ${isPost ? `<div class="article-kicker"><time datetime="${page.date}">${dateLabel(page.date)}</time><span>/</span><span>${page.minutes} MIN READ</span></div>` : ""}
     <h1>${escape(page.title)}</h1>
     ${isPost ? `<p class="article-deck">${escape(page.excerpt)}</p><p class="byline">BY <a href="/about">TREVOR HARTMAN</a></p>` : ""}
   </header>
   <div class="reading-layout${isPost ? "" : " standalone-reading"}${toc ? " with-toc" : ""}">${isPost ? `<aside class="reading-aside"><span>categories</span><p>${page.categories.map(categoryLink).join("<br>")}</p></aside>` : ""}${toc}<article class="prose">${rendered}</article></div>
   ${page.slug === "about" ? '<p class="x-profile"><a href="https://x.com/devth">@devth on X ↗</a></p>' : ""}
-  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← back to the writing</a></div>'}`;
+  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : ""}`;
 }
 
 export async function generateSite() {

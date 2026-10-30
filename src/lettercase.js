@@ -1,6 +1,6 @@
-// Explicit acronyms, not arbitrary capitals such as WAS, YEAR, or HITS.
+// Explicit name/acronym exceptions, not arbitrary capitals such as WAS, YEAR, or HITS.
 const literals =
-  /\b(?:2D|3D|API|ASM|AST|AWS|BFF|CD|CDK|CDN|CEO|CI|CLI|CPU|CRA|CRUD|CSS|DNA|DR|DX|EDN|ES6|FP|GCP|HCL|HTML|HTTP|HTTPS|IC|IDE|IO|IP|IRC|IRL|JS|JSON|JVM|KV|LSP|LYAH|MA|MCP|MVP|NB|NPR|OO|OOP|OS|OSS|PDF|PR|README|REPL|RSS|RT|SDK|SQL|SRE|SSH|SVG|TCP|TICK|TL|UI|URI|URL|UX|VB|WCAG|XML|YAML)(?:s)?\b|\$[A-Z_][A-Z0-9_]*|\bhttps?:\/\/[^\s<>]+/g;
+  /\bTrevor Hartman\b|\b(?:2D|3D|API|ASM|AST|AWS|BFF|CD|CDK|CDN|CEO|CI|CLI|CPU|CRA|CRUD|CSS|DNA|DR|DX|EDN|ES6|FP|GCP|HCL|HTML|HTTP|HTTPS|IC|IDE|IO|IP|IRC|IRL|JS|JSON|JVM|KV|LSP|LYAH|MA|MCP|MVP|NB|NPR|OO|OOP|OS|OSS|PDF|PR|README|REPL|RSS|RT|SDK|SQL|SRE|SSH|SVG|TCP|TICK|TL|UI|URI|URL|UX|VB|WCAG|XML|YAML)(?:s)?\b|\$[A-Z_][A-Z0-9_]*|\bhttps?:\/\/[^\s<>]+/g;
 
 export function preserveCase(root) {
   const document = root.ownerDocument || root;

@@ -126,8 +126,7 @@ input {
 }
 .eyebrow,
 .article-kicker,
-.byline,
-.back-link {
+.byline {
   font-family: var(--mono);
   font-size: 11px;
   line-height: 1.6;
@@ -390,15 +389,11 @@ kbd {
 .article-header {
   padding: 40px 0 44px;
 }
-.back-link {
-  text-decoration: none;
-  color: var(--muted);
-}
 .article-kicker {
   display: flex;
   gap: 16px;
   color: var(--muted);
-  margin-top: 58px;
+  margin-top: 0;
   text-transform: lowercase;
 }
 .article-header h1 {
@@ -592,11 +587,6 @@ kbd {
 .x-profile {
   max-width: 740px;
   margin: 36px auto 0;
-  font: 12px var(--mono);
-}
-.page-bottom {
-  margin-top: 60px;
-  padding-top: 25px;
   font: 12px var(--mono);
 }
 .not-found {
@@ -822,9 +812,7 @@ kbd {
 }
 .site-header nav,
 .site-footer a,
-.back-link,
 .post-navigation span,
-.page-bottom a,
 .cosmos-colophon a,
 .cosmos-buttons button,
 .category-link {
@@ -1354,10 +1342,8 @@ body {
   .site-header,
   .site-footer,
   .reading-aside,
-  .back-link,
   .post-navigation,
-  .search,
-  .page-bottom {
+  .search {
     display: none !important;
   }
   .reading-layout {

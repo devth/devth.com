@@ -62,6 +62,23 @@ test("About photograph is full bleed without cropping or a frame, including with
   }
 });
 
+test("About and search capitalize Trevor Hartman while keeping about lowercase", async ({
+  page,
+}) => {
+  await page.goto("/about");
+  const heading = page.getByRole("heading", { name: "About Trevor Hartman", exact: true });
+  await expect(heading).toHaveCSS("text-transform", "lowercase");
+  await expect(heading.locator(".keep-case")).toHaveText("Trevor Hartman");
+  await expect(heading.locator(".keep-case")).toHaveCSS("text-transform", "none");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.getByRole("combobox").fill("Trevor");
+  const result = page.getByRole("option", { name: /^About Trevor Hartman/ });
+  await expect(result).toHaveCount(1);
+  await expect(result.locator(".keep-case")).toHaveText("Trevor Hartman");
+  await expect(result.locator(".keep-case")).toHaveCSS("text-transform", "none");
+  await expect(result.locator(".keep-case")).toHaveCSS("display", "inline");
+});
+
 test("on-page writing is lowercase while acronyms and code retain their case", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("body")).toHaveCSS("text-transform", "lowercase");

@@ -21,8 +21,26 @@ test("typeclass further reading links to the author's original article", async (
 
 test("reading footer has no divider rules", async ({ page }) => {
   await page.goto("/about");
-  await expect(page.locator(".page-bottom")).toHaveCSS("border-top-width", "0px");
+  await expect(page.locator(".page-bottom")).toHaveCount(0);
   await expect(page.locator(".site-footer")).toHaveCSS("border-top-width", "0px");
+});
+
+test("reading pages use the shared navigation instead of redundant back links", async ({
+  page,
+}) => {
+  for (const route of ["/about", "/iteration-and-play"]) {
+    await page.goto(route);
+    await expect(page.locator(".back-link, .page-bottom")).toHaveCount(0);
+    await expect(
+      page.locator(".site-header nav").getByRole("link", { name: "writing", exact: true }),
+    ).toBeVisible();
+    await expect(page.getByRole("link", { name: "Back to top", exact: true })).toHaveAttribute(
+      "href",
+      "#top",
+    );
+  }
+  await expect(page.getByRole("navigation", { name: "More writing" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /older post/ })).toBeVisible();
 });
 
 test("year inscription is decorative and does not shift the archive", async ({
