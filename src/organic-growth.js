@@ -47,7 +47,17 @@ export function organicCurves(id, ageSeconds, seed = 0) {
   const budget = Math.min(maxSegments, Math.floor(age * 76));
   if (!budget) return [];
   // Rolling generations replace old detail instead of retaining a growing tree.
-  const random = randomSource(id, seed, Math.floor(age / 6));
+  const phase = age / 6;
+  const generation = Math.floor(phase);
+  const progress = phase - generation;
+  const blend = progress * progress * (3 - 2 * progress);
+  const previous = randomSource(id, seed, generation);
+  const next = randomSource(id, seed, generation + 1);
+  // A rolling generation morphs continuously; no six-second topology jump.
+  const random = () => {
+    const value = previous();
+    return value + (next() - value) * blend;
+  };
   const curves = [];
   const frontier = [];
   const origin = [0, 0, 0];
@@ -79,7 +89,7 @@ export function organicCurves(id, ageSeconds, seed = 0) {
     add(point, id === "storm" ? point : control, end, cursor % 19 === 0);
 
     if (profile.leaf && cursor % profile.leaf === 0) {
-      const side = random() < 0.5 ? -1 : 1;
+      const side = random() * 2 - 1;
       const tip = [
         end[0] + Math.cos(heading + side) * length * 0.85,
         end[1] + Math.sin(heading + side) * length * 0.85,
@@ -107,9 +117,14 @@ export function organicCurves(id, ageSeconds, seed = 0) {
     // The queue and every decoration share the same fixed detail budget. No
     // recursive expansion or age-proportional history is allocated.
     if (frontier.length < budget) {
-      frontier.push({ point: end, angle: heading, length: length * (0.9 + random() * 0.15), depth: depth + 1 });
+      frontier.push({
+        point: end,
+        angle: heading,
+        length: length * (0.9 + random() * 0.15),
+        depth: depth + 1,
+      });
       if ((depth + cursor) % profile.fork === 0 && frontier.length < budget) {
-        const side = random() < 0.57 ? -1 : 1;
+        const side = Math.sin((random() - 0.57) * Math.PI);
         frontier.push({
           point: end,
           angle: heading + side * profile.spread * (0.65 + random() * 0.7),
@@ -133,9 +148,11 @@ export function growthFrame(id, ageSeconds, seed = 0) {
   // Reach has no terminal size. The sublinear power keeps this finite even at
   // Number.MAX_VALUE; the logarithmic factor accelerates the first few seconds.
   const extent = 80 * age ** 0.9 * (1 + Math.log1p(age) ** 2);
-  const radius = Math.max(...curves.flatMap(({ start, control, end }) =>
-    [start, control, end].map(([x, y]) => Math.hypot(x, y)),
-  ));
+  const radius = Math.max(
+    ...curves.flatMap(({ start, control, end }) =>
+      [start, control, end].map(([x, y]) => Math.hypot(x, y)),
+    ),
+  );
   const scale = extent / radius;
   const coordinate = ([x, y]) => `${(x * scale).toFixed(2)} ${(y * scale).toFixed(2)}`;
   for (const { start, control, end, accent } of curves) {

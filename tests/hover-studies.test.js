@@ -1,8 +1,18 @@
-import { it, expect } from "vitest";
+import { it, expect } from "vite-plus/test";
 import { studies, studyFrame } from "../src/hover-studies.js";
 import { organicCurves } from "../src/organic-growth.js";
 
-const originalIds = ["sigil", "double", "triple", "braid", "spring", "knot", "orbit", "lattice", "geodesic"];
+const originalIds = [
+  "sigil",
+  "double",
+  "triple",
+  "braid",
+  "spring",
+  "knot",
+  "orbit",
+  "lattice",
+  "geodesic",
+];
 const organicIds = ["mycelium", "bramble", "coral", "tendril", "spore", "storm"];
 
 it("preserves the original nine studies and appends six organic studies in order", () => {
@@ -46,7 +56,9 @@ it("uses asymmetric branching and distinct leaf/blossom topology, not renamed he
     }
     const forks = [...starts].filter(([point, degree]) => ends.has(point) && degree > 1);
     expect(forks.length).toBeGreaterThan(5);
-    const leafSides = curves.filter((a) => curves.some((b) => a.start === b.end && a.end === b.start));
+    const leafSides = curves.filter((a) =>
+      curves.some((b) => a.start === b.end && a.end === b.start),
+    );
     const straight = curves.filter(({ start, control }) => start === control).length;
     signatures.push([starts.get("0:0:0"), forks.length, leafSides.length, straight].join(":"));
     if (id === "mycelium" || id === "storm") expect(leafSides).toHaveLength(0);
@@ -54,9 +66,12 @@ it("uses asymmetric branching and distinct leaf/blossom topology, not renamed he
 
     const points = curves.flatMap(({ end }) => [end]);
     const radius = Math.max(...points.map((point) => Math.hypot(...point)));
-    const unmatched = points.filter(([x, y, z]) => !points.some((point) =>
-      Math.hypot(point[0] + x, point[1] + y, point[2] + z) < radius * 0.01,
-    ));
+    const unmatched = points.filter(
+      ([x, y, z]) =>
+        !points.some(
+          (point) => Math.hypot(point[0] + x, point[1] + y, point[2] + z) < radius * 0.01,
+        ),
+    );
     expect(unmatched.length).toBeGreaterThan(points.length * 0.8);
     expect(Object.values(studyFrame(id)).join("")).toContain("Q");
   }

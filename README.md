@@ -113,7 +113,9 @@ Link hovers draw a short, randomized node/edge sigil beside the link without mov
 
 ### Hover Lab
 
-Open [/hover-lab](https://preview.devth.com/hover-lab), linked beside Cosmos in the footer. Nine numbered, enlarged SVG studies compare a five-node sigil, double/triple helices, a woven braid, an elastic coil, a torus knot, a gyroscope, a cubic truss, and a geodesic cage. Hover or focus one to preview it; click or tap to hold it, and again to stop. **Compare all** animates the visible studies together. The site’s real link-hover effect is unchanged until a direction is selected.
+Open [/hover-lab](https://preview.devth.com/hover-lab), linked beside Cosmos in the footer. Fifteen numbered SVG studies compare the original nine geometric structures with asymmetric mycelium, bramble, coral, tendrils, spores, and storm roots. Hover a glyph **or its name**, or focus its preview button; click or tap either to hold, and again to stop. **Compare all** animates visible studies together.
+
+Switch on **generator mode** to grow any study from its seed into a screen-spanning organism. Size and branching detail grow while active, pause on leave, and resume on return. **Clear growth**, Escape, or switching the generator off clears the garden. A pointer-transparent fixed SVG can spill across the screen without creating document overflow or blocking controls. Growth has no terminal visual size, but live geometry uses a bounded rolling detail budget (680 organic segments per specimen, six paths total), rather than allocating an ever-growing tree. Full-screen growth draws at 30fps; only visible, active studies animate. The site’s real link-hover effect is unchanged until a direction is selected.
 
 All shapes are pre-rendered and remain viewable without JavaScript. Reduced motion keeps them static; one animation loop services only active, visible studies and stops when nothing is running, the page loses focus, or it is hidden. This page is noindex, excluded from the sitemap/feed/MCP catalog, but available in quick navigation. Its counter uses its own path in the existing namespace, with no storage or identity changes.
 

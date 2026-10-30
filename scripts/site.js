@@ -233,7 +233,7 @@ export async function generateSite() {
       slug: "hover-lab",
       body: hoverBody,
       noindex: true,
-      excerpt: "Nine wireframe hover studies to compare side by side.",
+      excerpt: "Wireframe and organic hover studies with a growing generator mode.",
     }),
   });
   pages.push({
@@ -266,7 +266,11 @@ export async function generateSite() {
         categories,
       })),
       { title: "Cosmos", path: "/cosmos", excerpt: "" },
-      { title: "Hover Lab", path: "/hover-lab", excerpt: "Compare nine wireframe hover studies." },
+      {
+        title: "Hover Lab",
+        path: "/hover-lab",
+        excerpt: "Compare wireframe and organic hover studies, or grow them across the screen.",
+      },
     ]),
     "feed.xml": rss,
     "sitemap.xml": `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((url) => `<url><loc>${origin}${url}</loc></url>`).join("")}</urlset>`,
@@ -296,6 +300,7 @@ export async function generateSite() {
       "hover-lab.css",
       "hover-lab.js",
       "hover-studies.js",
+      "organic-growth.js",
     ].map((name) => copyFile(resolve(root, "src", name), resolve(output, name))),
   );
   return { input: pages.map((page) => resolve(output, page.path)), assets };

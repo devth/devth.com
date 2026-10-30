@@ -35,12 +35,36 @@ export const studies = [
     name: "Geodesic cage",
     description: "A subdivided shell with front-to-back depth.",
   },
-  { id: "mycelium", name: "Mycelium", description: "Uneven runners split into a creeping fungal network." },
-  { id: "bramble", name: "Bramble", description: "Crooked canes carry thorns, leaves, and small blossoms." },
-  { id: "coral", name: "Coral", description: "An off-center fan of forked branches and rounded polyps." },
-  { id: "tendril", name: "Tendril", description: "A curling vine sends out sparse shoots and asymmetric leaves." },
-  { id: "spore", name: "Spore", description: "Unequal stalks open into clusters of spore-bearing lobes." },
-  { id: "storm", name: "Storm", description: "Jagged leaders fracture into an irregular branching discharge." },
+  {
+    id: "mycelium",
+    name: "Mycelium",
+    description: "Uneven runners split into a creeping fungal network.",
+  },
+  {
+    id: "bramble",
+    name: "Bramble",
+    description: "Crooked canes carry thorns, leaves, and small blossoms.",
+  },
+  {
+    id: "coral",
+    name: "Coral",
+    description: "An off-center fan of forked branches and rounded polyps.",
+  },
+  {
+    id: "tendril",
+    name: "Tendril",
+    description: "A curling vine sends out sparse shoots and asymmetric leaves.",
+  },
+  {
+    id: "spore",
+    name: "Spore",
+    description: "Unequal stalks open into clusters of spore-bearing lobes.",
+  },
+  {
+    id: "storm",
+    name: "Storm",
+    description: "Jagged leaders fracture into an irregular branching discharge.",
+  },
 ];
 
 const tau = Math.PI * 2;
@@ -177,13 +201,19 @@ const organicGeometries = Object.fromEntries(
 );
 
 function organicStudyFrame(curves, time) {
-  const radius = Math.max(...curves.flatMap(({ start, control, end }) =>
-    [start, control, end].map((point) => Math.hypot(...point)),
-  ));
+  const radius = Math.max(
+    ...curves.flatMap(({ start, control, end }) =>
+      [start, control, end].map((point) => Math.hypot(...point)),
+    ),
+  );
   const pitch = 0.35 + time * 0.19 + Math.sin(time * 0.37) * 0.2;
   const yaw = 0.55 + time * 0.38 + Math.sin(time * 0.53) * 0.17;
   const project = ([x, y, z]) => {
-    const point = rotate({ x: x * 46 / radius, y: y * 46 / radius, z: z * 46 / radius }, pitch, yaw);
+    const point = rotate(
+      { x: (x * 46) / radius, y: (y * 46) / radius, z: (z * 46) / radius },
+      pitch,
+      yaw,
+    );
     const scale = 220 / (220 - point.z);
     return { x: point.x * scale, y: point.y * scale, z: point.z };
   };

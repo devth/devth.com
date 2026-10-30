@@ -1,10 +1,10 @@
-import { it, expect } from "vitest";
+import { it, expect } from "vite-plus/test";
 import { studies } from "../src/hover-studies.js";
 import { growthFrame, organicCurves } from "../src/organic-growth.js";
 
 const layers = ({ back, front, accent }) => back + front + accent;
-const coordinates = (frame) => [...layers(frame).matchAll(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)]
-  .map(([value]) => Number(value));
+const coordinates = (frame) =>
+  [...layers(frame).matchAll(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)].map(([value]) => Number(value));
 
 it("grows every study from an empty seed with reproducible, seed-specific personality", () => {
   const shapes = [];
@@ -34,7 +34,9 @@ it("rapidly increases reach and real curve/leaf detail during the first five sec
     expect(frames[4].extent).toBeGreaterThan(1000);
     for (const frame of frames.slice(1)) {
       expect((layers(frame).match(/Q/g) || []).length).toBe(frame.segments);
-      expect(Math.max(...coordinates(frame).map(Math.abs))).toBeLessThanOrEqual(frame.extent + 0.01);
+      expect(Math.max(...coordinates(frame).map(Math.abs))).toBeLessThanOrEqual(
+        frame.extent + 0.01,
+      );
     }
   }
 });
@@ -58,6 +60,20 @@ it("keeps active output bounded while rolling generations and extent continue gr
     expect(growthFrame(id, 3600).extent).toBeGreaterThan(growthFrame(id, 60).extent);
     // Different generations must change topology, not merely scale the same tree.
     expect(organicCurves(id, 60, 19)).not.toEqual(organicCurves(id, 66, 19));
+  }
+});
+
+it("crosses rolling generations without replacing the plant in a single frame", () => {
+  for (const { id } of studies) {
+    const before = organicCurves(id, 6 - 0.00001, 23);
+    const after = organicCurves(id, 6 + 0.00001, 23);
+    for (let index = 0; index < 100; index++) {
+      for (const point of ["start", "control", "end"]) {
+        before[index][point].forEach((value, axis) =>
+          expect(Math.abs(value - after[index][point][axis])).toBeLessThan(0.01),
+        );
+      }
+    }
   }
 });
 

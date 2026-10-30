@@ -15,6 +15,10 @@
   font-size: 16px;
   line-height: 1.6;
 }
+.hover-heading {
+  position: relative;
+  z-index: 10;
+}
 .hover-controls {
   display: flex;
   flex-wrap: wrap;
@@ -53,6 +57,64 @@
   cursor: pointer;
   font: 16px/1.4 var(--sans);
   text-transform: inherit;
+}
+.hover-study[data-grown="true"] .hover-sample svg {
+  visibility: hidden;
+}
+.hover-study figcaption label {
+  cursor: pointer;
+}
+.generator-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.generator-toggle::before {
+  content: "";
+  display: inline-block;
+  width: 24px;
+  height: 12px;
+  border: 1px solid currentColor;
+  background: linear-gradient(currentColor, currentColor) left 2px center / 8px 8px no-repeat;
+}
+.generator-toggle[aria-checked="true"]::before {
+  background-position: right 2px center;
+  color: var(--accent);
+}
+.hover-controls .text-action {
+  background-color: var(--paper);
+}
+.growth-reset {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  padding: 10px 14px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+}
+.hover-growth-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--ink);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hover-growth-layer path {
+  vector-effect: non-scaling-stroke;
+}
+@media print {
+  .hover-growth-layer,
+  .growth-reset {
+    display: none !important;
+  }
 }
 .hover-sample:disabled {
   cursor: default;
