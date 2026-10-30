@@ -78,6 +78,7 @@ if (quickNav?.showModal) {
 }
 
 if (document.querySelector("[data-toc]")) import("./toc.js");
+else if (document.querySelector(".prose :is(h2, h3, h4, h5, h6)")) import("./heading-hover.js");
 
 const search = document.querySelector("#search");
 if (search) {
