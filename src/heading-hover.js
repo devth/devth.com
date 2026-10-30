@@ -103,17 +103,25 @@ function register(element, heading) {
 }
 for (const heading of headings) {
   register(heading, heading);
+  const permalink = heading.querySelector(".header-anchor");
+  if (permalink) register(permalink, heading);
   heading.addEventListener("click", (event) => {
+    const link = event.target.closest("a");
     if (
       event.button !== 0 ||
       event.metaKey ||
       event.ctrlKey ||
       event.shiftKey ||
       event.altKey ||
-      event.target.closest("a") ||
+      (link && !link.matches(".header-anchor[href^='#']")) ||
       !getSelection()?.isCollapsed
     )
       return;
+    if (link) {
+      event.preventDefault();
+      if (location.hash !== link.hash) history.pushState(history.state, "", link.hash);
+      heading.scrollIntoView({ behavior: "instant", block: "start" });
+    }
     activateHeading(heading);
   });
 }

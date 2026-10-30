@@ -505,11 +505,27 @@ button,
   scroll-margin-top: 24px;
 }
 .prose .header-anchor {
+  position: relative;
   text-decoration: none;
 }
-.prose .header-anchor:hover::after {
-  content: " #";
+.prose .header-anchor::before {
+  content: "#" / "";
+  position: absolute;
+  inset-inline-start: 0;
+  margin-inline-start: -0.7em;
   color: var(--accent);
+  opacity: 0;
+  transition:
+    opacity 180ms ease-out,
+    color 180ms ease-out;
+}
+.prose .header-anchor:is(:hover, :focus-visible)::before {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose .header-anchor::before {
+    transition: none;
+  }
 }
 .prose ul,
 .prose ol {
