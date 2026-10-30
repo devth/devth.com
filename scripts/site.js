@@ -118,11 +118,12 @@ function layout({
   </div>
   <dialog id="quick-nav" class="quick-nav" aria-labelledby="quick-nav-title">
     <h2 id="quick-nav-title" class="sr-only">Search</h2>
-    <div class="quick-nav-input"><label class="sr-only" for="quick-nav-query">Search pages</label><input id="quick-nav-query" type="search" role="combobox" placeholder="Search pages" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-expanded="true" aria-controls="quick-nav-results" aria-describedby="quick-nav-status" autofocus><button type="button" data-quick-nav-close aria-label="Close search">esc</button></div>
+    <div class="quick-nav-input"><label class="sr-only" for="quick-nav-query">Search pages</label><input id="quick-nav-query" type="search" role="combobox" placeholder="Find a page…" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-expanded="true" aria-controls="quick-nav-results" aria-describedby="quick-nav-status" autofocus><button type="button" data-quick-nav-close aria-label="Close search">close</button></div>
     <p id="quick-nav-status" role="status">Loading…</p>
     <button class="text-action quick-nav-reset" type="button" data-clear-search hidden>Clear search</button>
     <ul id="quick-nav-results" role="listbox" aria-label="Pages"></ul>
-    <a class="quick-nav-fallback" href="/" hidden>home</a>
+    <a class="quick-nav-fallback" href="/" hidden>Browse writing</a>
+    <p class="quick-nav-help" aria-hidden="true">↑↓ move · enter open · esc close</p>
   </dialog>
 </body>
 </html>`;
@@ -135,13 +136,13 @@ function categoryLink(category) {
 function home(posts) {
   const years = [...new Set(posts.map((post) => post.date.slice(0, 4)))];
   return `<section id="writing" class="writing" aria-label="Posts">
-    <div class="section-heading"><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Filter the archive" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
+    <div class="section-heading"><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="filter" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
     <div class="category-filter" data-category-filter hidden><span data-category-label></span><a href="/">all posts</a></div>
     <p class="archive-status sr-only" role="status" data-search-status></p>
     <div class="archive">${years
       .map(
         (year) =>
-          `<section class="year-group" aria-labelledby="year-${year}"><h2 id="year-${year}" class="year">${year}</h2><ol class="entries">${posts
+          `<section class="year-group" aria-labelledby="year-${year}"><h2 id="year-${year}" class="year">${year}<span class="year-note" aria-hidden="true">${year} WAS A GOOD YEAR</span></h2><ol class="entries">${posts
             .filter((post) => post.date.startsWith(year))
             .map(
               (post) =>
@@ -151,7 +152,6 @@ function home(posts) {
       )
       .join("")}</div>
     <div class="no-results" data-no-results hidden><p>No matching posts.</p><button class="text-action" type="button" data-clear-filter>Clear filter</button></div>
-    <div class="archive-end"><a href="/feed.xml">RSS ↗</a></div>
   </section>`;
 }
 
@@ -173,7 +173,7 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
   const rendered = article.innerHTML;
   const toc =
     headings.length > 1
-      ? `<div class="article-toc" data-toc><nav aria-label="on this page"><svg aria-hidden="true" width="24"><path class="toc-track"/><path class="toc-progress" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><ol>${headings.map(({ id, title, depth }) => `<li><a href="#${escape(id)}" data-depth="${depth}" style="--toc-depth:${depth}">${escape(title)}</a></li>`).join("")}</ol></nav></div>`
+      ? `<div class="article-toc" data-toc><nav aria-label="on this page"><svg aria-hidden="true" width="24"><path class="toc-track"/><path class="toc-progress" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/><path class="toc-arrival" pathLength="1"/></svg><ol>${headings.map(({ id, title, depth }) => `<li><a href="#${escape(id)}" data-depth="${depth}" style="--toc-depth:${depth}">${escape(title)}</a></li>`).join("")}</ol></nav></div>`
       : "";
   return `<header class="article-header">
     <a class="back-link" href="/">← all writing</a>
@@ -182,7 +182,7 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
     ${isPost ? `<p class="article-deck">${escape(page.excerpt)}</p><p class="byline">BY <a href="/about">TREVOR HARTMAN</a></p>` : ""}
   </header>
   <div class="reading-layout${isPost ? "" : " standalone-reading"}${toc ? " with-toc" : ""}">${isPost ? `<aside class="reading-aside"><span>categories</span><p>${page.categories.map(categoryLink).join("<br>")}</p></aside>` : ""}${toc}<article class="prose">${rendered}</article></div>
-  ${page.slug === "about" ? '<section class="x-timeline" aria-labelledby="x-posts-title" data-x-timeline><h2 id="x-posts-title">X posts</h2><p><a href="https://x.com/devth">@devth on X</a></p><p>Loads content from X only when you choose to.</p><button type="button" data-load-timeline hidden>Load @devth timeline</button><p role="status" data-timeline-status></p><div data-timeline-content></div></section>' : ""}
+  ${page.slug === "about" ? '<p class="x-profile"><a href="https://x.com/devth">@devth on X ↗</a></p>' : ""}
   ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : '<div class="page-bottom"><a href="/">← back to the writing</a></div>'}`;
 }
 
@@ -267,7 +267,7 @@ export async function generateSite() {
     [
       "style.css",
       "main.js",
-      "x-timeline.js",
+      "link-sigil.js",
       "background.js",
       "graph-geometry.js",
       "search.js",

@@ -22,7 +22,8 @@ for (const width of [320, 393, 768, 1440]) {
         return {
           borders,
           yearSize: parseFloat(getComputedStyle(year).fontSize),
-          yearFits: year.getBoundingClientRect().width >= year.scrollWidth,
+          // scrollWidth is integer-rounded; the fitted heading can be fractional.
+          yearFits: Math.ceil(year.getBoundingClientRect().width) >= year.scrollWidth,
           searchWidth: trigger.getBoundingClientRect().width,
           searchHeight: trigger.getBoundingClientRect().height,
           overflow: document.documentElement.scrollWidth > innerWidth,

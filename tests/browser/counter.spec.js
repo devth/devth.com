@@ -24,9 +24,14 @@ test("counter increments atomically, keeps pages separate, and cannot be cached"
   for (const response of responses) {
     expect(response.headers()["cache-control"]).toContain("no-store");
     expect(response.headers()["content-type"]).toContain("image/svg+xml");
-    expect(await response.text()).toContain(
-      "<title>" + response.headers()["x-page-views"] + " page views</title>",
-    );
+    const svg = await response.text();
+    expect(svg).toContain("<title>" + response.headers()["x-page-views"] + " page views</title>");
+    expect(svg).toContain(String(response.headers()["x-page-views"]).padStart(7, "0") + "</text>");
+    expect(svg).toContain('<path class="signal"');
+    expect(svg).toContain('<path class="ticks"');
+    expect(svg).toContain("prefers-color-scheme:dark");
+    expect(svg).not.toContain("<rect");
+    expect(svg).not.toContain('font-style="italic"');
   }
   const final = await request.head(counter("/on-learning"));
   expect(Number(final.headers()["x-page-views"])).toBe(before + 8);

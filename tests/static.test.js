@@ -85,17 +85,17 @@ describe("static publishing contract", () => {
     expect(cosmos.querySelector(".cosmos-colophon").textContent.trim()).toBe("Home ↗");
   });
 
-  it("adds the consent-based X section only outside the authored About article", () => {
+  it("offers a script-free X profile link only outside the authored About article", () => {
     const about = documentFor("about/index.html");
-    const section = about.querySelector("[data-x-timeline]");
+    const section = about.querySelector(".x-profile");
     expect(section).not.toBeNull();
     expect(section.closest("article")).toBeNull();
     expect(section.querySelector("a").href).toBe("https://x.com/devth");
-    expect(section.querySelector("button").hasAttribute("hidden")).toBe(true);
+    expect(about.querySelector("[data-x-timeline]")).toBeNull();
     expect(about.querySelector('script[src*="twitter.com"]')).toBeNull();
     expect(about.querySelector('link[rel="preconnect"][href*="twitter"]')).toBeNull();
     for (const slug of ["overture", "glossary", "beautiful-constraint"]) {
-      expect(documentFor(slug + "/index.html").querySelector("[data-x-timeline]")).toBeNull();
+      expect(documentFor(slug + "/index.html").querySelector(".x-profile")).toBeNull();
     }
   });
 

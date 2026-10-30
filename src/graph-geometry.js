@@ -1,4 +1,4 @@
-function rotate({ x, y, z }, pitch, yaw) {
+export function rotate({ x, y, z }, pitch, yaw) {
   const horizontal = x * Math.cos(yaw) + z * Math.sin(yaw);
   const depth = z * Math.cos(yaw) - x * Math.sin(yaw);
   return {

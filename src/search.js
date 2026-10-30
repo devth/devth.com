@@ -50,7 +50,7 @@ export function initializeSearch(dialog) {
         const title = document.createElement("span");
         title.textContent = page.title;
         link.append(title);
-        if (page.excerpt) {
+        if (page.excerpt && page.excerpt.trim().toLowerCase() !== page.title.trim().toLowerCase()) {
           const excerpt = document.createElement("small");
           excerpt.textContent = page.excerpt;
           link.append(excerpt);

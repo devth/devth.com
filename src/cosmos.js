@@ -40,7 +40,7 @@ function sculpture(seed) {
   const indices = [];
   const segments = 360;
   const across = 6;
-  const halfWidth = 0.14 + random() * 0.16;
+  const halfWidth = 0.07 + random() * 0.08;
   const center = (t) => {
     const radius = 1.55 + 0.5 * Math.cos(winding * t + phase);
     return new THREE.Vector3(
@@ -106,8 +106,8 @@ function sculpture(seed) {
       float rim = pow(1.0 - facing, 2.0);
       float band = 0.5 + 0.5 * sin(vPosition.z * 3.0 + time * 0.65 + phase);
       vec3 color = mix(colorA, colorB, band);
-      float light = 0.3 + 0.7 * abs(dot(n, normalize(vec3(0.5, 0.8, 1.0))));
-      gl_FragColor = vec4(color * light + colorB * rim * 1.2, 1.0);
+      float light = 0.18 + 0.55 * abs(dot(n, normalize(vec3(0.5, 0.8, 1.0))));
+      gl_FragColor = vec4(color * light + colorB * rim * 0.35, 1.0);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }
@@ -118,8 +118,8 @@ function sculpture(seed) {
     const uniforms = {
       time,
       phase: { value: phase + i * 2 },
-      colorA: { value: new THREE.Color().setHSL(hue, 0.8, 0.58) },
-      colorB: { value: new THREE.Color().setHSL((hue + 0.22) % 1, 0.75, 0.75) },
+      colorA: { value: new THREE.Color().setHSL(hue, 0.65, 0.3) },
+      colorB: { value: new THREE.Color().setHSL((hue + 0.22) % 1, 0.6, 0.42) },
     };
     const ribbon = new THREE.Group();
     ribbon.add(
@@ -141,7 +141,7 @@ function sculpture(seed) {
         fragmentShader: `
         uniform vec3 colorB;
         void main() {
-          gl_FragColor = vec4(colorB, 0.16);
+          gl_FragColor = vec4(colorB, 0.055);
           #include <colorspace_fragment>
         }
       `,

@@ -127,13 +127,11 @@ Internal same-origin navigation uses native cross-document View Transitions: a 2
 
 The CSS enhancement needs no JavaScript. Reduced-motion users opt out entirely. Browsers without cross-document View Transitions use ordinary navigation. There is no client-side router, intercepted link navigation or artificial loading delay; fragment links, downloads, external links, modified clicks and browser history retain native behavior.
 
-### X timeline on About
+### X profile on About
 
-About includes an optional **@devth** profile timeline. The initial page contains only a profile link and a load button; there are no requests to X until the visitor activates **Load @devth timeline**. This consent is per page load, not saved in a cookie or local storage. With JavaScript disabled, the profile link remains usable and the load button stays hidden.
+About has a direct **@devth on X** link outside its authored article. It works without JavaScript and makes no requests to X until the visitor follows the link. There is no embedded timeline, third-party loader, loading state, or local consent state.
 
-Only after activation does `src/main.js` import `src/x-timeline.js`, which loads X's official `platform.twitter.com/widgets.js` and calls `twttr.widgets.createTimeline` with `dnt: true`, the current light/dark preference, and a 600px height. Do-not-track mode requests reduced personalization, not a guarantee of zero third-party tracking after loading. X controls the embedded content, availability and login requirements; blockers or X restrictions can prevent it from appearing. Script errors, an unavailable widget or a 15-second timeout leave the profile link and a retryable load button. Other pages never initialize the timeline.
-
-`tests/browser/x-timeline.spec.js` verifies pre-consent isolation, keyboard activation, mobile sizing, blocked loading, timeouts and no-JavaScript fallback with a stub of the external widget API. These tests do not depend on live X availability or claim to verify X's current feed contents.
+The official opt-in timeline was removed after repeated live checks found X returning HTTP 429 for its feed endpoint. `tests/browser/x-profile.spec.js` verifies the direct link, no third-party requests or embed, and the no-JavaScript version. These tests do not claim to verify X’s profile availability.
 
 ### Public content MCP
 
