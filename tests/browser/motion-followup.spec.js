@@ -47,7 +47,7 @@ test("switcher keeps query and touch-sized dismissal visible with one results sc
   await page.keyboard.press("Control+k");
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox");
-  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("option")).toHaveCount(23);
   await expect(query).toBeFocused();
   const close = dialog.getByRole("button", { name: "Close search" });
   const closeBox = await close.boundingBox();

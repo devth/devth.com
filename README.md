@@ -1,6 +1,6 @@
 # devth.com
 
-Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
+Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page, and `/hover-lab` is a separate SVG hover-study board. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
 
 ## Develop
 
@@ -90,7 +90,7 @@ The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_AP
 - `/counter.svg` is first-party. Only this path and `/mcp` run Worker code before assets; ordinary pages remain direct static asset responses.
 - `wrangler.www.jsonc` deploys **devth-com-www** on **www.devth.com/\***, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
 - Both production configs pin the Trevor Hartman account and devth.com zone, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched. Root and www DNS must remain Cloudflare-proxied for these routes to run.
-- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 23 HTML pages before publishing. Cosmos and the 404 retain their own noindex metadata.
+- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 24 HTML pages before publishing. Cosmos, Hover Lab, and the 404 retain their own noindex metadata.
 - `npm run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
 
 Nameservers and email records are unchanged. The existing Vercel project is retained for rollback, not used by the new deployment workflow; its legacy GitHub integration is separate from the passing Cloudflare checks.
@@ -111,9 +111,17 @@ Reduced-motion users start with drift paused. The scene stops rendering offscree
 
 Link hovers draw a short, randomized node/edge sigil beside the link without moving or obscuring its text. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
 
+### Hover Lab
+
+Open [/hover-lab](https://preview.devth.com/hover-lab), linked beside Cosmos in the footer. Nine numbered, enlarged SVG studies compare a five-node sigil, double/triple helices, a woven braid, an elastic coil, a torus knot, a gyroscope, a cubic truss, and a geodesic cage. Hover or focus one to preview it; click or tap to hold it, and again to stop. **Compare all** animates the visible studies together. The site’s real link-hover effect is unchanged until a direction is selected.
+
+All shapes are pre-rendered and remain viewable without JavaScript. Reduced motion keeps them static; one animation loop services only active, visible studies and stops when nothing is running, the page loses focus, or it is hidden. This page is noindex, excluded from the sitemap/feed/MCP catalog, but available in quick navigation. Its counter uses its own path in the existing namespace, with no storage or identity changes.
+
 ### Navigation and contents
 
-Header/footer navigation and category links use lowercase labels; authored titles retain their original casing. Category labels link to `/?category=…#writing`, where the enhanced archive applies an exact category filter. With JavaScript disabled, these remain native links to the complete, readable archive.
+At the author’s request, on-page writing renders lowercase, except explicit acronyms, case-sensitive literals, and the oversized “WAS A GOOD YEAR” inscription, which stays ALL CAPS. `src/lettercase.js` marks known acronyms, visible URLs, and environment-variable names at build time and in dynamic search results; code blocks, inline code, keyboard labels, and user-entered fields keep their case. Add new acronyms to that list when publishing. Original Markdown, headings/anchor IDs, metadata, and MCP document bodies retain their authored content. Header/footer divider rules are removed; X and GitHub are accessible icon links in the footer. About’s complete square photo spans the browser width, without a border or crop.
+
+Header/footer navigation and category links use lowercase labels. Category labels link to `/?category=…#writing`, where the enhanced archive applies an exact category filter. With JavaScript disabled, these remain native links to the complete, readable archive.
 
 Cmd+K or Ctrl+K opens global quick navigation. Type to filter; arrows or Ctrl+N/Ctrl+P select the next/previous result, Enter follows its ordinary anchor, and Escape closes and restores focus. Search failure leaves a home link and normal navigation available. Browsers without dialog support retain the existing navigation.
 
@@ -141,9 +149,9 @@ Connect an MCP client using **Streamable HTTP** to **`https://devth.com/mcp`**. 
 - **`list_content`** — list titles, canonical URLs, dates, categories, and excerpts without full article bodies.
 - **`search_content`** — pass `query` and optionally `limit` (1–20, default 10). Searches titles, categories, excerpts and full bodies using case-insensitive literal terms; every term must match. Returns metadata and passages from matching articles, in archive order.
 - **`read_content`** — pass `identifier`, an exact canonical URL or path from the other tools, such as `https://devth.com/beautiful-constraint` or `/beautiful-constraint`. Returns metadata and the complete original Markdown body. Relative links resolve against the returned canonical URL.
-- **`get_hit_count`** — pass the same exact canonical URL or path as `read_content`, for example `{ "identifier": "/about" }`. Returns `{ "path": "/about", "url": "https://devth.com/about", "hitCount": 123 }` (illustrative count). Reads the existing production counter directly without incrementing it. These are counter-image requests, not unique visitors. Only published posts and the three authored pages are accepted, not the homepage, Cosmos or arbitrary URLs. Storage failures return a tool error, not a misleading zero.
+- **`get_hit_count`** — pass the same exact canonical URL or path as `read_content`, for example `{ "identifier": "/about" }`. Returns `{ "path": "/about", "url": "https://devth.com/about", "hitCount": 123 }` (illustrative count). Reads the existing production counter directly without incrementing it. These are counter-image requests, not unique visitors. Only published posts and the three authored pages are accepted, not the homepage, Cosmos, Hover Lab or arbitrary URLs. Storage failures return a tool error, not a misleading zero.
 
-Both the website and MCP catalog use `scripts/content.js`. Each site build writes `production/.generated-content.json`, an ignored build input bundled into the Worker, not a new public asset. Only `posts/` and the three explicit authored pages are loaded. Drafts, unpublished non-posts, the homepage's generated archive, Cosmos application source and error pages are not MCP documents. Frontmatter is allowlisted into public metadata rather than returned wholesale. Content reads never fetch user-supplied URLs or access the filesystem at runtime, and do not increment hit counters. `get_hit_count` uses the existing `COUNTERS` Durable Object binding with `visit(false)`; it does not request the SVG or create another counter namespace.
+Both the website and MCP catalog use `scripts/content.js`. Each site build writes `production/.generated-content.json`, an ignored build input bundled into the Worker, not a new public asset. Only `posts/` and the three explicit authored pages are loaded. Drafts, unpublished non-posts, the homepage's generated archive, Cosmos/Hover Lab application source and error pages are not MCP documents. Frontmatter is allowlisted into public metadata rather than returned wholesale. Content reads never fetch user-supplied URLs or access the filesystem at runtime, and do not increment hit counters. `get_hit_count` uses the existing `COUNTERS` Durable Object binding with `visit(false)`; it does not request the SVG or create another counter namespace.
 
 The official MCP SDK handles initialization, protocol errors and JSON responses. The endpoint is stateless, with a fresh server and transport per request; no new Durable Object or database. POST bodies are limited to 32 KiB, queries to 200 characters, and read identifiers to 2,048 characters. There is no persistent GET/SSE stream or session deletion. Responses are `noindex` and `no-store`.
 

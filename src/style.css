@@ -23,6 +23,21 @@ html {
 }
 body {
   margin: 0;
+  text-transform: lowercase;
+}
+button,
+select {
+  text-transform: inherit;
+}
+.keep-case,
+pre,
+code,
+kbd,
+samp,
+var,
+input,
+textarea {
+  text-transform: none;
 }
 a {
   color: inherit;
@@ -214,6 +229,7 @@ kbd {
     visibility: hidden;
     opacity: 0.65;
     font: 900 min(8dvh, 6vw, 160px) / 0.78 var(--sans);
+    text-transform: uppercase;
     letter-spacing: -0.04em;
     writing-mode: vertical-rl;
     text-orientation: mixed;
@@ -246,7 +262,7 @@ kbd {
   gap: 7px;
   font: 11px/1.5 var(--mono);
   color: var(--muted);
-  text-transform: uppercase;
+  text-transform: lowercase;
   padding-top: 4px;
 }
 .entry-meta span {
@@ -383,7 +399,7 @@ kbd {
   gap: 16px;
   color: var(--muted);
   margin-top: 58px;
-  text-transform: uppercase;
+  text-transform: lowercase;
 }
 .article-header h1 {
   font-size: clamp(44px, 6vw, 80px);
@@ -909,7 +925,7 @@ html:has(.quick-nav[open]) {
   background: var(--ink);
   transform: rotate(45deg);
 }
-#quick-nav-results span {
+#quick-nav-results [role="option"] > span {
   display: block;
   font-size: 18px;
   font-weight: 600;

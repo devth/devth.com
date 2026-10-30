@@ -7,9 +7,11 @@ import anchor from "markdown-it-anchor";
 import { slug as slugify } from "github-slugger";
 import { createHighlighter } from "shiki";
 import { cosmosBody } from "./cosmos-page.js";
+import { hoverBody } from "./hover-page.js";
 import { parseHTML } from "linkedom";
 import { background } from "./background.js";
 import { publishingSettings } from "./publishing.js";
+import { preserveCase } from "../src/lettercase.js";
 
 const publishing = publishingSettings(process.env.SITE_ENV, process.env.COUNTER_ORIGIN);
 
@@ -58,6 +60,12 @@ function dateLabel(date) {
   }).format(new Date(date));
 }
 
+function preserveLiteralCase(html) {
+  const { document } = parseHTML(html);
+  preserveCase(document.body);
+  return document.toString();
+}
+
 function layout({
   title,
   slug = "",
@@ -76,7 +84,7 @@ function layout({
     ["/overture", "overture"],
     ["/glossary", "glossary"],
   ];
-  return `<!doctype html>
+  return preserveLiteralCase(`<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -98,6 +106,7 @@ function layout({
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/main.js"></script>
   ${slug === "cosmos" ? '<link rel="stylesheet" href="/cosmos.css"><script type="module" src="/cosmos.js"></script>' : ""}
+  ${slug === "hover-lab" ? '<link rel="stylesheet" href="/hover-lab.css"><script type="module" src="/hover-lab.js"></script>' : ""}
 </head>
 <body id="top"${slug === "cosmos" ? ' class="cosmos-page"' : slug === "" ? ' class="home-page"' : slug === "about" ? ' class="about-page"' : ""}>
   ${background}
@@ -112,7 +121,7 @@ function layout({
     <footer class="site-footer">
       <p>© ${new Date().getFullYear()} Trevor C. Hartman<br><a href="https://grokipedia.com/page/Soli_Deo_gloria">Soli Deo Gloria</a></p>
       <span class="hit-counter" title="Page loads, not unique visitors. No cookies."><span>HITS</span><img src="${escape(counter.href)}" width="126" height="24" alt="Page hit counter" referrerpolicy="no-referrer"></span>
-      <div><a href="/cosmos">Cosmos ◇</a><a href="/feed.xml">RSS ↗</a><a href="https://github.com/devth/devth.com">view source ↗</a><a class="footer-social" href="https://x.com/devth" aria-label="X profile"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.64 7.584H.47l8.6-9.835L0 1.154h7.594l5.243 6.932 6.064-6.933zm-1.29 19.49h2.039L6.486 3.24H4.298z"/></svg></a><a class="footer-social" href="https://github.com/devth" aria-label="GitHub profile"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a><a href="#top" aria-label="Back to top">↑ Top</a></div>
+      <div><a href="/cosmos">Cosmos ◇</a><a href="/hover-lab">Hover Lab ↗</a><a href="/feed.xml">RSS ↗</a><a href="https://github.com/devth/devth.com">view source ↗</a><a class="footer-social" href="https://x.com/devth" aria-label="X profile"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.64 7.584H.47l8.6-9.835L0 1.154h7.594l5.243 6.932 6.064-6.933zm-1.29 19.49h2.039L6.486 3.24H4.298z"/></svg></a><a class="footer-social" href="https://github.com/devth" aria-label="GitHub profile"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg></a><a href="#top" aria-label="Back to top">↑ Top</a></div>
     </footer>
   </div>
   <dialog id="quick-nav" class="quick-nav" aria-labelledby="quick-nav-title">
@@ -125,7 +134,7 @@ function layout({
     <p class="quick-nav-help" aria-hidden="true">↑↓ move · enter open · esc close</p>
   </dialog>
 </body>
-</html>`;
+</html>`);
 }
 
 function categoryLink(category) {
@@ -219,6 +228,16 @@ export async function generateSite() {
     }),
   });
   pages.push({
+    path: "hover-lab/index.html",
+    html: layout({
+      title: "Hover Lab",
+      slug: "hover-lab",
+      body: hoverBody,
+      noindex: true,
+      excerpt: "Nine wireframe hover studies to compare side by side.",
+    }),
+  });
+  pages.push({
     path: "404.html",
     html: layout({
       title: "Page not found",
@@ -248,6 +267,7 @@ export async function generateSite() {
         categories,
       })),
       { title: "Cosmos", path: "/cosmos", excerpt: "" },
+      { title: "Hover Lab", path: "/hover-lab", excerpt: "Compare nine wireframe hover studies." },
     ]),
     "feed.xml": rss,
     "sitemap.xml": `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls.map((url) => `<url><loc>${origin}${url}</loc></url>`).join("")}</urlset>`,
@@ -267,12 +287,16 @@ export async function generateSite() {
       "style.css",
       "main.js",
       "link-sigil.js",
+      "lettercase.js",
       "background.js",
       "graph-geometry.js",
       "search.js",
       "toc.js",
       "cosmos.css",
       "cosmos.js",
+      "hover-lab.css",
+      "hover-lab.js",
+      "hover-studies.js",
     ].map((name) => copyFile(resolve(root, "src", name), resolve(output, name))),
   );
   return { input: pages.map((page) => resolve(output, page.path)), assets };

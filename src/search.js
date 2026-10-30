@@ -1,3 +1,5 @@
+import { preserveCase } from "./lettercase.js";
+
 let initialized = false;
 
 export function initializeSearch(dialog) {
@@ -59,6 +61,7 @@ export function initializeSearch(dialog) {
         return item;
       }),
     );
+    preserveCase(results);
     clear.hidden = matches.length !== 0 || !query.value.trim();
     status.textContent = matches.length
       ? matches.length + (matches.length === 1 ? " page." : " pages.")

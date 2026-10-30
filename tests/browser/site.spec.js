@@ -7,6 +7,7 @@ const routes = [
   "/overture",
   "/glossary",
   "/cosmos",
+  "/hover-lab",
   "/iteration-and-play",
   "/compiled-queries-in-scala",
 ];

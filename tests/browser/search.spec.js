@@ -37,7 +37,7 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   await expect(query).toBeFocused();
-  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("option")).toHaveCount(23);
   await query.press("ArrowDown");
   await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toHaveAttribute(
     "aria-selected",
@@ -54,7 +54,7 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   await dialog.getByRole("button", { name: "Clear search", exact: true }).click();
   await expect(query).toBeFocused();
   await expect(query).toHaveValue("");
-  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("option")).toHaveCount(23);
   await expect(dialog.getByRole("button", { name: "Clear search", exact: true })).toBeHidden();
   await query.fill("about");
   await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toBeVisible();
@@ -77,7 +77,7 @@ test("Ctrl+N/P selects next and previous search results without changing the que
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   const selected = dialog.locator('[role="option"][aria-selected="true"]');
-  await expect(dialog.getByRole("option")).toHaveCount(22);
+  await expect(dialog.getByRole("option")).toHaveCount(23);
   await query.press("Control+n");
   await expect(selected).toContainText("About Trevor Hartman");
   await query.press("Control+n");
@@ -87,7 +87,8 @@ test("Ctrl+N/P selects next and previous search results without changing the que
   await query.press("Control+p");
   await expect(selected).toContainText("Writing");
   await query.press("Control+p");
-  await expect(selected).toHaveText("Cosmos");
+  await expect(selected).toHaveAttribute("href", "/hover-lab");
+  await expect(selected.locator(":scope > span")).toHaveText("Hover Lab");
   await query.press("Control+n");
   await expect(selected).toContainText("Writing");
   await expect(query).toHaveValue("");

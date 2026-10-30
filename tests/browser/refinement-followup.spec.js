@@ -41,6 +41,7 @@ test("year inscription is decorative and does not shift the archive", async ({
   } else {
     await expect(note).toBeVisible();
     await expect(note).toHaveCSS("writing-mode", "vertical-rl");
+    await expect(note).toHaveCSS("text-transform", "uppercase");
     const box = await note.boundingBox();
     const viewport = page.viewportSize();
     await expect(note).toHaveCSS("position", "fixed");

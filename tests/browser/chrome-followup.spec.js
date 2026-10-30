@@ -8,6 +8,10 @@ test("social icons live in the borderless footer, not the header", async ({ page
   await expect(header).toHaveCSS("border-bottom-width", "0px");
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await expect(page.getByRole("combobox")).toHaveAttribute("placeholder", "find");
+  await expect(page.getByRole("button", { name: "Close search" })).toHaveCSS(
+    "text-transform",
+    "lowercase",
+  );
   await page.keyboard.press("Escape");
   await expect(footer).toHaveCSS("border-top-width", "0px");
   for (const [name, href] of [
@@ -56,4 +60,23 @@ test("About photograph is full bleed without cropping or a frame, including with
   } finally {
     await context.close();
   }
+});
+
+test("on-page writing is lowercase while acronyms and code retain their case", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("body")).toHaveCSS("text-transform", "lowercase");
+  const title = page.locator(".entry-title").filter({ hasText: "YAML was a bad idea" });
+  await expect(title).toHaveCSS("text-transform", "lowercase");
+  await expect(title.locator(".keep-case")).toHaveText(["YAML", "CI"]);
+  await expect(title.locator(".keep-case").first()).toHaveCSS("text-transform", "none");
+  await expect(page.locator(".year-note").first().locator(".keep-case")).toHaveCount(0);
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.getByRole("combobox").fill("YAML");
+  const result = page.getByRole("option");
+  await expect(result).toHaveCount(1);
+  await expect(result.locator(".keep-case")).toHaveText(["YAML", "CI"]);
+  await expect(result.locator(".keep-case").first()).toHaveCSS("display", "inline");
+  await expect(result.locator(".keep-case").last()).toHaveCSS("display", "inline");
+  await page.goto("/compiled-queries-in-scala");
+  await expect(page.locator(".prose pre code").first()).toHaveCSS("text-transform", "none");
 });
