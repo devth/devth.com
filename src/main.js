@@ -26,24 +26,6 @@ function loadSigils(event) {
 }
 document.addEventListener("pointerover", loadSigils);
 document.addEventListener("focusin", loadSigils);
-const sheen = document.createElement("div");
-sheen.className = "page-sheen";
-sheen.setAttribute("aria-hidden", "true");
-document.body.append(sheen);
-window.addEventListener("pagereveal", (event) => {
-  delete sheen.dataset.active;
-  event.viewTransition?.finished
-    .then(() => {
-      if (!motion.matches && !document.hidden) sheen.dataset.active = "";
-    })
-    .catch(() => {});
-});
-window.addEventListener("pageswap", () => {
-  delete sheen.dataset.active;
-});
-motion.addEventListener("change", () => {
-  delete sheen.dataset.active;
-});
 
 const quickNav = document.querySelector("#quick-nav");
 if (quickNav?.showModal) {

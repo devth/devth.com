@@ -42,8 +42,17 @@ test("year inscription is decorative and does not shift the archive", async ({
     await expect(note).toBeVisible();
     await expect(note).toHaveCSS("writing-mode", "vertical-rl");
     const box = await note.boundingBox();
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThan((await year.boundingBox()).x);
+    const viewport = page.viewportSize();
+    await expect(note).toHaveCSS("position", "fixed");
+    await expect(note).toHaveCSS("right", "0px");
+    await expect(note).toHaveCSS("font-weight", "900");
+    expect(box.x + box.width).toBeCloseTo(viewport.width, 0);
+    expect(box.height).toBeGreaterThan(viewport.height * 0.75);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+    expect(
+      parseFloat(await note.evaluate((element) => getComputedStyle(element).fontSize)),
+    ).toBeGreaterThanOrEqual(64);
   }
   expect(await page.locator(".entry").first().boundingBox()).toEqual(before);
   if (testInfo.project.name === "desktop") {
@@ -51,7 +60,11 @@ test("year inscription is decorative and does not shift the archive", async ({
     await year.hover();
     const noteBox = await note.boundingBox();
     const footer = await page.locator(".site-footer").boundingBox();
-    expect(noteBox.y + noteBox.height).toBeLessThan(footer.y - 24);
+    expect(noteBox.x).toBeGreaterThanOrEqual(footer.x + footer.width);
+    expect(noteBox.x + noteBox.width).toBeCloseTo(page.viewportSize().width, 0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
+      false,
+    );
     await page.emulateMedia({ media: "print" });
     await expect(note).toBeHidden();
   }

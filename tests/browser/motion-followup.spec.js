@@ -25,40 +25,18 @@ test("hover geometry keeps evolving, holds text still and cancels on exit or res
   await expect(sigil).toBeHidden();
 });
 
-test("navigation gets one background-only sheen after its native transition", async ({ page }) => {
+test("navigation keeps its restrained transition without a page-wide sweep", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator(".page-sheen")).not.toHaveAttribute("data-active");
+  await expect(page.locator(".page-sheen")).toHaveCount(0);
   await page.locator('.site-header a[href="/about"]').click();
   await expect(page).toHaveURL(/\/about$/);
-  const sheen = page.locator(".page-sheen[data-active]");
-  await expect(sheen).toHaveAttribute("aria-hidden", "true");
-  const style = await sheen.evaluate((element) => {
-    const layer = getComputedStyle(element);
-    const effect = getComputedStyle(element, "::before");
-    return {
-      z: layer.zIndex,
-      events: layer.pointerEvents,
-      name: effect.animationName,
-      iterations: effect.animationIterationCount,
-      duration: effect.animationDuration,
-    };
-  });
-  expect(style).toEqual({
-    z: "-1",
-    events: "none",
-    name: "page-sheen",
-    iterations: "1",
-    duration: "0.42s",
-  });
-  await expect
-    .poll(() => sheen.evaluate((element) => getComputedStyle(element, "::before").opacity))
-    .toBe("0");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("About Trevor Hartman");
+  await expect(page.locator(".page-sheen")).toHaveCount(0);
   await expect(page.locator(".prose")).toHaveCSS("filter", "none");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.locator('.site-header a[href="/overture"]').click();
   await expect(page).toHaveURL(/\/overture$/);
-  await expect(page.locator(".page-sheen")).toBeHidden();
-  await expect(page.locator(".page-sheen")).not.toHaveAttribute("data-active");
+  await expect(page.locator(".page-sheen")).toHaveCount(0);
 });
 
 test("switcher keeps query and touch-sized dismissal visible with one results scroller", async ({
