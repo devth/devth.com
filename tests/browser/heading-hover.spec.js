@@ -18,7 +18,7 @@ test("ToC arrival activates its heading for five seconds, then fades back even w
     .locator("[data-toc][data-enhanced]")
     .getByRole("link", { name: "Memory", exact: true });
   await link.click();
-  await page.clock.runFor(300);
+  await page.clock.runFor(350);
   await expect(heading).toBeFocused();
   await expect(heading).toHaveClass(active);
   await expect(page.locator(".heading-sigil")).toBeVisible();
@@ -56,6 +56,39 @@ test("direct heading hover and ToC hover activate the same destination without n
   await expect(page.locator(".heading-sigil")).toBeHidden();
 });
 
+test("Scalaz heading hover and keyboard focus light its ToC entry without changing the reading location", async ({
+  page,
+}) => {
+  await page.goto("/a-simple-type-class");
+  const heading = page.locator(".prose #scalaz");
+  const permalink = heading.locator(".header-anchor");
+  const toc = page.locator("[data-toc][data-enhanced]");
+  const link = toc.locator("a[href='#scalaz']");
+  await expect(toc).toBeVisible();
+  await permalink.scrollIntoViewIfNeeded();
+  const current = await toc.locator("[aria-current]").getAttribute("href");
+  const position = await page.evaluate(() => scrollY);
+  await permalink.hover();
+  await expect(link).toHaveClass(active);
+  await expect
+    .poll(async () => {
+      return (
+        (await link.evaluate((el) => getComputedStyle(el).color)) ===
+        (await heading.evaluate((el) => getComputedStyle(el).color))
+      );
+    })
+    .toBe(true);
+  expect(await page.evaluate(() => scrollY)).toBe(position);
+  await expect(toc.locator("[aria-current]")).toHaveAttribute("href", current);
+  await page.mouse.move(1, 1);
+  await expect(link).not.toHaveClass(active);
+  await permalink.focus();
+  await expect(link).toHaveClass(active);
+  await page.evaluate(() => dispatchEvent(new Event("blur")));
+  await expect(link).not.toHaveClass(active);
+  await expect(heading).not.toHaveClass(active);
+});
+
 test("hovering an offscreen ToC destination never scrolls or parks a glyph at the viewport edge", async ({
   page,
 }) => {
@@ -80,7 +113,9 @@ test("clicking the actual heading permalink text renews the five-second activati
   const heading = page.locator(".prose #memory");
   const permalink = heading.locator(".header-anchor");
   const original = await permalink.evaluate((link) => getComputedStyle(link).color);
+  const tocLink = page.locator("[data-toc] a[href='#memory']");
   await permalink.click();
+  await expect(tocLink).toHaveClass(active);
   await expect(page).toHaveURL(/#memory$/);
   await expect(heading).toHaveClass(active);
   await page.clock.runFor(4000);
@@ -90,6 +125,7 @@ test("clicking the actual heading permalink text renews the five-second activati
   await page.clock.runFor(1300);
   await expect(heading).not.toHaveClass(active);
   await expect(permalink).toHaveCSS("color", original);
+  await expect(tocLink).not.toHaveClass(active);
   await expect(page.locator(".heading-sigil")).toBeHidden();
 });
 
@@ -120,13 +156,24 @@ test("the permalink hash appears in the left gutter without widening or shifting
     const style = getComputedStyle(el, "::before");
     return {
       content: style.content,
-      position: style.position,
+      display: style.display,
+      alignment: style.verticalAlign,
+      width: parseFloat(style.width),
       offset: parseFloat(style.marginInlineStart),
     };
   });
   expect(hash.content).toBe('"#" / ""');
-  expect(hash.position).toBe("absolute");
+  expect(hash.display).toBe("inline-block");
+  expect(hash.alignment).toBe("baseline");
   expect(hash.offset).toBeLessThan(0);
+  expect(hash.width + hash.offset).toBeCloseTo(0, 1);
+  const textLeft = await permalink.evaluate(
+    (el) => el.firstElementChild.getBoundingClientRect().left,
+  );
+  expect(textLeft).toBeCloseTo(
+    await permalink.evaluate((el) => el.closest("h2").getBoundingClientRect().left),
+    1,
+  );
   await expect(permalink).toHaveAttribute("href", "#memory");
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });

@@ -1,5 +1,11 @@
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const headings = [...document.querySelectorAll(".prose :is(h2, h3, h4, h5, h6)")];
+const tocLinks = new Map(
+  [...document.querySelectorAll("[data-toc] a")].map((link) => [
+    link,
+    document.getElementById(decodeURIComponent(link.hash.slice(1))),
+  ]),
+);
 const sources = [];
 let selected;
 let timer = 0;
@@ -52,6 +58,12 @@ function refresh() {
       "is-destination-active",
       heading === selected ||
         sources.some((source) => source.heading === heading && (source.hovered || source.focused)),
+    );
+  }
+  for (const [link, heading] of tocLinks) {
+    link.classList.toggle(
+      "is-destination-active",
+      heading?.classList.contains("is-destination-active") || false,
     );
   }
   cancelAnimationFrame(queued);
@@ -125,8 +137,7 @@ for (const heading of headings) {
     activateHeading(heading);
   });
 }
-for (const link of document.querySelectorAll("[data-toc] a")) {
-  const heading = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+for (const [link, heading] of tocLinks) {
   if (heading) register(link, heading);
 }
 function clear() {
@@ -138,6 +149,7 @@ function clear() {
   revision++;
   renderer?.clear();
   for (const heading of headings) heading.classList.remove("is-destination-active");
+  for (const link of tocLinks.keys()) link.classList.remove("is-destination-active");
 }
 window.addEventListener(
   "scroll",

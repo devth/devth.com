@@ -49,7 +49,7 @@ links.forEach((link, index) =>
     }
     const began = performance.now();
     function step(now) {
-      const fraction = Math.min(1, (now - began) / 220);
+      const fraction = Math.min(1, (now - began) / 280);
       scrollTo({
         top: start + (destination - start) * (1 - Math.pow(1 - fraction, 3)),
         behavior: "instant",

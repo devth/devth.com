@@ -16,11 +16,12 @@ test("ToC has one document scroll surface and sticks only when it fits", async (
   await expect(toc).toHaveCSS("position", "sticky");
 });
 
-test("ToC click eases quickly to a heading, updates history, and transfers focus", async ({
+test("ToC click eases over 280ms, updates history, and transfers focus only on arrival", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1100 });
-  await page.clock.install();
+  await page.clock.install({ time: new Date("2026-10-30T12:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-10-30T12:00:01Z"));
   await page.goto("/on-learning");
   const toc = page.locator("[data-toc][data-enhanced]");
   await expect(toc).toBeVisible();
@@ -30,8 +31,10 @@ test("ToC click eases quickly to a heading, updates history, and transfers focus
   await page.clock.runFor(100);
   const midway = await page.evaluate(() => scrollY);
   expect(midway).toBeGreaterThan(before);
-  await page.clock.runFor(160);
+  await page.clock.runFor(140);
   const heading = page.locator(".prose #memory");
+  await expect(heading).not.toBeFocused();
+  await page.clock.runFor(80);
   expect((await heading.boundingBox()).y).toBeCloseTo(32, 0);
   await expect(heading).toBeFocused();
   expect(await page.evaluate(() => scrollY)).toBeGreaterThan(midway);

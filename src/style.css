@@ -505,7 +505,6 @@ button,
   scroll-margin-top: 24px;
 }
 .prose .header-anchor {
-  position: relative;
   color: inherit;
   text-decoration: none;
   /* The heading animates its inherited color; do not animate it a second time. */
@@ -513,9 +512,10 @@ button,
 }
 .prose .header-anchor::before {
   content: "#" / "";
-  position: absolute;
-  inset-inline-start: 0;
-  margin-inline-start: max(-0.7em, -5vw);
+  display: inline-block;
+  inline-size: min(0.75em, 5vw);
+  margin-inline-start: max(-0.75em, -5vw);
+  vertical-align: baseline;
   color: var(--accent);
   opacity: 0;
   transition:
@@ -1116,6 +1116,9 @@ html:has(.quick-nav[open]) {
 .article-toc a:hover,
 .article-toc a[aria-current] {
   color: var(--ink);
+}
+.article-toc a.is-destination-active {
+  color: var(--accent);
 }
 .article-toc svg {
   display: none;
