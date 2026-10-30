@@ -143,7 +143,14 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
 
 const linkSigil = createSigil();
 export const clearSigil = () => linkSigil.clear();
-export const drawSigil = (link) => linkSigil.draw(link);
+export const drawSigil = (link) => {
+  // Header permalinks are already owned by the heading activation controller.
+  if (link.matches(".prose .header-anchor")) {
+    clearSigil();
+    return;
+  }
+  linkSigil.draw(link);
+};
 document.addEventListener("pointerover", (event) => {
   if (event.pointerType === "touch") return;
   const link = event.target.closest("a");

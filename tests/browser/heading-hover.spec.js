@@ -72,19 +72,63 @@ test("hovering an offscreen ToC destination never scrolls or parks a glyph at th
   await expect(page.locator(".heading-sigil")).toBeHidden();
 });
 
-test("direct heading clicks renew the five-second activation", async ({ page }) => {
+test("clicking the actual heading permalink text renews the five-second activation", async ({
+  page,
+}) => {
   await pausedClock(page);
   await page.goto("/on-learning");
   const heading = page.locator(".prose #memory");
-  await heading.click();
+  const permalink = heading.locator(".header-anchor");
+  const original = await permalink.evaluate((link) => getComputedStyle(link).color);
+  await permalink.click();
+  await expect(page).toHaveURL(/#memory$/);
   await expect(heading).toHaveClass(active);
   await page.clock.runFor(4000);
-  await heading.click();
+  await permalink.click();
   await page.clock.runFor(4000);
   await expect(heading).toHaveClass(active);
   await page.clock.runFor(1300);
   await expect(heading).not.toHaveClass(active);
+  await expect(permalink).toHaveCSS("color", original);
   await expect(page.locator(".heading-sigil")).toBeHidden();
+});
+
+test("a heading permalink hover has one glyph, not both ordinary and heading glyphs", async ({
+  page,
+}) => {
+  await page.goto("/on-learning");
+  const heading = page.locator(".prose #memory");
+  await expect(heading.locator("a")).toHaveCount(1);
+  await heading.locator(".header-anchor").hover();
+  await expect(page.locator(".heading-sigil")).toBeVisible();
+  await expect(page.locator("svg.link-sigil:visible, svg.heading-sigil:visible")).toHaveCount(1);
+  await expect(page.locator(".link-sigil")).toBeHidden();
+});
+
+test("the permalink hash appears in the left gutter without widening or shifting heading text", async ({
+  page,
+}) => {
+  await page.goto("/on-learning");
+  const permalink = page.locator(".prose #memory .header-anchor");
+  await permalink.scrollIntoViewIfNeeded();
+  const before = await permalink.boundingBox();
+  await permalink.hover();
+  const after = await permalink.boundingBox();
+  expect(after.width).toBeCloseTo(before.width, 2);
+  expect(after.x).toBeCloseTo(before.x, 2);
+  const hash = await permalink.evaluate((el) => {
+    const style = getComputedStyle(el, "::before");
+    return {
+      content: style.content,
+      position: style.position,
+      offset: parseFloat(style.marginInlineStart),
+    };
+  });
+  expect(hash.content).toBe('"#" / ""');
+  expect(hash.position).toBe("absolute");
+  expect(hash.offset).toBeLessThan(0);
+  await expect(permalink).toHaveAttribute("href", "#memory");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
 
 test("keyboard ToC activation keeps five-second color feedback with no animation under reduced motion", async ({
