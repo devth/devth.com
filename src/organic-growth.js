@@ -137,6 +137,53 @@ export function organicCurves(id, ageSeconds, seed = 0) {
   return curves;
 }
 
+/** Each node grows its own asymmetric form, not a rotated/scaled blossom stamp.
+ * Uneven arms can branch, curl or close into lobes, sharing a small curve budget.
+ */
+export function ornamentCurves(point, heading, length, random) {
+  const curves = [];
+  const add = (start, control, end) => {
+    if (curves.length < 24) curves.push({ start, control, end, accent: true });
+  };
+  const arms = 2 + Math.floor(random() * 6);
+  const gaps = Array.from({ length: arms }, () => 0.25 + random());
+  const total = gaps.reduce((sum, gap) => sum + gap, 0);
+  const radius = length * (0.2 + random() * 0.5);
+  const stretch = 0.45 + random();
+  const lobes = random();
+  let direction = heading + random() * tau;
+  const offset = (angle, distance) => [
+    point[0] + Math.cos(angle) * distance,
+    point[1] + Math.sin(angle) * distance * stretch,
+    point[2] + (random() - 0.5) * radius * 0.3,
+  ];
+  for (const gap of gaps) {
+    direction += (gap / total) * tau;
+    const reach = radius * (0.4 + random() * 0.85);
+    const steps = random() < 0.45 ? 2 : 1;
+    let start = point;
+    for (let step = 1; step <= steps; step++) {
+      const turn = direction + (random() - 0.5) * 0.9;
+      const end = offset(turn, (reach * step) / steps);
+      const control = offset(turn + (random() - 0.5) * 1.6, (reach * (step - 0.4)) / steps);
+      add(start, control, end);
+      if (random() < 0.5) {
+        const fork = [
+          end[0] + Math.cos(turn + (random() < 0.5 ? -1 : 1)) * reach * (0.2 + random() * 0.5),
+          end[1] + Math.sin(turn + (random() - 0.5) * 2) * reach * (0.2 + random() * 0.5),
+          end[2] + (random() - 0.5) * radius * 0.3,
+        ];
+        add(end, random() < 0.5 ? end : control, fork);
+      }
+      if (step === steps && random() < lobes) {
+        add(end, offset(direction - 0.2 - random() * 0.9, reach * (0.4 + random() * 0.6)), point);
+      }
+      start = end;
+    }
+  }
+  return curves;
+}
+
 /** Incremental, fixed-scale roots. Only a bounded visible garden is materialized:
  * old offscreen tips are replenished from existing branch nodes, not magnified.
  * Advance is capped for suspended frames; callers own pause/resume and rendering.
@@ -252,18 +299,9 @@ export function createGrowth(id, seed = 0) {
       ];
       append(end, end, thorn, true);
     }
-    if (profile.bloom && commits % profile.bloom === 0) {
-      const petals = id === "spore" ? 3 : id === "coral" ? 2 : 5;
-      const radius = length * (id === "spore" ? 0.7 : 0.35);
-      for (let petal = 0; petal < petals; petal++) {
-        const direction = (petal / petals) * tau + random() * 0.4;
-        const tip = [
-          end[0] + Math.cos(direction) * radius,
-          end[1] + Math.sin(direction) * radius,
-          end[2],
-        ];
-        append(end, [tip[0] - radius * 0.5, tip[1] - radius * 0.4, tip[2]], tip, true);
-        append(tip, [tip[0] + radius * 0.5, tip[1] + radius * 0.3, tip[2]], end, true);
+    if (profile.bloom && random() < 1 / profile.bloom) {
+      for (const curve of ornamentCurves(end, angle, length, random)) {
+        append(curve.start, curve.control, curve.end, curve.accent);
       }
     }
   }
@@ -304,7 +342,7 @@ export function createGrowth(id, seed = 0) {
       }
     }
   }
-  function frame() {
+  function frame(retention = 1) {
     const drawing = {
       back: "",
       front: "",
@@ -315,7 +353,20 @@ export function createGrowth(id, seed = 0) {
       tips: tips.length,
     };
     const coordinate = ([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`;
-    function draw({ start, control, end, accent }) {
+    const live = tips.filter((tip) => tip.progress > 0);
+    let remaining =
+      (segments.length + live.length) *
+      Math.max(0, Math.min(1, Number.isFinite(retention) ? retention : 0));
+    function draw({ start, control, end, accent }, progress = 1) {
+      if (remaining <= 0) return;
+      const p = Math.min(1, remaining) * progress;
+      remaining--;
+      if (p < 1) {
+        const mix = (a, b) => a.map((value, axis) => value + (b[axis] - value) * p);
+        const nextControl = mix(start, control);
+        end = mix(nextControl, mix(control, end));
+        control = nextControl;
+      }
       const layer = accent ? "accent" : start[2] + end[2] < 0 ? "back" : "front";
       drawing[layer] += `M${coordinate(start)}Q${coordinate(control)} ${coordinate(end)}`;
       drawing.extent = Math.max(
@@ -324,14 +375,13 @@ export function createGrowth(id, seed = 0) {
       );
       drawing.segments++;
     }
-    segments.forEach(draw);
-    for (const { curve, progress } of tips) {
-      if (!progress) continue;
-      const p = Math.min(1, progress);
-      const mix = (a, b) => a.map((value, axis) => value + (b[axis] - value) * p);
-      const control = mix(curve.start, curve.control);
-      draw({ ...curve, control, end: mix(control, mix(curve.control, curve.end)) });
-    }
+    // The outer ring wraps in memory, but exits always erase newest growth first.
+    const ordered =
+      retention < 1 && segments.length === completeLimit
+        ? [...segments.slice(0, core), ...segments.slice(cursor), ...segments.slice(core, cursor)]
+        : segments;
+    for (const curve of ordered) draw(curve);
+    for (const { curve, progress } of live) draw(curve, Math.min(1, progress));
     return drawing;
   }
   return { advance, frame };

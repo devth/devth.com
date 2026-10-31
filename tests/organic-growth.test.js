@@ -86,6 +86,24 @@ it("uses fixed simulation steps and does not mutate when merely rendering or pau
   expect(() => createGrowth("missing")).toThrow(RangeError);
 });
 
+it("unwinds newest growth first without storing history or mutating the live garden", () => {
+  const growth = createGrowth("spore", 29);
+  const full = advance(growth, 20);
+  const complete = new Set(chunks(full));
+  let previous = full.segments;
+  for (const remaining of [0.9, 0.6, 0.3, 0.01, 0]) {
+    const frame = growth.frame(remaining);
+    expect(frame.segments).toBeLessThan(previous);
+    expect(frame.roots).toBe(full.roots);
+    expect(chunks(frame).filter((curve) => complete.has(curve)).length).toBeGreaterThanOrEqual(
+      frame.segments - 1,
+    );
+    previous = frame.segments;
+  }
+  expect(layers(growth.frame(0))).toBe("");
+  expect(growth.frame()).toEqual(full);
+});
+
 it("preserves the static study generator's smooth rolling generation boundaries", () => {
   for (const { id } of studies) {
     const before = organicCurves(id, 6 - 0.00001, 23);

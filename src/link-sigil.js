@@ -31,12 +31,16 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
   let range;
   let bounds;
   let generating = false;
+  let unwind;
+  const release = () => unwind?.();
 
   function clear(fade = false) {
     if (fade && !activeLink) return;
     cancelAnimationFrame(frame);
     clearTimeout(hideTimer);
     frame = hideTimer = 0;
+    unwind = null;
+    original.style.opacity = "";
     activeLink?.classList.remove("link-distortion");
     activeLink = range = null;
     sigil.classList.remove("is-visible");
@@ -135,6 +139,44 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
       }
       frame = requestAnimationFrame(animate);
     }
+    unwind = () => {
+      if (!activeLink) return;
+      if (motion.matches || document.hidden) {
+        clear();
+        return;
+      }
+      const target = activeLink;
+      activeLink.classList.remove("link-distortion");
+      activeLink = null;
+      cancelAnimationFrame(frame);
+      const started = performance.now();
+      painted = -Infinity;
+      hideTimer = setTimeout(() => {
+        paint(paths[1], { back: "", front: "", accent: "" });
+        clear();
+      }, 800);
+      function retract(now) {
+        if (
+          motion.matches ||
+          document.hidden ||
+          document.querySelector("dialog[open]") ||
+          (follow && !position(target))
+        ) {
+          clear();
+          return;
+        }
+        const progress = Math.min(1, (now - started) / 800);
+        const remaining = 1 - progress * progress * (3 - 2 * progress);
+        if (now - painted >= 1000 / 30) {
+          if (growth) paint(paths[1], growth.frame(remaining));
+          paint(paths[0], studyFrame(id, phase + age - Math.min(age, 0.8) * (1 - remaining)));
+          original.style.opacity = String(remaining);
+          painted = now;
+        }
+        frame = requestAnimationFrame(retract);
+      }
+      retract(started);
+    };
     animate(last);
   }
   window.addEventListener("keydown", (event) => {
@@ -148,6 +190,7 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
   return {
     draw,
     clear,
+    release,
     get target() {
       return activeLink;
     },
@@ -178,13 +221,13 @@ document.addEventListener("pointerover", (event) => {
 });
 document.addEventListener("pointerout", (event) => {
   const link = linkSigil.target;
-  if (link?.contains(event.target) && !link.contains(event.relatedTarget)) clearSigil();
+  if (link?.contains(event.target) && !link.contains(event.relatedTarget)) linkSigil.release();
 });
 document.addEventListener("focusin", (event) => {
   const link = event.target.closest("a");
   if (link) drawSigil(link);
 });
-document.addEventListener("focusout", clearSigil);
+document.addEventListener("focusout", () => linkSigil.release());
 document.addEventListener("scroll", clearSigil, { passive: true, capture: true });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) clearSigil();

@@ -14,6 +14,7 @@ let renderer;
 let loading;
 let revision = 0;
 let intent = 0;
+let unwindExit = false;
 
 function preferred() {
   const latest = sources.reduce(
@@ -30,7 +31,8 @@ function updateGlyph() {
   const target = preferred();
   const version = ++revision;
   if (!target || motion.matches || document.hidden) {
-    renderer?.clear(!motion.matches && !document.hidden);
+    if (!target && unwindExit && !motion.matches && !document.hidden) renderer?.release();
+    else renderer?.clear(!motion.matches && !document.hidden);
     return;
   }
   loading ||= import("./link-sigil.js")
@@ -52,7 +54,8 @@ function updateGlyph() {
       instance.draw(target);
   });
 }
-function refresh() {
+function refresh(unwind = false) {
+  unwindExit = unwind;
   for (const heading of headings) {
     heading.classList.toggle(
       "is-destination-active",
@@ -101,7 +104,7 @@ function register(element, heading) {
   });
   element.addEventListener("pointerleave", () => {
     source.hovered = false;
-    refresh();
+    refresh(true);
   });
   element.addEventListener("focus", () => {
     source.focused = true;
@@ -110,7 +113,7 @@ function register(element, heading) {
   });
   element.addEventListener("blur", () => {
     source.focused = false;
-    refresh();
+    refresh(true);
   });
 }
 for (const heading of headings) {
