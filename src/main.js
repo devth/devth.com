@@ -36,8 +36,7 @@ function loadSigils(event) {
   loadingSigils = import("./link-sigil.js")
     .then((module) => {
       sigils = module;
-      document.removeEventListener("pointerover", loadSigils);
-      document.removeEventListener("focusin", loadSigils);
+      for (const type of ["pointerover", "focusin"]) document.removeEventListener(type, loadSigils);
       const current = pendingSigil;
       pendingSigil = null;
       if (
@@ -52,8 +51,7 @@ function loadSigils(event) {
       loadingSigils = null;
     });
 }
-document.addEventListener("pointerover", loadSigils);
-document.addEventListener("focusin", loadSigils);
+for (const type of ["pointerover", "focusin"]) document.addEventListener(type, loadSigils);
 
 const quickNav = document.querySelector("#quick-nav");
 if (quickNav?.showModal) {
@@ -95,6 +93,11 @@ if (quickNav?.showModal) {
     } else if (event.key === "Escape") clearSigil();
   });
 }
+
+import("./collapse-trigger.js").then(
+  (module) => module.init(clearSigil),
+  () => {},
+);
 
 onPage("main", () => {
   if (document.querySelector("[data-toc]")) import("./toc.js");

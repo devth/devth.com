@@ -1052,6 +1052,80 @@ html:has(.quick-nav[open]) {
   margin: 0;
   accent-color: var(--accent);
 }
+.demolition-trigger {
+  color: var(--muted);
+  font: 11px/1.6 var(--mono);
+}
+.demolition-error {
+  color: var(--muted);
+  font: 11px/1.6 var(--mono);
+}
+.quick-nav-demolition {
+  align-self: flex-start;
+  flex-shrink: 0;
+  margin: 0 22px 12px;
+}
+body[data-demolishing] > :not(.demolition-dialog) {
+  display: none !important;
+}
+.demolition-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  color: var(--ink);
+  background: var(--paper);
+}
+.demolition-dialog::backdrop {
+  background: var(--paper);
+}
+.demolition-stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.demolition-piece {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform, opacity;
+}
+.demolition-message {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  font: 16px/1.5 var(--mono);
+}
+.demolition-restore {
+  position: absolute;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 1;
+  min-width: 44px;
+  padding: 8px;
+  background: var(--paper);
+}
+@media print {
+  html:has(.demolition-dialog[open]) {
+    overflow: visible !important;
+  }
+  body[data-demolishing] > .site-shell {
+    display: block !important;
+  }
+  .demolition-dialog {
+    display: none !important;
+  }
+}
 .quick-nav-help {
   margin: 0;
   padding: 14px 22px;

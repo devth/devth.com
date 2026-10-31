@@ -314,8 +314,9 @@ onPage("[data-cosmos-stage]", (stage, { on, dispose }) => {
     observer.observe(stage);
     on(document, "visibilitychange", syncLoop);
     on(window, "pageshow", syncLoop);
+    on(canvas, "site:before-capture", () => renderer.render(scene, camera));
     const resize = new ResizeObserver(() => {
-      if (disposed) return;
+      if (disposed || !stage.clientWidth || !stage.clientHeight) return;
       camera.aspect = stage.clientWidth / stage.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(stage.clientWidth, stage.clientHeight, false);
