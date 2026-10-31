@@ -31,7 +31,8 @@ test("footer content tumbles in three dimensions and Escape restores the same re
   await button.click();
   const dialog = collapseDialog(page);
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("button", { name: "restore", exact: true })).toBeFocused();
+  await expect(dialog).toBeFocused();
+  await expect(dialog.getByRole("button", { name: "restore", exact: true })).toHaveCount(0);
   await page.clock.pauseAt(new Date(Date.now() + 100));
   await page.clock.runFor(1800);
   await expect.poll(() => page.locator(".demolition-piece").count()).toBeGreaterThan(0);
@@ -51,6 +52,11 @@ test("footer content tumbles in three dimensions and Escape restores the same re
   ).toBe(true);
   expect(await page.locator(".demolition-piece").count()).toBeLessThanOrEqual(160);
   await page.keyboard.press("Escape");
+  await expect(dialog).toHaveAttribute("data-phase", "reversing");
+  await page.clock.runFor(300);
+  await expect(dialog).toBeVisible();
+  expect(await page.locator(".demolition-piece").count()).toBeGreaterThan(0);
+  await page.clock.runFor(1000);
   await expect(dialog).toHaveCount(0);
   await expect(button).toBeFocused();
   expect(
@@ -95,8 +101,22 @@ test("the bottom Cmd+K action crumbles away to i told you and stays until restor
   await expect(page.locator(".demolition-piece")).toHaveCount(0);
   await page.clock.runFor(60_000);
   await expect(dialog).toBeVisible();
-  await dialog.getByRole("button", { name: "restore", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "i told you", exact: true })).toBeFocused();
+  await page.evaluate(() => {
+    window.sawReversePieces = false;
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('.demolition-dialog[data-phase="reversing"] .demolition-piece'))
+        window.sawReversePieces = true;
+      if (!document.querySelector(".demolition-dialog")) observer.disconnect();
+    });
+    observer.observe(document.body, { subtree: true, childList: true });
+  });
+  await dialog.getByRole("button", { name: "i told you", exact: true }).click();
+  await expect(dialog).toHaveAttribute("data-phase", "reversing");
+  await expect(dialog.getByRole("status")).toBeHidden();
+  await page.clock.runFor(13_000);
   await expect(dialog).toHaveCount(0);
+  expect(await page.evaluate(() => window.sawReversePieces)).toBe(true);
   await expect(menu).toBeVisible();
   await expect(query).toHaveValue("glossary");
   await expect(button).toBeFocused();

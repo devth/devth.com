@@ -1106,14 +1106,10 @@ body[data-demolishing] > :not(.demolition-dialog) {
   margin: 0;
   font: 16px/1.5 var(--mono);
 }
-.demolition-restore {
-  position: absolute;
-  right: max(22px, env(safe-area-inset-right));
-  bottom: max(18px, env(safe-area-inset-bottom));
-  z-index: 1;
+.demolition-return {
   min-width: 44px;
   padding: 8px;
-  background: var(--paper);
+  font: inherit;
 }
 @media print {
   html:has(.demolition-dialog[open]) {

@@ -1,6 +1,7 @@
 import { Scene, PerspectiveCamera } from "three";
 import { CSS3DRenderer, CSS3DObject } from "three/addons/renderers/CSS3DRenderer.js";
 import { createDemolitionPhysics } from "./demolition-physics.js";
+import { createHistory } from "./demolition-history.js";
 import { releasePiece } from "./demolition-capture.js";
 export { capturePage } from "./demolition-capture.js";
 
@@ -11,6 +12,7 @@ export function createScene(capture, host, onDone) {
   const renderer = new CSS3DRenderer();
   const objects = new Map();
   const physics = createDemolitionPhysics(capture.models, host.clientWidth, host.clientHeight);
+  const history = createHistory();
   host.append(renderer.domElement);
   renderer.domElement.setAttribute("aria-hidden", "true");
   renderer.domElement.inert = true;
@@ -19,6 +21,9 @@ export function createScene(capture, host, onDone) {
   let last = 0;
   let nextPaint = 0;
   let visibleTime = 0;
+  let cursor = 0;
+  let phase = "forward";
+  let onRebuilt;
   let disposed = false;
   function resize() {
     width = host.clientWidth;
@@ -35,9 +40,9 @@ export function createScene(capture, host, onDone) {
     releasePiece(object.element);
     objects.delete(id);
   }
-  function paint() {
-    for (const [id, object] of objects) if (!physics.pieces.has(id)) remove(id, object);
-    for (const piece of physics.pieces.values()) {
+  function paint(pieces = physics.pieces) {
+    for (const [id, object] of objects) if (!pieces.has(id)) remove(id, object);
+    for (const piece of pieces.values()) {
       const { body, region } = piece;
       const visible =
         body.position.y - region.height / 2 < height / 2 + 120 &&
@@ -73,15 +78,27 @@ export function createScene(capture, host, onDone) {
     frame = 0;
     scope.abort();
     physics.dispose();
+    history.dispose();
     for (const [id, object] of objects) remove(id, object);
     renderer.domElement.remove();
     capture.dispose();
   }
   function finish() {
-    if (!disposed) {
-      dispose();
-      onDone();
-    }
+    if (disposed || phase !== "forward") return;
+    phase = "done";
+    physics.dispose();
+    for (const [id, object] of objects) remove(id, object);
+    renderer.domElement.remove();
+    onDone();
+  }
+  function reverse(callback) {
+    if (disposed || phase === "reverse") return;
+    phase = "reverse";
+    onRebuilt = callback;
+    cursor = history.duration;
+    physics.dispose();
+    host.append(renderer.domElement);
+    visibility();
   }
   function tick(now) {
     frame = 0;
@@ -91,15 +108,29 @@ export function createScene(capture, host, onDone) {
       return;
     }
     const seconds = last ? (now - last) / 1000 : 0;
-    visibleTime += seconds;
-    physics.advance(seconds);
     last = now;
     nextPaint = now + 1000 / 30;
-    if (visibleTime > 23) host.style.opacity = Math.max(0, 24 - visibleTime);
-    paint();
-    if (physics.done || visibleTime >= 24) {
-      finish();
-      return;
+    if (phase === "reverse") {
+      // Replay the actual collisions, rotations and fracture topology, twice as fast.
+      cursor = Math.max(0, cursor - seconds * 2);
+      const snapshot = history.at(cursor);
+      host.style.opacity = snapshot.opacity;
+      paint(snapshot.pieces);
+      if (cursor === 0) {
+        onRebuilt();
+        return;
+      }
+    } else {
+      visibleTime += seconds;
+      physics.advance(seconds);
+      const opacity = visibleTime > 23 ? Math.max(0, 24 - visibleTime) : 1;
+      host.style.opacity = opacity;
+      history.record(visibleTime, physics.pieces, opacity);
+      paint();
+      if (physics.done || visibleTime >= 24) {
+        finish();
+        return;
+      }
     }
     frame = requestAnimationFrame(tick);
   }
@@ -108,10 +139,11 @@ export function createScene(capture, host, onDone) {
     frame = 0;
     last = 0;
     nextPaint = 0;
-    if (!document.hidden && !disposed) frame = requestAnimationFrame(tick);
+    if (!document.hidden && !disposed && phase !== "done") frame = requestAnimationFrame(tick);
   }
   try {
     resize();
+    history.record(0, physics.pieces);
     paint();
     window.addEventListener("resize", resize, { signal: scope.signal });
     window.visualViewport?.addEventListener("resize", resize, { signal: scope.signal });
@@ -121,5 +153,5 @@ export function createScene(capture, host, onDone) {
     dispose();
     throw error;
   }
-  return { dispose, finish };
+  return { dispose, reverse };
 }

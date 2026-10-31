@@ -46,7 +46,7 @@ test("reduced motion leaves an instant accessible empty scene without loading 3D
   await expect(page.locator("main")).toBeVisible();
   await expect(page.locator(".demolition-dialog")).toBeHidden();
   await page.emulateMedia({ media: "screen", reducedMotion: "reduce" });
-  await effect(page).getByRole("button", { name: "restore", exact: true }).click();
+  await effect(page).getByRole("button", { name: "i told you", exact: true }).click();
   await expect(filter).toHaveValue("constraint");
   await expect(page.locator(".entry:visible")).toHaveCount(2);
   expect(await page.evaluate((key) => localStorage.getItem(key), preferences)).toBe(stored);
@@ -151,9 +151,7 @@ test("repeated collapses retain the filtered document, reading position and one 
     await expect(effect(page)).toBeVisible();
     for (const key of ["Tab", "Shift+Tab"]) {
       await page.keyboard.press(key);
-      await expect(
-        effect(page).getByRole("button", { name: "restore", exact: true }),
-      ).toBeFocused();
+      await expect(effect(page)).toBeFocused();
     }
     await page.keyboard.press("Escape");
     await expect(effect(page)).toHaveCount(0);

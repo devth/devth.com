@@ -37,12 +37,14 @@ for (const colorScheme of ["light", "dark"])
         true,
       );
       expect(await page.locator(".demolition-piece").count()).toBeLessThanOrEqual(160);
-      await expect(dialog.getByRole("button", { name: "restore", exact: true })).toBeVisible();
+      await expect(dialog.getByRole("button", { name: "restore", exact: true })).toHaveCount(0);
       await page.screenshot({ path: testInfo.outputPath(label + ".png") });
     }
     await expect(dialog.getByRole("status")).toHaveText("i told you");
     await expect(page.locator(".demolition-piece")).toHaveCount(0);
     await page.keyboard.press("Escape");
+    await expect(dialog).toHaveAttribute("data-phase", "reversing");
+    await page.clock.runFor(13_000);
     await expect(menu).toBeVisible();
     expect(errors).toEqual([]);
   });

@@ -323,6 +323,7 @@ export async function generateSite() {
       "demolition-scene.js",
       "demolition-capture.js",
       "demolition-physics.js",
+      "demolition-history.js",
       "link-sigil.js",
       "hover-target.js",
       "page-lifecycle.js",

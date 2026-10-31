@@ -24,13 +24,15 @@ export async function collapse(trigger, { signal } = {}) {
   dialog.className = "demolition-dialog";
   dialog.setAttribute("aria-label", "page collapse");
   dialog.setAttribute("aria-describedby", "demolition-instructions");
+  dialog.dataset.phase = "falling";
   dialog.innerHTML =
-    '<p id="demolition-instructions" class="sr-only">press Escape or restore to bring the page back.</p><div class="demolition-stage" aria-hidden="true"></div><p class="demolition-message" role="status" hidden></p><button class="text-action demolition-restore" type="button" aria-keyshortcuts="Escape" autofocus>restore</button>';
+    '<p id="demolition-instructions" class="sr-only">press Escape to reverse the fall, or click i told you when it appears.</p><div class="demolition-stage" aria-hidden="true"></div><p class="demolition-message" role="status" hidden><button class="text-action demolition-return" type="button" aria-keyshortcuts="Escape">i told you</button></p>';
   const button = dialog.querySelector("button");
   const stage = dialog.querySelector(".demolition-stage");
   let scene;
   let capture;
   let restored = false;
+  let reversing = false;
   const restore = ({ focus = true, menu: restoreMenu = true } = {}) => {
     if (restored) return;
     restored = true;
@@ -56,15 +58,24 @@ export async function collapse(trigger, { signal } = {}) {
       target?.focus({ preventScroll: true });
     }
   };
+  const reverse = () => {
+    if (restored || reversing) return;
+    if (motion.matches || !scene) {
+      restore();
+      return;
+    }
+    reversing = true;
+    dialog.dataset.phase = "reversing";
+    dialog.querySelector(".demolition-message").hidden = true;
+    dialog.focus({ preventScroll: true });
+    scene.reverse(() => restore());
+  };
   const done = () => {
-    if (restored || dialog.classList.contains("is-done")) return;
-    scene = undefined;
-    capture = undefined;
-    stage.replaceChildren();
+    if (restored || reversing || dialog.classList.contains("is-done")) return;
     dialog.classList.add("is-done");
-    const message = dialog.querySelector(".demolition-message");
-    message.textContent = "i told you";
-    message.hidden = false;
+    dialog.dataset.phase = "destroyed";
+    dialog.querySelector(".demolition-message").hidden = false;
+    button.focus({ preventScroll: true });
   };
   active = { restore };
   try {
@@ -74,13 +85,13 @@ export async function collapse(trigger, { signal } = {}) {
     dialog.showModal();
     document.body.setAttribute("data-demolishing", "");
     document.documentElement.style.overflow = "hidden";
-    button.focus({ preventScroll: true });
-    button.addEventListener("click", () => restore(), { signal: scope.signal });
+    dialog.focus({ preventScroll: true });
+    button.addEventListener("click", reverse, { signal: scope.signal });
     dialog.addEventListener(
       "cancel",
       (event) => {
         event.preventDefault();
-        restore();
+        reverse();
       },
       { signal: scope.signal },
     );
@@ -90,11 +101,13 @@ export async function collapse(trigger, { signal } = {}) {
         if (event.key === "Escape") {
           event.preventDefault();
           event.stopImmediatePropagation();
-          restore();
+          reverse();
         } else if (event.key === "Tab" && !event.metaKey && !event.ctrlKey && !event.altKey) {
           event.preventDefault();
           event.stopImmediatePropagation();
-          button.focus({ preventScroll: true });
+          (dialog.querySelector(".demolition-message").hidden ? dialog : button).focus({
+            preventScroll: true,
+          });
         } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -110,8 +123,14 @@ export async function collapse(trigger, { signal } = {}) {
       "change",
       () => {
         if (motion.matches) {
-          if (scene) scene.finish();
-          else done();
+          if (reversing) restore();
+          else {
+            scene?.dispose();
+            capture?.dispose();
+            scene = undefined;
+            capture = undefined;
+            done();
+          }
         }
       },
       { signal: scope.signal },
