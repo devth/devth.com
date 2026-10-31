@@ -22,6 +22,7 @@ export function createScene(capture, host, onDone) {
   let nextPaint = 0;
   let visibleTime = 0;
   let cursor = 0;
+  let reverseSpeed = 2;
   let phase = "forward";
   let onRebuilt;
   let disposed = false;
@@ -91,11 +92,12 @@ export function createScene(capture, host, onDone) {
     renderer.domElement.remove();
     onDone();
   }
-  function reverse(callback) {
+  function reverse(callback, duration) {
     if (disposed || phase === "reverse") return;
     phase = "reverse";
     onRebuilt = callback;
     cursor = history.duration;
+    reverseSpeed = duration > 0 ? Math.max(2, cursor / duration) : 2;
     physics.dispose();
     host.append(renderer.domElement);
     visibility();
@@ -111,8 +113,8 @@ export function createScene(capture, host, onDone) {
     last = now;
     nextPaint = now + 1000 / 30;
     if (phase === "reverse") {
-      // Replay the actual collisions, rotations and fracture topology, twice as fast.
-      cursor = Math.max(0, cursor - seconds * 2);
+      // Replay the actual collisions and fractures; a released hold zips back in 250ms.
+      cursor = Math.max(0, cursor - seconds * reverseSpeed);
       const snapshot = history.at(cursor);
       host.style.opacity = snapshot.opacity;
       paint(snapshot.pieces);

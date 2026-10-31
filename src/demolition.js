@@ -1,12 +1,19 @@
 let active;
 
-export async function collapse(trigger, { signal } = {}) {
-  if (active || signal?.aborted || document.hidden) return;
+export async function collapse(trigger, { signal, releaseSignal } = {}) {
+  if (active || signal?.aborted || releaseSignal?.aborted || document.hidden) return;
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
   const engine = motion.matches ? null : await import("./demolition-scene.js");
-  if (signal?.aborted || document.hidden || !trigger.isConnected) return;
+  if (signal?.aborted || releaseSignal?.aborted || document.hidden || !trigger.isConnected) return;
   if (!motion.matches) await new Promise(requestAnimationFrame);
-  if (active || signal?.aborted || !trigger.isConnected || document.hidden) return;
+  if (
+    active ||
+    signal?.aborted ||
+    releaseSignal?.aborted ||
+    !trigger.isConnected ||
+    document.hidden
+  )
+    return;
   const menu = document.querySelector("#quick-nav");
   const reopen = !!menu?.open;
   const scroll = { x: scrollX, y: scrollY };
@@ -25,6 +32,7 @@ export async function collapse(trigger, { signal } = {}) {
   dialog.setAttribute("aria-label", "page collapse");
   dialog.setAttribute("aria-describedby", "demolition-instructions");
   dialog.dataset.phase = "falling";
+  if (releaseSignal) dialog.dataset.momentary = "";
   dialog.innerHTML =
     '<p id="demolition-instructions" class="sr-only">press Escape to reverse the fall, or click i told you when it appears.</p><div class="demolition-stage" aria-hidden="true"></div><p class="demolition-message" role="status" hidden><button class="text-action demolition-return" type="button" aria-keyshortcuts="Escape">i told you</button></p>';
   const button = dialog.querySelector("button");
@@ -58,7 +66,7 @@ export async function collapse(trigger, { signal } = {}) {
       target?.focus({ preventScroll: true });
     }
   };
-  const reverse = () => {
+  const reverse = ({ quick = !!releaseSignal } = {}) => {
     if (restored || reversing) return;
     if (motion.matches || !scene) {
       restore();
@@ -68,7 +76,7 @@ export async function collapse(trigger, { signal } = {}) {
     dialog.dataset.phase = "reversing";
     dialog.querySelector(".demolition-message").hidden = true;
     dialog.focus({ preventScroll: true });
-    scene.reverse(() => restore());
+    scene.reverse(() => restore(), quick ? 0.25 : undefined);
   };
   const done = () => {
     if (restored || reversing || dialog.classList.contains("is-done")) return;
@@ -136,6 +144,18 @@ export async function collapse(trigger, { signal } = {}) {
       { signal: scope.signal },
     );
     signal?.addEventListener("abort", leave, { once: true, signal: scope.signal });
+    releaseSignal?.addEventListener("abort", () => reverse({ quick: true }), {
+      once: true,
+      signal: scope.signal,
+    });
+    if (releaseSignal)
+      document.addEventListener(
+        "visibilitychange",
+        () => {
+          if (document.hidden) leave();
+        },
+        { signal: scope.signal },
+      );
     if (capture) scene = engine.createScene(capture, stage, done);
     else done();
   } catch (error) {
