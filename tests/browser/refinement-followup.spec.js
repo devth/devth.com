@@ -1,12 +1,10 @@
 import { test, expect } from "@playwright/test";
 
-test("archive has one RSS action and a quiet filter prompt", async ({ page }) => {
+test("archive has one RSS action and no inline filter", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: /^RSS/ })).toHaveCount(1);
-  await expect(page.getByRole("searchbox", { name: "Filter writing" })).toHaveAttribute(
-    "placeholder",
-    "filter",
-  );
+  await expect(page.getByRole("searchbox", { name: "Filter writing" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Search", exact: true })).toBeVisible();
 });
 
 test("typeclass further reading links to the author's original article", async ({ page }) => {
@@ -80,7 +78,6 @@ test("year inscription is decorative and does not shift the archive", async ({
   }
   expect(await page.locator(".entry").first().boundingBox()).toEqual(before);
   if (testInfo.project.name === "desktop") {
-    await page.getByRole("searchbox", { name: "Filter writing" }).fill("Iteration");
     await year.hover();
     const noteBox = await note.boundingBox();
     const footer = await page.locator(".site-footer").boundingBox();

@@ -62,7 +62,6 @@ function savePosition() {
   positions.set(entry + "|" + rendered.href, {
     x: scrollX,
     y: scrollY,
-    filter: document.querySelector("#search")?.value || "",
   });
 }
 function keyFor(url) {
@@ -205,8 +204,6 @@ async function navigate(requested, { pop = false, keyboard = false } = {}) {
       for (const token of pageClasses.split(/\s+/).filter(Boolean))
         document.body.classList.add(token);
       for (const script of content.querySelectorAll("script")) script.remove();
-      if (saved && main.querySelector("#search"))
-        main.querySelector("#search").value = saved.filter;
       document.querySelector("main").replaceWith(main);
       const currentFooter = document.querySelector(".site-footer");
       const counter = footer.querySelector(".hit-counter");

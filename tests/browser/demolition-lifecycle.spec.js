@@ -23,10 +23,9 @@ test("reduced motion leaves an instant accessible empty scene without loading 3D
     (key) => localStorage.setItem(key, JSON.stringify({ structure: "lattice", generation: true })),
     preferences,
   );
-  await page.goto("/");
-  const filter = page.getByRole("searchbox", { name: "Filter writing" });
-  await filter.fill("constraint");
-  await expect(page.locator(".entry:visible")).toHaveCount(2);
+  await page.goto("/?category=philosophy#writing");
+  await expect(page.locator("[data-category-label]")).toHaveText("philosophy");
+  const entries = await page.locator(".entry:visible").count();
   const stored = await page.evaluate((key) => localStorage.getItem(key), preferences);
   await footer(page).hover();
   expect(assets.some((url) => /\/assets\/(demolition-|three\.core-|cosmos-)/.test(url))).toBe(
@@ -47,8 +46,8 @@ test("reduced motion leaves an instant accessible empty scene without loading 3D
   await expect(page.locator(".demolition-dialog")).toBeHidden();
   await page.emulateMedia({ media: "screen", reducedMotion: "reduce" });
   await effect(page).getByRole("button", { name: "i told you", exact: true }).click();
-  await expect(filter).toHaveValue("constraint");
-  await expect(page.locator(".entry:visible")).toHaveCount(2);
+  await expect(page.locator("[data-category-label]")).toHaveText("philosophy");
+  await expect(page.locator(".entry:visible")).toHaveCount(entries);
   expect(await page.evaluate((key) => localStorage.getItem(key), preferences)).toBe(stored);
 });
 
@@ -135,10 +134,9 @@ test("repeated collapses retain the filtered document, reading position and one 
       counts.push(request.url());
   });
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
-  const filter = page.getByRole("searchbox", { name: "Filter writing" });
-  await filter.fill("constraint");
-  await expect(page.locator(".entry:visible")).toHaveCount(2);
+  await page.goto("/?category=philosophy#writing");
+  await expect(page.locator("[data-category-label]")).toHaveText("philosophy");
+  const entries = await page.locator(".entry:visible").count();
   await expect(page.getByRole("img", { name: "Page hit counter" })).toHaveJSProperty(
     "complete",
     true,
@@ -156,7 +154,8 @@ test("repeated collapses retain the filtered document, reading position and one 
     await page.keyboard.press("Escape");
     await expect(effect(page)).toHaveCount(0);
     await expect(footer(page)).toBeFocused();
-    await expect(filter).toHaveValue("constraint");
+    await expect(page.locator("[data-category-label]")).toHaveText("philosophy");
+    await expect(page.locator(".entry:visible")).toHaveCount(entries);
     expect(await page.evaluate(() => scrollY)).toBeCloseTo(y, 0);
     await expect(page.locator(".demolition-piece,[id^=demolition-svg-]")).toHaveCount(0);
   }

@@ -106,8 +106,7 @@ onPage("main", () => {
   if (document.querySelector("[data-cosmos-stage]")) import("./cosmos.js");
 });
 
-onPage("#search", (search, { on }) => {
-  document.querySelector("[data-search]").hidden = false;
+onPage("section.writing", (_, { on }) => {
   const entries = [...document.querySelectorAll(".entry")];
   const groups = [...document.querySelectorAll(".year-group")];
   const status = document.querySelector("[data-search-status]");
@@ -118,45 +117,20 @@ onPage("#search", (search, { on }) => {
     document.querySelector("[data-category-label]").textContent = category;
   }
   function filter() {
-    const words = search.value.toLowerCase().trim().split(/\s+/);
     entries.forEach((entry, index) => {
       const inCategory =
         !category ||
         categories[index].some((name) => name.toLowerCase() === category.toLowerCase());
-      entry.hidden = !inCategory || !words.every((word) => entry.dataset.searchText.includes(word));
+      entry.hidden = !inCategory;
     });
     for (const group of groups) group.hidden = !group.querySelector(".entry:not([hidden])");
     const count = entries.filter((entry) => !entry.hidden).length;
     document.querySelector("[data-no-results]").hidden = count !== 0;
     status.textContent = count + (count === 1 ? " post found." : " posts found.");
-    status.classList.toggle("sr-only", !category && !search.value.trim());
+    status.classList.toggle("sr-only", !category);
   }
-  document.querySelector("[data-clear-filter]").addEventListener("click", () => {
-    search.value = "";
-    filter();
-    search.focus();
-  });
   filter();
-  search.addEventListener("input", filter);
   on(window, "pageshow", filter);
-  on(document, "keydown", (event) => {
-    if (
-      event.key === "/" &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.altKey &&
-      !/INPUT|TEXTAREA|SELECT/.test(event.target.tagName) &&
-      !event.target.isContentEditable
-    ) {
-      event.preventDefault();
-      search.focus();
-    }
-    if (event.key === "Escape" && document.activeElement === search) {
-      search.value = "";
-      filter();
-      search.blur();
-    }
-  });
 });
 import("./navigation.js").catch(() => {
   /* Native anchors remain the fallback. */

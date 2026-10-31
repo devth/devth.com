@@ -6,7 +6,8 @@ for (const width of [320, 393, 768, 1440]) {
     for (const colorScheme of ["light", "dark"]) {
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       await page.goto("/");
-      await expect(page.getByRole("searchbox", { name: "Filter writing" })).toBeVisible();
+      await expect(page.getByRole("searchbox", { name: "Filter writing" })).toHaveCount(0);
+      await expect(page.getByRole("button", { name: "Search", exact: true })).toBeVisible();
       await expect(page.locator(".entry")).toHaveCount(17);
       await expect(page.locator(".year-group")).toHaveCount(11);
       await expect(page.locator(".entry-arrow")).toHaveCount(0);
@@ -41,14 +42,12 @@ for (const width of [320, 393, 768, 1440]) {
   });
 }
 
-test("clearing text preserves the selected category and year grouping", async ({ page }) => {
+test("category navigation preserves year grouping without an inline filter", async ({ page }) => {
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto("/?category=infrastructure#writing");
-  const input = page.getByRole("searchbox", { name: "Filter writing" });
-  await input.fill("no-matching-writing-12345");
-  await page.getByRole("button", { name: "Clear filter", exact: true }).click();
+  await expect(page.getByRole("searchbox", { name: "Filter writing" })).toHaveCount(0);
   await expect(page).toHaveURL(/category=infrastructure#writing$/);
-  await expect(input).toBeFocused();
+  await expect(page.locator("[data-category-label]")).toHaveText("infrastructure");
   await expect(page.getByRole("link", { name: /YAML was a bad idea/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Iteration and Play/ })).toBeHidden();
   await expect(page.locator(".year-group:not([hidden])")).toHaveCount(3);

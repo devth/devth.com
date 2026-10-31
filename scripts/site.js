@@ -173,7 +173,6 @@ function categoryLink(category) {
 function home(posts) {
   const years = [...new Set(posts.map((post) => post.date.slice(0, 4)))];
   return `<section id="writing" class="writing" aria-label="Posts">
-    <div class="section-heading"><div class="search" data-search hidden><label class="sr-only" for="search">Filter writing</label><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="filter" autocomplete="off" spellcheck="false" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></div></div>
     <div class="category-filter" data-category-filter hidden><span data-category-label></span><a href="/">all posts</a></div>
     <p class="archive-status sr-only" role="status" data-search-status></p>
     <div class="archive">${years
@@ -183,12 +182,12 @@ function home(posts) {
             .filter((post) => post.date.startsWith(year))
             .map(
               (post) =>
-                `<li class="entry" data-categories="${escape(JSON.stringify(post.categories))}" data-search-text="${escape([post.title, post.excerpt, ...post.categories, post.date].join(" ").toLowerCase())}"><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${post.categories.map(categoryLink).join(" / ")}</span></div><a class="entry-link" href="/${post.slug}"><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div></a></li>`,
+                `<li class="entry" data-categories="${escape(JSON.stringify(post.categories))}" ><div class="entry-meta"><time datetime="${post.date}">${escape(dateLabel(post.date))}</time><span>${post.categories.map(categoryLink).join(" / ")}</span></div><a class="entry-link" href="/${post.slug}"><div class="entry-body"><h3 class="entry-title">${escape(post.title)}</h3><p>${escape(post.excerpt)}</p></div></a></li>`,
             )
             .join("")}</ol></section>`,
       )
       .join("")}</div>
-    <div class="no-results" data-no-results hidden><p>No matching posts.</p><button class="text-action" type="button" data-clear-filter>Clear filter</button></div>
+    <div class="no-results" data-no-results hidden><p>No matching posts.</p><a href="/">all posts</a></div>
   </section>`;
 }
 

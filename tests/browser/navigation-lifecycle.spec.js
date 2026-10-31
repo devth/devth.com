@@ -96,20 +96,27 @@ test("return visits request a fresh counter image for the same page identity", a
   expect(about[0]).not.toBe(about[1]);
 });
 
-test("Back restores the per-entry writing filter", async ({ page }) => {
-  await page.goto("/");
-  await page.locator("#search").fill("monorepo");
-  await expect(page.locator("[data-search-status]")).toHaveText("1 post found.");
-  await page.locator(".entry-link:visible").click();
+test("Back restores the per-entry writing category without an inline filter", async ({ page }) => {
+  await page.goto("/?category=infrastructure#writing");
+  await expect(page.locator("[data-category-label]")).toHaveText("infrastructure");
+  const entries = await page
+    .locator(".entry:visible .entry-link")
+    .evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  await page.getByRole("link", { name: /You might not want a Monorepo/ }).click();
   await expect(page.locator("html")).toHaveAttribute(
     "data-navigation-ready",
     "/you-might-not-want-a-monorepo",
   );
   await page.goBack();
-  await expect(page.locator("html")).toHaveAttribute("data-navigation-ready", "/");
-  await expect(page.locator("#search")).toHaveValue("monorepo");
-  await expect(page.locator(".entry:visible")).toHaveCount(1);
-  await page.locator("#search").fill("");
+  await expect(page).toHaveURL(/category=infrastructure#writing$/);
+  await expect(page.locator("[data-category-label]")).toHaveText("infrastructure");
+  await expect(page.locator("#search")).toHaveCount(0);
+  expect(
+    await page
+      .locator(".entry:visible .entry-link")
+      .evaluateAll((links) => links.map((link) => link.getAttribute("href"))),
+  ).toEqual(entries);
+  await page.getByRole("link", { name: "all posts", exact: true }).click();
   await expect(page.locator(".entry:visible")).toHaveCount(17);
 });
 
@@ -345,7 +352,7 @@ test("harmless clicks cannot commit a pending category traversal", async ({ page
   release();
   await expect(page).toHaveURL(/category=oss#writing$/);
   await expect(page.locator("[data-category-label]")).toHaveText("oss");
-  await expect(page.locator("#search")).toHaveValue("");
+  await expect(page.locator("#search")).toHaveCount(0);
   for (const entry of await page.locator(".entry:visible").all())
     expect(JSON.parse(await entry.getAttribute("data-categories"))).toContain("oss");
 });
