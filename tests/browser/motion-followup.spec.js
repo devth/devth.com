@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+const drawing = (sigil) =>
+  sigil.locator("path").evaluateAll((paths) => paths.map((p) => p.getAttribute("d")).join(""));
 
 test("hover geometry keeps evolving, holds text still and cancels on exit or resize", async ({
   page,
@@ -9,16 +11,17 @@ test("hover geometry keeps evolving, holds text still and cancels on exit or res
   const sigil = page.locator(".link-sigil");
   const box = await link.boundingBox();
   await link.hover();
-  const first = await sigil.locator("path").getAttribute("d");
+  await expect(sigil).toBeVisible();
+  const first = await drawing(sigil);
   expect(first).not.toContain("NaN");
   await page.clock.runFor(1600);
-  expect(await sigil.locator("path").getAttribute("d")).not.toBe(first);
+  expect(await drawing(sigil)).not.toBe(first);
   expect(await link.boundingBox()).toEqual(box);
   await page.mouse.move(1, 1);
   await expect(sigil).toBeHidden();
-  const stopped = await sigil.locator("path").getAttribute("d");
+  const stopped = await drawing(sigil);
   await page.clock.runFor(1000);
-  expect(await sigil.locator("path").getAttribute("d")).toBe(stopped);
+  expect(await drawing(sigil)).toBe(stopped);
   await link.hover();
   await expect(sigil).toBeVisible();
   await page.setViewportSize({ width: 1200, height: 800 });
@@ -46,8 +49,8 @@ test("switcher keeps query and touch-sized dismissal visible with one results sc
   await page.goto("/");
   await page.keyboard.press("Control+k");
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
-  const query = dialog.getByRole("combobox");
-  await expect(dialog.getByRole("option")).toHaveCount(23);
+  const query = dialog.getByRole("combobox", { name: "Search pages" });
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toHaveCount(23);
   await expect(query).toBeFocused();
   const close = dialog.getByRole("button", { name: "Close search" });
   const closeBox = await close.boundingBox();
@@ -60,7 +63,9 @@ test("switcher keeps query and touch-sized dismissal visible with one results sc
   await expect(dialog.getByRole("listbox")).toHaveCSS("overflow-y", "auto");
   const inputBox = await query.boundingBox();
   await page.keyboard.press("ArrowUp");
-  await expect(dialog.getByRole("option").last()).toHaveAttribute("aria-selected", "true");
+  await expect(
+    dialog.getByRole("listbox", { name: "Pages" }).getByRole("option").last(),
+  ).toHaveAttribute("aria-selected", "true");
   expect(await query.boundingBox()).toEqual(inputBox);
   await expect(query).toBeFocused();
   await close.click();

@@ -1,15 +1,31 @@
 import { preserveCase } from "./lettercase.js";
+import { getHoverPreferences, setHoverPreferences } from "./hover-preferences.js";
 
 let initialized = false;
 
 export function initializeSearch(dialog) {
   if (initialized) return;
   initialized = true;
-  const query = dialog.querySelector("input");
+  const query = dialog.querySelector('input[type="search"]');
   const results = dialog.querySelector("[role=listbox]");
   const status = dialog.querySelector("[role=status]");
   const fallback = dialog.querySelector(".quick-nav-fallback");
   const clear = dialog.querySelector("[data-clear-search]");
+  const settings = dialog.querySelector("[data-hover-settings]");
+  const structure = settings.querySelector("select");
+  const generation = settings.querySelector("input");
+  function updateSettings() {
+    const preferences = getHoverPreferences();
+    structure.value = preferences.structure;
+    generation.checked = preferences.generation;
+  }
+  structure.addEventListener("change", () => setHoverPreferences({ structure: structure.value }));
+  generation.addEventListener("change", () =>
+    setHoverPreferences({ generation: generation.checked }),
+  );
+  window.addEventListener("hover-preferenceschange", updateSettings);
+  updateSettings();
+  settings.hidden = false;
   let pages = [];
   let loaded = false;
   let failed = false;

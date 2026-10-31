@@ -137,28 +137,202 @@ export function organicCurves(id, ageSeconds, seed = 0) {
   return curves;
 }
 
-/** Local SVG paths: the caller owns viewport translation and glyph scaling.
- * Extent encloses endpoints AND curve controls. Segment count includes decorations.
+/** Incremental, fixed-scale roots. Only a bounded visible garden is materialized:
+ * old offscreen tips are replenished from existing branch nodes, not magnified.
+ * Advance is capped for suspended frames; callers own pause/resume and rendering.
  */
-export function growthFrame(id, ageSeconds, seed = 0) {
-  const age = safeAge(ageSeconds);
-  const curves = organicCurves(id, age, seed);
-  const frame = { back: "", front: "", accent: "", extent: 0, segments: curves.length };
-  if (!curves.length) return frame;
-  // Reach has no terminal size. The sublinear power keeps this finite even at
-  // Number.MAX_VALUE; the logarithmic factor accelerates the first few seconds.
-  const extent = 80 * age ** 0.9 * (1 + Math.log1p(age) ** 2);
-  const radius = Math.max(
-    ...curves.flatMap(({ start, control, end }) =>
-      [start, control, end].map(([x, y]) => Math.hypot(x, y)),
-    ),
-  );
-  const scale = extent / radius;
-  const coordinate = ([x, y]) => `${(x * scale).toFixed(2)} ${(y * scale).toFixed(2)}`;
-  for (const { start, control, end, accent } of curves) {
-    const layer = accent ? "accent" : start[2] + end[2] < 0 ? "back" : "front";
-    frame[layer] += `M${coordinate(start)}Q${coordinate(control)} ${coordinate(end)}`;
+export function createGrowth(id, seed = 0) {
+  const profile = profiles[id];
+  if (!profile) throw new RangeError(`Unknown growth study: ${id}`);
+  const random = randomSource(id, seed, "live-roots");
+  const maxTips = 24;
+  const completeLimit = maxSegments - maxTips;
+  const core = 96;
+  const fixedStep = 1 / 60;
+  const origin = [0, 0, 0];
+  const segments = [];
+  const tips = [];
+  let cursor = core;
+  let roots = 0;
+  let commits = 0;
+  let elapsed = 0;
+  let remainder = 0;
+  let birthClock = 0;
+  const defaultBounds = { left: -1400, right: 1400, top: -1000, bottom: 1000 };
+  const inside = (point, bounds, margin = 0) =>
+    point[0] >= bounds.left - margin &&
+    point[0] <= bounds.right + margin &&
+    point[1] >= bounds.top - margin &&
+    point[1] <= bounds.bottom + margin;
+  const append = (start, control, end, accent = false) => {
+    const segment = { start, control, end, accent };
+    if (segments.length < completeLimit) segments.push(segment);
+    else {
+      segments[cursor] = segment;
+      cursor = cursor + 1 === completeLimit ? core : cursor + 1;
+    }
+  };
+  function nextCurve(tip) {
+    const angle = tip.angle;
+    const bend = profile.curl * 0.18 + (random() - 0.5) * (id === "storm" ? 1.6 : 0.7);
+    tip.angle += bend;
+    const length = 26 + random() * 18;
+    const start = tip.point;
+    const end = [
+      start[0] + Math.cos(tip.angle) * length,
+      start[1] + Math.sin(tip.angle) * length * (id === "mycelium" ? 0.65 : 1),
+      start[2] + (random() - 0.5) * length * 0.3,
+    ];
+    const control =
+      id === "storm"
+        ? start
+        : [
+            start[0] + Math.cos(angle - bend * 0.3) * length * 0.6,
+            start[1] + Math.sin(angle - bend * 0.3) * length * 0.6,
+            (start[2] + end[2]) / 2,
+          ];
+    tip.curve = { start, control, end, accent: roots % 9 === 0 };
+    tip.length = length;
+    tip.progress = 0;
   }
-  frame.extent = extent;
-  return frame;
+  function spawn(point, angle) {
+    roots++;
+    const tip = { point, angle, speed: 280 + random() * 120 };
+    nextCurve(tip);
+    if (tips.length === maxTips) tips.shift();
+    tips.push(tip);
+  }
+  for (let root = 0; root < profile.roots; root++) {
+    const angle = ["coral", "bramble", "spore"].includes(id)
+      ? -Math.PI / 2 + (random() - 0.5) * 1.7
+      : (root / profile.roots) * tau + random() * 0.5;
+    spawn(origin, angle);
+  }
+  function sprout(bounds) {
+    let parent;
+    // Re-seeding the core as well as growing from live wood keeps the interior
+    // populated after older outer detail leaves the bounded rendering window.
+    if (roots % 5 !== 0) {
+      for (let attempt = 0; attempt < 12 && segments.length; attempt++) {
+        const candidate = segments[Math.floor(random() * segments.length)];
+        if (inside(candidate.end, bounds)) {
+          parent = candidate;
+          break;
+        }
+      }
+    }
+    const point = parent?.end || origin;
+    let angle = parent
+      ? Math.atan2(parent.end[1] - parent.control[1], parent.end[0] - parent.control[0])
+      : random() * tau;
+    if (elapsed > 2 && roots % 3 === 0) {
+      angle = Math.atan2(
+        bounds.top + random() * (bounds.bottom - bounds.top) - point[1],
+        bounds.left + random() * (bounds.right - bounds.left) - point[0],
+      );
+    }
+    spawn(point, angle + (random() - 0.5) * profile.spread * 1.8);
+  }
+  function decorate({ end }, angle, length) {
+    if (profile.leaf && commits % profile.leaf === 0) {
+      const side = random() < 0.5 ? -1 : 1;
+      const tip = [
+        end[0] + Math.cos(angle + side) * length * 0.85,
+        end[1] + Math.sin(angle + side) * length * 0.85,
+        end[2],
+      ];
+      append(end, [tip[0] - Math.sin(angle) * length * 0.3, tip[1], tip[2]], tip);
+      append(tip, [end[0], end[1] + Math.cos(angle) * length * 0.25, end[2]], end);
+    }
+    if (id === "bramble" && commits % 3 === 0) {
+      const thorn = [
+        end[0] + Math.cos(angle + 0.9) * length * 0.5,
+        end[1] + Math.sin(angle + 0.9) * length * 0.5,
+        end[2],
+      ];
+      append(end, end, thorn, true);
+    }
+    if (profile.bloom && commits % profile.bloom === 0) {
+      const petals = id === "spore" ? 3 : id === "coral" ? 2 : 5;
+      const radius = length * (id === "spore" ? 0.7 : 0.35);
+      for (let petal = 0; petal < petals; petal++) {
+        const direction = (petal / petals) * tau + random() * 0.4;
+        const tip = [
+          end[0] + Math.cos(direction) * radius,
+          end[1] + Math.sin(direction) * radius,
+          end[2],
+        ];
+        append(end, [tip[0] - radius * 0.5, tip[1] - radius * 0.4, tip[2]], tip, true);
+        append(tip, [tip[0] + radius * 0.5, tip[1] + radius * 0.3, tip[2]], end, true);
+      }
+    }
+  }
+  function advance(seconds, viewport = defaultBounds) {
+    if (!Number.isFinite(seconds) || seconds <= 0) return;
+    const bounds =
+      [viewport.left, viewport.right, viewport.top, viewport.bottom].every(Number.isFinite) &&
+      viewport.right > viewport.left &&
+      viewport.bottom > viewport.top
+        ? viewport
+        : defaultBounds;
+    remainder += Math.min(0.1, seconds);
+    while (remainder + 1e-9 >= fixedStep) {
+      remainder = Math.max(0, remainder - fixedStep);
+      elapsed += fixedStep;
+      birthClock += fixedStep;
+      const interval = 0.22 + profile.fork * 0.04;
+      if (birthClock >= interval || !tips.length) {
+        birthClock %= interval;
+        sprout(bounds);
+      }
+      for (let index = tips.length - 1; index >= 0; index--) {
+        const tip = tips[index];
+        tip.progress += (tip.speed * fixedStep) / tip.length;
+        if (tip.progress < 1) continue;
+        const overflow = (tip.progress - 1) * tip.length;
+        const curve = tip.curve;
+        append(curve.start, curve.control, curve.end, curve.accent);
+        commits++;
+        decorate(curve, tip.angle, tip.length);
+        if (!inside(curve.end, bounds, 160)) {
+          tips.splice(index, 1);
+          continue;
+        }
+        tip.point = curve.end;
+        nextCurve(tip);
+        tip.progress = overflow / tip.length;
+      }
+    }
+  }
+  function frame() {
+    const drawing = {
+      back: "",
+      front: "",
+      accent: "",
+      extent: 0,
+      segments: 0,
+      roots,
+      tips: tips.length,
+    };
+    const coordinate = ([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`;
+    function draw({ start, control, end, accent }) {
+      const layer = accent ? "accent" : start[2] + end[2] < 0 ? "back" : "front";
+      drawing[layer] += `M${coordinate(start)}Q${coordinate(control)} ${coordinate(end)}`;
+      drawing.extent = Math.max(
+        drawing.extent,
+        ...[start, control, end].map(([x, y]) => Math.hypot(x, y)),
+      );
+      drawing.segments++;
+    }
+    segments.forEach(draw);
+    for (const { curve, progress } of tips) {
+      if (!progress) continue;
+      const p = Math.min(1, progress);
+      const mix = (a, b) => a.map((value, axis) => value + (b[axis] - value) * p);
+      const control = mix(curve.start, curve.control);
+      draw({ ...curve, control, end: mix(control, mix(curve.control, curve.end)) });
+    }
+    return drawing;
+  }
+  return { advance, frame };
 }

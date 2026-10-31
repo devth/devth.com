@@ -14,8 +14,10 @@ test("Cmd+K searches original titles and navigates from an article", async ({ pa
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   await expect(query).toBeFocused();
   await query.fill("monorepo");
-  await expect(dialog.getByRole("option")).toHaveCount(1);
-  await expect(dialog.getByRole("option")).toContainText("You might not want a Monorepo");
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toHaveCount(1);
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toContainText(
+    "You might not want a Monorepo",
+  );
   expect(indexRequests).toHaveLength(1);
   const accessibility = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
@@ -37,27 +39,31 @@ test("Ctrl+K works over fullscreen Cosmos, arrows select and Escape restores foc
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   await expect(query).toBeFocused();
-  await expect(dialog.getByRole("option")).toHaveCount(23);
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toHaveCount(23);
   await query.press("ArrowDown");
-  await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
+  await expect(
+    dialog
+      .getByRole("listbox", { name: "Pages" })
+      .getByRole("option", { name: /^About Trevor Hartman/ }),
+  ).toHaveAttribute("aria-selected", "true");
   await query.press("ArrowUp");
-  await expect(dialog.getByRole("option", { name: /^Writing/ })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
+  await expect(
+    dialog.getByRole("listbox", { name: "Pages" }).getByRole("option", { name: /^Writing/ }),
+  ).toHaveAttribute("aria-selected", "true");
   await query.fill("no-matching-page-123456");
   await expect(dialog.getByRole("status")).toHaveText("No matching pages.");
-  await expect(dialog.getByRole("option")).toHaveCount(0);
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toHaveCount(0);
   await dialog.getByRole("button", { name: "Clear search", exact: true }).click();
   await expect(query).toBeFocused();
   await expect(query).toHaveValue("");
-  await expect(dialog.getByRole("option")).toHaveCount(23);
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toHaveCount(23);
   await expect(dialog.getByRole("button", { name: "Clear search", exact: true })).toBeHidden();
   await query.fill("about");
-  await expect(dialog.getByRole("option", { name: /^About Trevor Hartman/ })).toBeVisible();
+  await expect(
+    dialog
+      .getByRole("listbox", { name: "Pages" })
+      .getByRole("option", { name: /^About Trevor Hartman/ }),
+  ).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("quick-search.png") });
   await query.press("Escape");
   await expect(dialog).not.toBeVisible();
@@ -77,7 +83,7 @@ test("Ctrl+N/P selects next and previous search results without changing the que
   const dialog = page.getByRole("dialog", { name: "Search", exact: true });
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   const selected = dialog.locator('[role="option"][aria-selected="true"]');
-  await expect(dialog.getByRole("option")).toHaveCount(23);
+  await expect(dialog.getByRole("listbox", { name: "Pages" }).getByRole("option")).toHaveCount(23);
   await query.press("Control+n");
   await expect(selected).toContainText("About Trevor Hartman");
   await query.press("Control+n");

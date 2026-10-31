@@ -1,5 +1,6 @@
 import { studyFrame } from "./hover-studies.js";
-import { growthFrame } from "./organic-growth.js";
+import { createGrowth } from "./organic-growth.js";
+import { getHoverPreferences, setHoverPreferences } from "./hover-preferences.js";
 
 const board = document.querySelector("[data-hover-board]");
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -27,7 +28,7 @@ const states = [...board.querySelectorAll("[data-hover-study]")].map((element, i
   garden: null,
 }));
 let comparing = false;
-let generating = false;
+let generating = getHoverPreferences().generation && !motion.matches;
 let pageActive = true;
 let frame = 0;
 let last = 0;
@@ -57,7 +58,16 @@ function position(state) {
     "transform",
     `translate(${rect.x + rect.width / 2} ${rect.y + rect.height / 2})`,
   );
-  state.garden.unit = rect.width / 128;
+  const unit = rect.width / 128;
+  state.garden.unit = unit;
+  state.garden.original.setAttribute("transform", `scale(${unit})`);
+  state.garden.branches.setAttribute("transform", `scale(${unit})`);
+  state.garden.bounds = {
+    left: -(rect.x + rect.width / 2) / unit,
+    right: (innerWidth - rect.x - rect.width / 2) / unit,
+    top: -(rect.y + rect.height / 2) / unit,
+    bottom: (innerHeight - rect.y - rect.height / 2) / unit,
+  };
 }
 function ensureGarden(state) {
   if (!garden) {
@@ -82,6 +92,8 @@ function ensureGarden(state) {
       branches,
       basePaths: pathSet(original),
       branchPaths: pathSet(branches),
+      growth: createGrowth(state.id, state.seed),
+      paintedAge: 0,
     };
     position(state);
   }
@@ -124,11 +136,12 @@ function tick(now) {
     const drawing = studyFrame(state.id, state.time);
     if (generating) {
       ensureGarden(state);
-      const scale = state.garden.unit * (1 + state.age ** 2 * 1.2);
-      state.garden.original.setAttribute("transform", `scale(${scale})`);
-      state.garden.branches.setAttribute("transform", `scale(${state.garden.unit})`);
+      state.garden.growth.advance(state.age - state.garden.paintedAge, state.garden.bounds);
+      state.garden.paintedAge = state.age;
+      const roots = state.garden.growth.frame();
+      state.garden.root.dataset.growthRoots = roots.roots;
       paint(state.garden.basePaths, drawing);
-      paint(state.garden.branchPaths, growthFrame(state.id, state.age, state.seed));
+      paint(state.garden.branchPaths, roots);
     } else paint(state.paths, drawing);
   }
   if (redraw) painted = now;
@@ -216,7 +229,12 @@ compare.addEventListener("click", () => {
   updateControls();
 });
 toggle.addEventListener("click", () => {
-  generating = !generating;
+  setHoverPreferences({ generation: !generating });
+});
+window.addEventListener("hover-preferenceschange", () => {
+  const enabled = getHoverPreferences().generation && !motion.matches;
+  if (enabled === generating) return;
+  generating = enabled;
   resetIntents();
   clearGrowth();
   reposition();
@@ -227,7 +245,8 @@ document.addEventListener("keydown", (event) => {
   if (generating && event.key === "Escape" && !event.defaultPrevented) stopAndClear();
 });
 motion.addEventListener("change", () => {
-  generating = comparing = false;
+  generating = getHoverPreferences().generation && !motion.matches;
+  comparing = false;
   resetIntents();
   clearGrowth();
   updateControls();

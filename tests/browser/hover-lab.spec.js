@@ -1,5 +1,12 @@
 import { test, expect } from "@playwright/test";
 
+// These cases exercise the unchanged, non-generative comparison studies.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("devth:hover-preferences:v1", JSON.stringify({ generation: false })),
+  );
+});
+
 test("numbered studies render distinct structures and animate only the requested preview", async ({
   page,
 }) => {

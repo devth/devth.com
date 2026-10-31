@@ -12,6 +12,7 @@ import { parseHTML } from "linkedom";
 import { background } from "./background.js";
 import { publishingSettings } from "./publishing.js";
 import { preserveCase } from "../src/lettercase.js";
+import { studies } from "../src/hover-studies.js";
 
 const publishing = publishingSettings(process.env.SITE_ENV, process.env.COUNTER_ORIGIN);
 
@@ -131,6 +132,12 @@ function layout({
     <button class="text-action quick-nav-reset" type="button" data-clear-search hidden>Clear search</button>
     <ul id="quick-nav-results" role="listbox" aria-label="Pages"></ul>
     <a class="quick-nav-fallback" href="/" hidden>Browse writing</a>
+    <fieldset class="quick-nav-hover" data-hover-settings hidden>
+      <legend class="sr-only">Hover effects</legend>
+      <label for="hover-structure">Structure</label>
+      <select id="hover-structure" name="hover-structure"><option value="random">Random</option>${studies.map(({ id, name }) => `<option value="${escape(id)}">${escape(name)}</option>`).join("")}</select>
+      <label class="hover-generation"><input type="checkbox" role="switch" id="hover-generation" checked>Generation</label>
+    </fieldset>
     <p class="quick-nav-help" aria-hidden="true">↑↓ move · enter open · esc close</p>
   </dialog>
 </body>
@@ -301,6 +308,7 @@ export async function generateSite() {
       "hover-lab.css",
       "hover-lab.js",
       "hover-studies.js",
+      "hover-preferences.js",
       "organic-growth.js",
     ].map((name) => copyFile(resolve(root, "src", name), resolve(output, name))),
   );

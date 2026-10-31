@@ -7,7 +7,10 @@ test("social icons live in the borderless footer, not the header", async ({ page
   await expect(header.locator('a[href="https://github.com/devth"]')).toHaveCount(0);
   await expect(header).toHaveCSS("border-bottom-width", "0px");
   await page.getByRole("button", { name: "Search", exact: true }).click();
-  await expect(page.getByRole("combobox")).toHaveAttribute("placeholder", "find");
+  await expect(page.getByRole("combobox", { name: "Search pages" })).toHaveAttribute(
+    "placeholder",
+    "find",
+  );
   await expect(page.getByRole("button", { name: "Close search" })).toHaveCSS(
     "text-transform",
     "lowercase",
@@ -71,7 +74,7 @@ test("About and search capitalize Trevor Hartman while keeping about lowercase",
   await expect(heading.locator(".keep-case")).toHaveText("Trevor Hartman");
   await expect(heading.locator(".keep-case")).toHaveCSS("text-transform", "none");
   await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.getByRole("combobox").fill("Trevor");
+  await page.getByRole("combobox", { name: "Search pages" }).fill("Trevor");
   const result = page.getByRole("option", { name: /^About Trevor Hartman/ });
   await expect(result).toHaveCount(1);
   await expect(result.locator(".keep-case")).toHaveText("Trevor Hartman");
@@ -88,8 +91,8 @@ test("on-page writing is lowercase while acronyms and code retain their case", a
   await expect(title.locator(".keep-case").first()).toHaveCSS("text-transform", "none");
   await expect(page.locator(".year-note").first().locator(".keep-case")).toHaveCount(0);
   await page.getByRole("button", { name: "Search", exact: true }).click();
-  await page.getByRole("combobox").fill("YAML");
-  const result = page.getByRole("option");
+  await page.getByRole("combobox", { name: "Search pages" }).fill("YAML");
+  const result = page.getByRole("listbox", { name: "Pages" }).getByRole("option");
   await expect(result).toHaveCount(1);
   await expect(result.locator(".keep-case")).toHaveText(["YAML", "CI"]);
   await expect(result.locator(".keep-case").first()).toHaveCSS("display", "inline");

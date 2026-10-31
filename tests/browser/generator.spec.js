@@ -18,8 +18,7 @@ test("generator grows from a label into a screen-sized garden and pauses on leav
   await freezeClock(page);
   await page.goto("/hover-lab");
   const toggle = page.getByRole("switch", { name: "Generator mode", exact: true });
-  await expect(toggle).toHaveAttribute("aria-checked", "false");
-  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-checked", "true");
   const first = page.locator("[data-hover-study]").first();
   await first.locator("figcaption label").hover();
   await expect(first).toHaveAttribute("data-running", "true");
@@ -27,6 +26,8 @@ test("generator grows from a label into a screen-sized garden and pauses on leav
   const group = page.locator('[data-growth-study="sigil"]');
   await expect(group).toBeVisible();
   const seed = await gardenSize(group);
+  const original = group.locator("g").first();
+  const scale = await original.getAttribute("transform");
   const branches = group.locator("[data-growth-branches] path");
   const earlyDetail = (
     await branches.evaluateAll((paths) => paths.map((p) => p.getAttribute("d")).join(""))
@@ -38,6 +39,17 @@ test("generator grows from a label into a screen-sized garden and pauses on leav
   expect(
     (await branches.evaluateAll((paths) => paths.map((p) => p.getAttribute("d")).join(""))).length,
   ).toBeGreaterThan(earlyDetail);
+  const roots = Number(await group.getAttribute("data-growth-roots"));
+  await page.clock.runFor(9000);
+  expect(Number(await group.getAttribute("data-growth-roots"))).toBeGreaterThan(roots);
+  await expect(original).toHaveAttribute("transform", scale);
+  const curves = await branches.evaluateAll((paths) =>
+    paths.map((p) => p.getAttribute("d")).join(""),
+  );
+  for (const curve of curves.match(/M[^M]+/g)) {
+    const p = curve.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    expect(Math.hypot(p[4] - p[0], p[5] - p[1])).toBeLessThan(100);
+  }
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   await page.mouse.move(1, 1);
   await expect(first).toHaveAttribute("data-running", "false");
@@ -59,7 +71,10 @@ test("generator applies to every study and its overlay cannot capture controls",
   await page.setViewportSize({ width: 1440, height: 2600 });
   await freezeClock(page);
   await page.goto("/hover-lab");
-  await page.getByRole("switch", { name: "Generator mode", exact: true }).click();
+  await expect(page.getByRole("switch", { name: "Generator mode", exact: true })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
   await page.getByRole("button", { name: "Compare all", exact: true }).click();
   await page.clock.runFor(500);
   await expect(page.locator("[data-growth-study]")).toHaveCount(15);

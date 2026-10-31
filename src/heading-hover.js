@@ -158,6 +158,9 @@ window.addEventListener(
   },
   { passive: true },
 );
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !event.defaultPrevented) clear();
+});
 window.addEventListener("blur", clear);
 window.addEventListener("pagehide", clear);
 window.addEventListener("popstate", clear);

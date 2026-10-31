@@ -38,7 +38,7 @@ document.addEventListener("focusin", loadSigils);
 
 const quickNav = document.querySelector("#quick-nav");
 if (quickNav?.showModal) {
-  const query = quickNav.querySelector("input");
+  const query = quickNav.querySelector('input[type="search"]');
   function toggleQuickNav() {
     clearSigil();
     if (quickNav.open) {

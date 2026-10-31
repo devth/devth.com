@@ -1,22 +1,36 @@
-import { rotate } from "./graph-geometry.js";
+import { studyFrame } from "./hover-studies.js";
+import { createGrowth } from "./organic-growth.js";
+import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
 
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
+const layers = ["back", "front", "accent"];
 
-// A heading arrival and an ordinary link hover share geometry, not ownership.
-// Clearing one must not interrupt the other.
+// Heading holds and ordinary link hovers retain independent lifetimes.
 export function createSigil({ className = "link-sigil", follow = false } = {}) {
   const sigil = document.createElementNS(namespace, "svg");
   sigil.classList.add(className);
-  sigil.setAttribute("viewBox", "0 0 80 80");
   sigil.setAttribute("aria-hidden", "true");
   sigil.setAttribute("focusable", "false");
   sigil.setAttribute("hidden", "");
+  const original = document.createElementNS(namespace, "g");
+  const branches = document.createElementNS(namespace, "g");
+  const paths = [original, branches].map((group) =>
+    layers.map((layer) => {
+      const path = document.createElementNS(namespace, "path");
+      path.classList.add(`study-${layer}`);
+      group.append(path);
+      return path;
+    }),
+  );
+  sigil.append(original, branches);
   document.body.append(sigil);
   let activeLink;
   let frame = 0;
   let hideTimer = 0;
   let range;
+  let bounds;
+  let generating = false;
 
   function clear(fade = false) {
     if (fade && !activeLink) return;
@@ -32,23 +46,48 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
   }
   function position(link) {
     const rect = (range || link.querySelector(".entry-title") || link).getBoundingClientRect();
-    if (follow && (!link.isConnected || rect.bottom <= 0 || rect.top >= innerHeight)) return false;
-    sigil.style.left =
-      Math.min(innerWidth - 72, Math.max(0, follow ? rect.right + 6 : rect.right - 42)) + "px";
-    sigil.style.top =
-      Math.min(innerHeight - 72, Math.max(0, rect.top + rect.height / 2 - 36)) + "px";
+    if (!link.isConnected || rect.bottom <= 0 || rect.top >= innerHeight) return false;
+    const x = Math.min(innerWidth - 36, Math.max(36, follow ? rect.right + 42 : rect.right - 6));
+    const y = Math.min(innerHeight - 36, Math.max(36, rect.top + rect.height / 2));
+    const unit = 72 / 128;
+    if (generating) {
+      sigil.setAttribute("viewBox", `0 0 ${innerWidth} ${innerHeight}`);
+      sigil.style.left = sigil.style.top = "0px";
+      original.setAttribute("transform", `translate(${x} ${y}) scale(${unit})`);
+      branches.setAttribute("transform", `translate(${x} ${y}) scale(${unit})`);
+    } else {
+      sigil.setAttribute("viewBox", "0 0 80 80");
+      sigil.style.left = x - 36 + "px";
+      sigil.style.top = y - 36 + "px";
+      original.setAttribute("transform", "translate(40 40) scale(0.625)");
+    }
+    bounds = {
+      left: -x / unit,
+      right: (innerWidth - x) / unit,
+      top: -y / unit,
+      bottom: (innerHeight - y) / unit,
+    };
     return true;
   }
+  function paint(set, drawing) {
+    set.forEach((path, index) => path.setAttribute("d", drawing[layers[index]]));
+  }
   function draw(link) {
-    if (follow && activeLink === link) return;
+    if (activeLink === link) return;
     clear();
     if (
       motion.matches ||
       document.hidden ||
       link.classList.contains("skip-link") ||
-      link.closest("dialog")
+      link.closest("dialog") ||
+      document.querySelector("dialog[open]")
     )
       return;
+    const preferences = getHoverPreferences();
+    generating = preferences.generation;
+    sigil.toggleAttribute("data-generating", generating);
+    const id = chooseStructure(preferences.structure);
+    sigil.dataset.structure = id;
     if (follow) {
       range = document.createRange();
       range.selectNodeContents(link);
@@ -59,79 +98,53 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
     }
     activeLink = link;
     link.classList.add("link-distortion");
-    const vertices = [
-      [-20, -12, 0],
-      [20, -12, 0],
-      [0, 22, 0],
-      [0, 0, 24],
-      [0, 0, -24],
-    ].map((point) => ({
-      coordinates: point.map((value) => value + (Math.random() - 0.5) * 6),
-      phase: Math.random() * Math.PI * 2,
-    }));
-    const edges = [
-      [0, 1],
-      [1, 2],
-      [2, 0],
-      [3, 0],
-      [3, 1],
-      [3, 2],
-      [4, 0],
-      [4, 1],
-      [4, 2],
-    ];
-    const path = document.createElementNS(namespace, "path");
-    const circles = vertices.map(() => document.createElementNS(namespace, "circle"));
-    sigil.replaceChildren(path, ...circles);
+    const growth = generating ? createGrowth(id, Math.floor(Math.random() * 0x100000000)) : null;
+    delete sigil.dataset.growthRoots;
+    const phase = Math.random() * 20;
+    let age = 0;
+    let last = performance.now();
+    let painted = -Infinity;
+    let grown = 0;
+    paint(paths[1], { back: "", front: "", accent: "" });
     sigil.removeAttribute("hidden");
     if (follow) sigil.getBoundingClientRect();
     sigil.classList.add("is-visible");
-    let pitch = Math.random() * Math.PI * 2;
-    let yaw = Math.random() * Math.PI * 2;
-    let speed = [0.3, 0.5];
-    let target = speed;
-    let last = performance.now();
-    let nextShift = last;
     function animate(now) {
-      if (!activeLink || motion.matches || document.hidden || (follow && !position(activeLink))) {
+      if (
+        !activeLink ||
+        motion.matches ||
+        document.hidden ||
+        document.querySelector("dialog[open]") ||
+        (follow && !position(activeLink))
+      ) {
         clear();
         return;
       }
-      const delta = Math.min(0.05, (now - last) / 1000);
+      age += Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
-      if (now >= nextShift) {
-        target = [Math.random() - 0.5, Math.random() - 0.5].map((value) => value * 1.4);
-        nextShift = now + 650 + Math.random() * 800;
+      if (now - painted >= 1000 / 30) {
+        paint(paths[0], studyFrame(id, phase + age));
+        if (generating) {
+          growth.advance(age - grown, bounds);
+          grown = age;
+          const drawing = growth.frame();
+          paint(paths[1], drawing);
+          sigil.dataset.growthRoots = drawing.roots;
+        }
+        painted = now;
       }
-      speed = speed.map((value, axis) => value + (target[axis] - value) * delta * 2);
-      pitch += speed[0] * delta;
-      yaw += speed[1] * delta;
-      const points = vertices.map(({ coordinates, phase }, index) => {
-        const [x, y, z] = coordinates.map(
-          (value, axis) => value + Math.sin(now * (0.0007 + axis * 0.0002) + phase) * 2,
-        );
-        const rotated = rotate({ x, y, z }, pitch, yaw);
-        const scale = 120 / (120 - rotated.z);
-        const point = { x: 40 + rotated.x * scale, y: 40 + rotated.y * scale };
-        circles[index].setAttribute("cx", point.x.toFixed(2));
-        circles[index].setAttribute("cy", point.y.toFixed(2));
-        circles[index].setAttribute("r", (1.5 * scale).toFixed(2));
-        circles[index].setAttribute("opacity", (0.65 + rotated.z / 100).toFixed(2));
-        return point;
-      });
-      path.setAttribute(
-        "d",
-        edges
-          .map(
-            ([a, b]) =>
-              `M${points[a].x.toFixed(2)} ${points[a].y.toFixed(2)}L${points[b].x.toFixed(2)} ${points[b].y.toFixed(2)}`,
-          )
-          .join(" "),
-      );
       frame = requestAnimationFrame(animate);
     }
     animate(last);
   }
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") clear();
+  });
+  window.addEventListener("hover-preferenceschange", () => {
+    const target = activeLink;
+    clear();
+    if (target) draw(target);
+  });
   return {
     draw,
     clear,
@@ -144,8 +157,15 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
 const linkSigil = createSigil();
 export const clearSigil = () => linkSigil.clear();
 export const drawSigil = (link) => {
-  // Header permalinks are already owned by the heading activation controller.
-  if (link.matches(".prose .header-anchor")) {
+  // A visible destination owns the art; otherwise its ToC link can preview it.
+  const heading = link.matches("[data-toc] a")
+    ? document.getElementById(decodeURIComponent(link.hash.slice(1)))
+    : null;
+  const bounds = heading?.getBoundingClientRect();
+  if (
+    link.matches(".prose .header-anchor") ||
+    (bounds && bounds.bottom > 0 && bounds.top < innerHeight)
+  ) {
     clearSigil();
     return;
   }
