@@ -8,7 +8,7 @@ test("hover geometry keeps evolving, holds text still and cancels on exit or res
   await page.clock.install();
   await page.goto("/");
   const link = page.locator('.site-header a[href="/about"]');
-  const sigil = page.locator(".link-sigil");
+  const sigil = page.locator(".link-sigil:not([data-retiring])");
   const box = await link.boundingBox();
   await link.hover();
   await expect(sigil).toBeVisible();

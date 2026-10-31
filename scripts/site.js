@@ -1,4 +1,5 @@
-import { mkdir, writeFile, copyFile, rm } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { mkdir, writeFile, copyFile, rm, readFile, readdir } from "node:fs/promises";
 import { resolve, dirname } from "node:path";
 import { loadContent } from "./content.js";
 import { writeMcpContent } from "./mcp-content.js";
@@ -19,6 +20,16 @@ const publishing = publishingSettings(process.env.SITE_ENV, process.env.COUNTER_
 const origin = "https://devth.com";
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, ".site");
+const runtime = (await readdir(resolve(root, "src")))
+  .filter((name) => /\.(js|css)$/.test(name))
+  .sort();
+const buildHash = createHash("sha256");
+for (const file of [
+  ...runtime.map((name) => resolve(root, "src", name)),
+  resolve(root, "scripts/site.js"),
+])
+  buildHash.update(await readFile(file));
+const siteBuild = buildHash.digest("hex").slice(0, 16);
 const description = "The blog of Trevor Hartman";
 const escape = (value) =>
   String(value).replace(
@@ -77,6 +88,14 @@ function layout({
   noindex = false,
 }) {
   const pageTitle = slug ? `${title} — devth` : "devth — Trevor Hartman";
+  const pageClass =
+    slug === "cosmos"
+      ? "cosmos-page"
+      : slug === ""
+        ? "home-page"
+        : slug === "about"
+          ? "about-page"
+          : "";
   const counter = new URL("/counter.svg", publishing.counterOrigin);
   counter.searchParams.set("page", slug ? `/${slug}` : "/");
   const nav = [
@@ -91,6 +110,7 @@ function layout({
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
+  <meta name="site-build" content="${siteBuild}">
   <title>${escape(pageTitle)}</title>
   <meta name="description" content="${escape(excerpt)}">
   <meta name="author" content="Trevor Hartman">
@@ -109,7 +129,7 @@ function layout({
   ${slug === "cosmos" ? '<link rel="stylesheet" href="/cosmos.css"><script type="module" src="/cosmos.js"></script>' : ""}
   ${slug === "hover-lab" ? '<link rel="stylesheet" href="/hover-lab.css"><script type="module" src="/hover-lab.js"></script>' : ""}
 </head>
-<body id="top"${slug === "cosmos" ? ' class="cosmos-page"' : slug === "" ? ' class="home-page"' : slug === "about" ? ' class="about-page"' : ""}>
+<body id="top"${pageClass ? ` class="${pageClass}"` : ""}>
   ${background}
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="site-shell">
@@ -118,7 +138,7 @@ function layout({
       <nav aria-label="Main navigation">${nav.map(([href, label]) => `<a href="${href}"${href === `/${slug}` ? ' aria-current="page"' : ""}>${label}</a>`).join("")}</nav>
       <button class="header-search" type="button" data-quick-nav-trigger aria-label="Search" aria-haspopup="dialog" aria-controls="quick-nav" aria-keyshortcuts="Meta+K Control+K" hidden><span aria-hidden="true">⌕</span><span class="header-search-label">search</span><kbd aria-hidden="true">⌘K</kbd></button>
     </header>
-    <main id="main" tabindex="-1">${body}</main>
+    <main id="main" tabindex="-1" data-page-class="${pageClass}">${body}</main>
     <footer class="site-footer">
       <p>© ${new Date().getFullYear()} Trevor C. Hartman<br><a href="https://grokipedia.com/page/Soli_Deo_gloria">Soli Deo Gloria</a></p>
       <span class="hit-counter" title="Page loads, not unique visitors. No cookies."><span>HITS</span><img src="${escape(counter.href)}" width="126" height="24" alt="Page hit counter" referrerpolicy="no-referrer"></span>
@@ -297,6 +317,10 @@ export async function generateSite() {
       "style.css",
       "main.js",
       "link-sigil.js",
+      "hover-target.js",
+      "page-lifecycle.js",
+      "fragment-history.js",
+      "navigation.js",
       "heading-hover.js",
       "lettercase.js",
       "background.js",

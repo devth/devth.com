@@ -3,11 +3,12 @@ import { test, expect } from "@playwright/test";
 async function observeTransitions(page, capture = false) {
   await page.addInitScript(
     ({ capture }) => {
-      window.addEventListener("pagereveal", (event) => {
+      const observe = (event) => {
+        const viewTransition = event.viewTransition || event.detail?.viewTransition;
         const root = document.documentElement;
-        root.dataset.transition = event.viewTransition ? "pending" : "none";
-        if (!event.viewTransition) return;
-        event.viewTransition.ready
+        root.dataset.transition = viewTransition ? "pending" : "none";
+        if (!viewTransition) return;
+        viewTransition.ready
           .then(() => {
             const animations = document
               .getAnimations()
@@ -28,16 +29,20 @@ async function observeTransitions(page, capture = false) {
           .catch(() => {
             root.dataset.transition = "skipped";
           });
-        event.viewTransition.finished.then(() => {
+        viewTransition.finished.then(() => {
           root.dataset.transition = "finished";
         });
-      });
+      };
+      window.addEventListener("pagereveal", observe);
+      document.addEventListener("site:navigation", observe);
     },
     { capture },
   );
 }
 
-test("native navigation uses a short, restrained depth transition", async ({ page }, testInfo) => {
+test("persistent navigation uses a short, restrained content transition", async ({
+  page,
+}, testInfo) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await observeTransitions(page, true);
   await page.goto("/");

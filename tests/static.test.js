@@ -281,7 +281,9 @@ describe("static publishing contract", () => {
     expect(lab.querySelector("meta[name=robots]").content).toContain("noindex");
     expect(read("sitemap.xml")).not.toContain("/cosmos");
     expect(home.querySelectorAll("script[src]")).toHaveLength(1);
-    const labScript = lab.querySelector("script[src]").src.slice(1);
+    const labScript = [...lab.querySelectorAll("script[src]")]
+      .find((script) => /\/cosmos-[^/]+\.js$/.test(script.src))
+      .src.slice(1);
     const homeScript = home.querySelector("script[src]").src.slice(1);
     expect(labScript).not.toBe(homeScript);
     expect(Buffer.byteLength(read(labScript))).toBeGreaterThan(100_000);

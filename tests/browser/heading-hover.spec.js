@@ -21,14 +21,14 @@ test("ToC arrival activates its heading for five seconds, then fades back even w
   await page.clock.runFor(350);
   await expect(heading).toBeFocused();
   await expect(heading).toHaveClass(active);
-  await expect(page.locator(".heading-sigil")).toBeVisible();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeVisible();
   await expect.poll(() => heading.evaluate((el) => getComputedStyle(el).color)).not.toBe(original);
   await page.clock.runFor(4500);
   await expect(heading).toHaveClass(active);
   await page.clock.runFor(750);
   await expect(heading).not.toHaveClass(active);
   await expect(heading).toHaveCSS("color", original);
-  await expect(page.locator(".heading-sigil")).toBeHidden();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeHidden();
   await expect(heading).toBeFocused();
   await expect(page).toHaveURL(/#memory$/);
 });
@@ -45,7 +45,7 @@ test("direct heading hover and ToC hover activate the same destination without n
   const position = await page.evaluate(() => scrollY);
   await toc.getByRole("link", { name: "Memory", exact: true }).hover();
   await expect(heading).toHaveClass(active);
-  await expect(page.locator(".heading-sigil")).toBeVisible();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeVisible();
   expect(await page.evaluate(() => scrollY)).toBe(position);
   await expect(page).not.toHaveURL(/#memory$/);
   await heading.hover();
@@ -53,7 +53,7 @@ test("direct heading hover and ToC hover activate the same destination without n
   await page.mouse.move(1438, 1);
   await expect(heading).not.toHaveClass(active);
   await expect(heading).toHaveCSS("color", original);
-  await expect(page.locator(".heading-sigil")).toBeHidden();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeHidden();
 });
 
 test("Scalaz heading hover and keyboard focus light its ToC entry without changing the reading location", async ({
@@ -102,7 +102,7 @@ test("hovering an offscreen ToC destination never scrolls or parks a glyph at th
     .hover();
   await expect(heading).toHaveClass(active);
   expect(await page.evaluate(() => scrollY)).toBe(before);
-  await expect(page.locator(".heading-sigil")).toBeHidden();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeHidden();
 });
 
 test("clicking the actual heading permalink text renews the five-second activation", async ({
@@ -126,7 +126,7 @@ test("clicking the actual heading permalink text renews the five-second activati
   await expect(heading).not.toHaveClass(active);
   await expect(permalink).toHaveCSS("color", original);
   await expect(tocLink).not.toHaveClass(active);
-  await expect(page.locator(".heading-sigil")).toBeHidden();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeHidden();
 });
 
 test("a heading permalink hover has one glyph, not both ordinary and heading glyphs", async ({
@@ -136,9 +136,9 @@ test("a heading permalink hover has one glyph, not both ordinary and heading gly
   const heading = page.locator(".prose #memory");
   await expect(heading.locator("a")).toHaveCount(1);
   await heading.locator(".header-anchor").hover();
-  await expect(page.locator(".heading-sigil")).toBeVisible();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeVisible();
   await expect(page.locator("svg.link-sigil:visible, svg.heading-sigil:visible")).toHaveCount(1);
-  await expect(page.locator(".link-sigil")).toBeHidden();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeHidden();
 });
 
 test("the permalink hash appears in the left gutter without widening or shifting heading text", async ({
@@ -194,7 +194,7 @@ test("keyboard ToC activation keeps five-second color feedback with no animation
   await expect(heading).toBeFocused();
   await expect(heading).toHaveClass(active);
   await expect(heading).toHaveCSS("transition-duration", "0s");
-  await expect(page.locator(".heading-sigil")).toBeHidden();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeHidden();
   await page.clock.runFor(5100);
   await expect(heading).not.toHaveClass(active);
   await expect(heading).toHaveCSS("color", original);

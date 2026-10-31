@@ -100,7 +100,7 @@ test("link sigils randomize without moving text and respect reduced motion", asy
   const about = page.getByRole("link", { name: "about", exact: true });
   const before = await about.boundingBox();
   await about.hover();
-  const sigil = page.locator(".link-sigil");
+  const sigil = page.locator(".link-sigil:not([data-retiring])");
   await expect(sigil).toBeVisible();
   expect(await about.boundingBox()).toEqual(before);
   await expect(sigil.locator("path")).toHaveCount(6);

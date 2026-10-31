@@ -26,7 +26,7 @@ for (const cancel of [false, true]) {
     if (cancel) await page.keyboard.press("Escape");
     else await page.locator('.site-header a[href="/about"]').hover();
     release();
-    const sigil = page.locator(".link-sigil");
+    const sigil = page.locator(".link-sigil:not([data-retiring])");
     await expect(sigil).toBeAttached();
     if (cancel) {
       await expect(sigil).toBeHidden();
@@ -41,7 +41,7 @@ test("defaults to random generation, rerolls each hover but not each frame", asy
   await page.goto("/");
   const about = page.locator('.site-header a[href="/about"]');
   await about.hover();
-  const sigil = page.locator(".link-sigil");
+  const sigil = page.locator(".link-sigil:not([data-retiring])");
   await expect(sigil).toBeVisible();
   await expect(sigil).toHaveAttribute("data-generating", "");
   const first = await sigil.getAttribute("data-structure");
@@ -60,11 +60,11 @@ test("offscreen ToC targets preview at their visible link without duplicating de
 }) => {
   await page.goto("/on-learning");
   await page.locator("[data-toc][data-enhanced] a[href='#memory']").hover();
-  await expect(page.locator(".link-sigil")).toBeVisible();
-  await expect(page.locator(".heading-sigil")).toBeHidden();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
+  await expect(page.locator(".heading-sigil:not([data-retiring])")).toBeHidden();
   await expect(page.locator("svg.link-sigil:visible, svg.heading-sigil:visible")).toHaveCount(1);
   await page.keyboard.press("Escape");
-  await expect(page.locator(".link-sigil")).toBeHidden();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeHidden();
 });
 
 test("CmdK fixed structure and generation choices persist across reload and pages without breaking search", async ({
@@ -83,8 +83,14 @@ test("CmdK fixed structure and generation choices persist across reload and page
   await page.keyboard.press("Escape");
   const about = page.locator('.site-header a[href="/about"]');
   await about.hover();
-  await expect(page.locator(".link-sigil")).toHaveAttribute("data-structure", "mycelium");
-  await expect(page.locator(".link-sigil")).not.toHaveAttribute("data-generating", "");
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toHaveAttribute(
+    "data-structure",
+    "mycelium",
+  );
+  await expect(page.locator(".link-sigil:not([data-retiring])")).not.toHaveAttribute(
+    "data-generating",
+    "",
+  );
   await page.reload();
   dialog = await menu(page);
   await expect(dialog.getByLabel("Structure", { exact: true })).toHaveValue("mycelium");
@@ -132,7 +138,7 @@ test("saved settings synchronize across tabs and reduced motion takes precedence
   await page.keyboard.press("Escape");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.locator('.site-header a[href="/about"]').hover();
-  await expect(page.locator(".link-sigil")).toBeHidden();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeHidden();
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).generation, key)).toBe(
     true,
   );
@@ -164,7 +170,10 @@ test("malformed or blocked localStorage does not break controls, hovers or navig
   await dialog.getByLabel("Structure", { exact: true }).selectOption("storm");
   await page.keyboard.press("Escape");
   await page.locator('.site-header a[href="/about"]').hover();
-  await expect(page.locator(".link-sigil")).toHaveAttribute("data-structure", "storm");
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toHaveAttribute(
+    "data-structure",
+    "storm",
+  );
   await page.locator('.site-header a[href="/about"]').click();
   await expect(page).toHaveURL(/\/about$/);
 });

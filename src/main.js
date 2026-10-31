@@ -1,12 +1,15 @@
 import "./background.js";
+import { hoverTarget } from "./hover-target.js";
+import { pushFragment } from "./fragment-history.js";
 
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
+import { onPage } from "./page-lifecycle.js";
 const footerTop = document.querySelector('.site-footer a[href="#top"]');
 footerTop?.addEventListener("click", (event) => {
   if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
     return;
   event.preventDefault();
-  if (location.hash !== footerTop.hash) history.pushState(history.state, "", footerTop.hash);
+  if (location.hash !== footerTop.hash && !pushFragment(footerTop.hash)) return;
   document.querySelector(".site-header nav a")?.focus({ preventScroll: true });
   scrollTo({ top: 0, behavior: motion.matches ? "instant" : "smooth" });
 });
@@ -19,7 +22,7 @@ function clearSigil() {
 }
 window.addEventListener("blur", clearSigil);
 function loadSigils(event) {
-  const link = event.target.closest("a");
+  const link = hoverTarget(event.target);
   if (
     !link ||
     motion.matches ||
@@ -37,7 +40,12 @@ function loadSigils(event) {
       document.removeEventListener("focusin", loadSigils);
       const current = pendingSigil;
       pendingSigil = null;
-      if (current && (current.matches(":hover") || document.activeElement === current))
+      if (
+        current &&
+        (current.closest(".entry")?.matches(":hover") ||
+          current.matches(":hover") ||
+          document.activeElement === current)
+      )
         module.drawSigil(current);
     })
     .catch(() => {
@@ -88,11 +96,14 @@ if (quickNav?.showModal) {
   });
 }
 
-if (document.querySelector("[data-toc]")) import("./toc.js");
-else if (document.querySelector(".prose :is(h2, h3, h4, h5, h6)")) import("./heading-hover.js");
+onPage("main", () => {
+  if (document.querySelector("[data-toc]")) import("./toc.js");
+  else if (document.querySelector(".prose :is(h2, h3, h4, h5, h6)")) import("./heading-hover.js");
+  if (document.querySelector("[data-hover-board]")) import("./hover-lab.js");
+  if (document.querySelector("[data-cosmos-stage]")) import("./cosmos.js");
+});
 
-const search = document.querySelector("#search");
-if (search) {
+onPage("#search", (search, { on }) => {
   document.querySelector("[data-search]").hidden = false;
   const entries = [...document.querySelectorAll(".entry")];
   const groups = [...document.querySelectorAll(".year-group")];
@@ -124,8 +135,8 @@ if (search) {
   });
   filter();
   search.addEventListener("input", filter);
-  window.addEventListener("pageshow", filter);
-  document.addEventListener("keydown", (event) => {
+  on(window, "pageshow", filter);
+  on(document, "keydown", (event) => {
     if (
       event.key === "/" &&
       !event.metaKey &&
@@ -143,4 +154,7 @@ if (search) {
       search.blur();
     }
   });
-}
+});
+import("./navigation.js").catch(() => {
+  /* Native anchors remain the fallback. */
+});

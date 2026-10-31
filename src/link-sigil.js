@@ -1,3 +1,4 @@
+import { hoverTarget, hoverRegion } from "./hover-target.js";
 import { studyFrame } from "./hover-studies.js";
 import { createGrowth } from "./organic-growth.js";
 import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
@@ -7,7 +8,7 @@ const namespace = "http://www.w3.org/2000/svg";
 const layers = ["back", "front", "accent"];
 
 // Heading holds and ordinary link hovers retain independent lifetimes.
-export function createSigil({ className = "link-sigil", follow = false } = {}) {
+function createEffect({ className, follow, finished }) {
   const sigil = document.createElementNS(namespace, "svg");
   sigil.classList.add(className);
   sigil.setAttribute("aria-hidden", "true");
@@ -45,8 +46,14 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
     activeLink = range = null;
     sigil.classList.remove("is-visible");
     if (fade && !motion.matches)
-      hideTimer = setTimeout(() => sigil.setAttribute("hidden", ""), 180);
-    else sigil.setAttribute("hidden", "");
+      hideTimer = setTimeout(() => {
+        sigil.setAttribute("hidden", "");
+        finished(api);
+      }, 180);
+    else {
+      sigil.setAttribute("hidden", "");
+      finished(api);
+    }
   }
   function position(link) {
     const rect = (range || link.querySelector(".entry-title") || link).getBoundingClientRect();
@@ -92,9 +99,10 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
     sigil.toggleAttribute("data-generating", generating);
     const id = chooseStructure(preferences.structure);
     sigil.dataset.structure = id;
-    if (follow) {
+    const title = link.querySelector(".entry-title");
+    if (follow || title) {
       range = document.createRange();
-      range.selectNodeContents(link);
+      range.selectNodeContents(title || link);
     }
     if (!position(link)) {
       range = null;
@@ -119,7 +127,7 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
         motion.matches ||
         document.hidden ||
         document.querySelector("dialog[open]") ||
-        (follow && !position(activeLink))
+        !position(activeLink)
       ) {
         clear();
         return;
@@ -160,7 +168,7 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
           motion.matches ||
           document.hidden ||
           document.querySelector("dialog[open]") ||
-          (follow && !position(target))
+          ((follow || target.closest(".site-header")) && !position(target))
         ) {
           clear();
           return;
@@ -179,20 +187,82 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
     };
     animate(last);
   }
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") clear();
-  });
-  window.addEventListener("hover-preferenceschange", () => {
-    const target = activeLink;
-    clear();
-    if (target) draw(target);
-  });
-  return {
+  const api = {
     draw,
     clear,
     release,
     get target() {
       return activeLink;
+    },
+    get visible() {
+      return !sigil.hasAttribute("hidden");
+    },
+    retire() {
+      sigil.dataset.retiring = "";
+      release();
+    },
+    destroy() {
+      clear();
+      sigil.remove();
+    },
+  };
+  return api;
+}
+
+export function createSigil({ className = "link-sigil", follow = false } = {}) {
+  const retiring = new Set();
+  const controller = new AbortController();
+  const make = () =>
+    createEffect({
+      className,
+      follow,
+      finished(effect) {
+        if (retiring.delete(effect)) effect.destroy();
+      },
+    });
+  let current = make();
+  function clear(fade = false) {
+    current.clear(fade);
+    if (!fade) for (const effect of retiring) effect.clear();
+  }
+  function draw(link) {
+    if (current.target === link) return;
+    if (current.visible) {
+      const previous = current;
+      retiring.add(previous);
+      previous.retire();
+      if (retiring.size > 12) retiring.values().next().value.destroy();
+      current = make();
+    }
+    current.draw(link);
+  }
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Escape") clear();
+    },
+    { signal: controller.signal },
+  );
+  window.addEventListener(
+    "hover-preferenceschange",
+    () => {
+      const target = current.target;
+      clear();
+      if (target) draw(target);
+    },
+    { signal: controller.signal },
+  );
+  return {
+    draw,
+    clear,
+    release: () => current.release(),
+    get target() {
+      return current.target;
+    },
+    destroy() {
+      controller.abort();
+      clear();
+      current.destroy();
     },
   };
 }
@@ -209,26 +279,48 @@ export const drawSigil = (link) => {
     link.matches(".prose .header-anchor") ||
     (bounds && bounds.bottom > 0 && bounds.top < innerHeight)
   ) {
-    clearSigil();
+    linkSigil.release();
     return;
   }
   linkSigil.draw(link);
 };
 document.addEventListener("pointerover", (event) => {
   if (event.pointerType === "touch") return;
-  const link = event.target.closest("a");
-  if (link && !link.contains(event.relatedTarget)) drawSigil(link);
+  const link = hoverTarget(event.target);
+  if (link && !hoverRegion(link).contains(event.relatedTarget)) drawSigil(link);
 });
 document.addEventListener("pointerout", (event) => {
   const link = linkSigil.target;
-  if (link?.contains(event.target) && !link.contains(event.relatedTarget)) linkSigil.release();
+  const region = hoverRegion(link);
+  // View-transition capture briefly hit-tests the root instead of the live nav.
+  if (
+    link?.closest(".site-header") &&
+    document.documentElement.hasAttribute("data-soft-navigation") &&
+    event.relatedTarget === document.documentElement
+  )
+    return;
+  if (region?.contains(event.target) && !region.contains(event.relatedTarget)) linkSigil.release();
 });
 document.addEventListener("focusin", (event) => {
-  const link = event.target.closest("a");
+  const link = hoverTarget(event.target);
   if (link) drawSigil(link);
 });
-document.addEventListener("focusout", () => linkSigil.release());
-document.addEventListener("scroll", clearSigil, { passive: true, capture: true });
+document.addEventListener("focusout", (event) => {
+  const region = hoverRegion(linkSigil.target);
+  if (region?.contains(event.target) && !region.matches(":hover")) linkSigil.release();
+});
+document.addEventListener(
+  "scroll",
+  () => {
+    if (!linkSigil.target?.closest(".site-header")) {
+      if (linkSigil.target) clearSigil();
+    }
+  },
+  { passive: true, capture: true },
+);
+document.addEventListener("site:before-swap", () => {
+  if (linkSigil.target && !linkSigil.target.closest(".site-header")) linkSigil.release();
+});
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) clearSigil();
 });

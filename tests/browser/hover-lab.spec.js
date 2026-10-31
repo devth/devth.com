@@ -33,7 +33,7 @@ test("numbered studies render distinct structures and animate only the requested
   await expect(first).toHaveAttribute("data-running", "true");
   await page.keyboard.press("Tab");
   await expect(first).toHaveAttribute("data-running", "false");
-  await expect(page.locator(".link-sigil")).toBeHidden();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
 

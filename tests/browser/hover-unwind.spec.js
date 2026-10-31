@@ -17,7 +17,7 @@ test("mouse leave retracts roots over 800ms without advancing or stretching them
   page,
 }) => {
   await setup(page);
-  const sigil = page.locator(".link-sigil");
+  const sigil = page.locator(".link-sigil:not([data-retiring])");
   await page.locator('.site-header a[href="/about"]').hover();
   await expect(sigil).toBeVisible();
   await page.clock.runFor(1800);
@@ -44,7 +44,7 @@ test("a fresh hover cancels the old unwind timer and Escape clears immediately",
   page,
 }) => {
   await setup(page);
-  const sigil = page.locator(".link-sigil");
+  const sigil = page.locator(".link-sigil:not([data-retiring])");
   const about = page.locator('.site-header a[href="/about"]');
   await about.hover();
   await expect(sigil).toBeVisible();
@@ -71,7 +71,7 @@ test("heading hover unwinds on leave without extending the separate five-second 
   await heading.scrollIntoViewIfNeeded();
   await heading.hover();
   await page.clock.runFor(32);
-  const sigil = page.locator(".heading-sigil");
+  const sigil = page.locator(".heading-sigil:not([data-retiring])");
   await expect(sigil).toBeVisible();
   await page.clock.runFor(1200);
   const count = await segments(sigil);

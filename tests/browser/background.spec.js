@@ -45,8 +45,8 @@ for (const reduced of [false, true]) {
 test("large home logo transitions into the compact article logo", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.addInitScript(() => {
-    window.addEventListener("pagereveal", (event) => {
-      event.viewTransition?.ready.then(() => {
+    const observe = (event) => {
+      (event.viewTransition || event.detail?.viewTransition)?.ready.then(() => {
         window.__brandFrames = document
           .getAnimations()
           .filter(
@@ -60,7 +60,9 @@ test("large home logo transitions into the compact article logo", async ({ page 
               .map((frame) => ({ width: frame.width, transform: frame.transform })),
           );
       });
-    });
+    };
+    window.addEventListener("pagereveal", observe);
+    document.addEventListener("site:navigation", observe);
   });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: "devth", exact: true })).toBeVisible();
