@@ -25,6 +25,31 @@ it("grows reproducible seed-specific roots for all 15 profiles without shared mu
   expect(new Set(shapes).size).toBe(15);
 });
 
+it("grows geometric struts instead of botanical curves on the three polyhedral sources", () => {
+  for (const id of ["sigil", "lattice", "geodesic"]) {
+    const frame = advance(createGrowth(id, 83), 3);
+    expect(frame.segments).toBeGreaterThan(20);
+    for (const curve of chunks(frame)) {
+      const [x, y, cx, cy, ex, ey] = curve.match(/-?\d+(?:\.\d+)?/g).map(Number);
+      expect(Math.abs(cx - (x + ex) / 2), id).toBeLessThan(0.02);
+      expect(Math.abs(cy - (y + ey) / 2), id).toBeLessThan(0.02);
+    }
+  }
+});
+
+it("discards a clipped incomplete polyhedron instead of leaving abandoned struts", () => {
+  const growth = createGrowth("sigil", 83);
+  const bounds = { left: 1000, right: 1100, top: 1000, bottom: 1100 };
+  let frame;
+  for (let tick = 0; tick < 20; tick++) {
+    growth.advance(1 / 60, bounds);
+    frame = growth.frame();
+    if (!frame.tips) break;
+  }
+  expect(frame.tips).toBe(0);
+  expect(frame.segments).toBe(0);
+});
+
 it("sprouts new roots continually, including after the live detail budget matures", () => {
   for (const { id } of studies) {
     const growth = createGrowth(id, 7);

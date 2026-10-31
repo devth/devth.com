@@ -334,6 +334,7 @@ export async function generateSite() {
       "hover-studies.js",
       "hover-preferences.js",
       "organic-growth.js",
+      "growth-grammar.js",
     ].map((name) => copyFile(resolve(root, "src", name), resolve(output, name))),
   );
   return { input: pages.map((page) => resolve(output, page.path)), assets };

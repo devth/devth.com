@@ -12,18 +12,19 @@ async function gardenSize(group) {
   });
 }
 
-test("generator grows from a label into a screen-sized garden and pauses on leave", async ({
+test("storm grows from a label into a screen-sized garden and pauses on leave", async ({
   page,
 }) => {
   await freezeClock(page);
   await page.goto("/hover-lab");
   const toggle = page.getByRole("switch", { name: "Generator mode", exact: true });
   await expect(toggle).toHaveAttribute("aria-checked", "true");
-  const first = page.locator("[data-hover-study]").first();
+  // Discharge expands quickly; assembling a faceted cage is deliberately slower.
+  const first = page.locator('[data-hover-study="storm"]');
   await first.locator("figcaption label").hover();
   await expect(first).toHaveAttribute("data-running", "true");
   await page.clock.runFor(300);
-  const group = page.locator('[data-growth-study="sigil"]');
+  const group = page.locator('[data-growth-study="storm"]');
   await expect(group).toBeVisible();
   const seed = await gardenSize(group);
   const original = group.locator("g").first();

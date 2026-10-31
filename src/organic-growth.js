@@ -1,5 +1,7 @@
-// Each profile changes branching topology as well as the silhouette. Original studies
-// keep their wire geometry; these profiles describe their organic hover growth only.
+import { createGrowthGrammar } from "./growth-grammar.js";
+export { ornamentCurves } from "./growth-grammar.js";
+
+// Legacy stateless organic studies retain their original geometry and timing.
 const profiles = {
   sigil: { roots: 5, fork: 3, spread: 1.1, curl: 0.3, leaf: 7, bloom: 13 },
   double: { roots: 2, fork: 4, spread: 0.8, curl: 0.55, leaf: 5, bloom: 0 },
@@ -137,53 +139,6 @@ export function organicCurves(id, ageSeconds, seed = 0) {
   return curves;
 }
 
-/** Each node grows its own asymmetric form, not a rotated/scaled blossom stamp.
- * Uneven arms can branch, curl or close into lobes, sharing a small curve budget.
- */
-export function ornamentCurves(point, heading, length, random) {
-  const curves = [];
-  const add = (start, control, end) => {
-    if (curves.length < 24) curves.push({ start, control, end, accent: true });
-  };
-  const arms = 2 + Math.floor(random() * 6);
-  const gaps = Array.from({ length: arms }, () => 0.25 + random());
-  const total = gaps.reduce((sum, gap) => sum + gap, 0);
-  const radius = length * (0.2 + random() * 0.5);
-  const stretch = 0.45 + random();
-  const lobes = random();
-  let direction = heading + random() * tau;
-  const offset = (angle, distance) => [
-    point[0] + Math.cos(angle) * distance,
-    point[1] + Math.sin(angle) * distance * stretch,
-    point[2] + (random() - 0.5) * radius * 0.3,
-  ];
-  for (const gap of gaps) {
-    direction += (gap / total) * tau;
-    const reach = radius * (0.4 + random() * 0.85);
-    const steps = random() < 0.45 ? 2 : 1;
-    let start = point;
-    for (let step = 1; step <= steps; step++) {
-      const turn = direction + (random() - 0.5) * 0.9;
-      const end = offset(turn, (reach * step) / steps);
-      const control = offset(turn + (random() - 0.5) * 1.6, (reach * (step - 0.4)) / steps);
-      add(start, control, end);
-      if (random() < 0.5) {
-        const fork = [
-          end[0] + Math.cos(turn + (random() < 0.5 ? -1 : 1)) * reach * (0.2 + random() * 0.5),
-          end[1] + Math.sin(turn + (random() - 0.5) * 2) * reach * (0.2 + random() * 0.5),
-          end[2] + (random() - 0.5) * radius * 0.3,
-        ];
-        add(end, random() < 0.5 ? end : control, fork);
-      }
-      if (step === steps && random() < lobes) {
-        add(end, offset(direction - 0.2 - random() * 0.9, reach * (0.4 + random() * 0.6)), point);
-      }
-      start = end;
-    }
-  }
-  return curves;
-}
-
 /** Incremental, fixed-scale roots. Only a bounded visible garden is materialized:
  * old offscreen tips are replenished from existing branch nodes, not magnified.
  * Advance is capped for suspended frames; callers own pause/resume and rendering.
@@ -192,68 +147,77 @@ export function createGrowth(id, seed = 0) {
   const profile = profiles[id];
   if (!profile) throw new RangeError(`Unknown growth study: ${id}`);
   const random = randomSource(id, seed, "live-roots");
-  const maxTips = 24;
-  const completeLimit = maxSegments - maxTips;
+  const grammar = createGrowthGrammar(id, random);
+  const completeLimit = maxSegments - 24;
   const core = 96;
+  const maxTips = Math.min(24, Math.floor((completeLimit - core) / grammar.maxUnitCurves));
   const fixedStep = 1 / 60;
   const origin = [0, 0, 0];
-  const segments = [];
+  let segments = [];
+  const units = new Set();
   const tips = [];
-  let cursor = core;
+  let coreSize = 0;
   let roots = 0;
-  let commits = 0;
   let elapsed = 0;
   let remainder = 0;
   let birthClock = 0;
+  let nextBirth = grammar.initialDelay + grammar.birthInterval();
   const defaultBounds = { left: -1400, right: 1400, top: -1000, bottom: 1000 };
   const inside = (point, bounds, margin = 0) =>
     point[0] >= bounds.left - margin &&
     point[0] <= bounds.right + margin &&
     point[1] >= bounds.top - margin &&
     point[1] <= bounds.bottom + margin;
-  const append = (start, control, end, accent = false) => {
-    const segment = { start, control, end, accent };
-    if (segments.length < completeLimit) segments.push(segment);
-    else {
-      segments[cursor] = segment;
-      cursor = cursor + 1 === completeLimit ? core : cursor + 1;
+  function abandon(unit) {
+    segments = segments.filter((segment) => segment.unit !== unit);
+    units.delete(unit);
+  }
+  function finish(unit) {
+    unit.complete = true;
+    if (!unit.count) units.delete(unit);
+    else if (coreSize + unit.count <= core) {
+      unit.fixed = true;
+      coreSize += unit.count;
     }
-  };
-  function nextCurve(tip) {
-    const angle = tip.angle;
-    const bend = profile.curl * 0.18 + (random() - 0.5) * (id === "storm" ? 1.6 : 0.7);
-    tip.angle += bend;
-    const length = 26 + random() * 18;
-    const start = tip.point;
-    const end = [
-      start[0] + Math.cos(tip.angle) * length,
-      start[1] + Math.sin(tip.angle) * length * (id === "mycelium" ? 0.65 : 1),
-      start[2] + (random() - 0.5) * length * 0.3,
-    ];
-    const control =
-      id === "storm"
-        ? start
-        : [
-            start[0] + Math.cos(angle - bend * 0.3) * length * 0.6,
-            start[1] + Math.sin(angle - bend * 0.3) * length * 0.6,
-            (start[2] + end[2]) / 2,
-          ];
-    tip.curve = { start, control, end, accent: roots % 9 === 0 };
-    tip.length = length;
+  }
+  function append(curve, unit) {
+    if (segments.length === completeLimit) {
+      // Reserve a complete unit per live tip; retire whole old cages/coils,
+      // never random struts that would turn their source grammar into debris.
+      const oldest = [...units].find((candidate) => candidate.complete && !candidate.fixed);
+      if (!oldest) return;
+      segments = segments.filter((segment) => segment.unit !== oldest);
+      units.delete(oldest);
+    }
+    segments.push({ ...curve, unit });
+    unit.count++;
+  }
+  function nextCurve(tip, bounds = defaultBounds) {
+    if (!tip.plan || tip.planIndex === tip.plan.curves.length) {
+      tip.plan = grammar.unit(tip, (point) => {
+        for (let attempt = 0; attempt < 12 && segments.length; attempt++) {
+          const candidate = segments[Math.floor(random() * segments.length)].end;
+          const distance = Math.hypot(...candidate.map((v, axis) => v - point[axis]));
+          if (distance > 16 && distance < 70 && inside(candidate, bounds)) return candidate;
+        }
+      });
+      tip.planIndex = 0;
+      tip.unit = { count: 0, complete: false, fixed: false };
+      units.add(tip.unit);
+    }
+    tip.curve = tip.plan.curves[tip.planIndex++];
+    tip.length = grammar.length(tip.curve);
     tip.progress = 0;
   }
   function spawn(point, angle) {
     roots++;
-    const tip = { point, angle, speed: 280 + random() * 120 };
+    const tip = { point, angle, speed: grammar.speed() };
     nextCurve(tip);
-    if (tips.length === maxTips) tips.shift();
+    if (tips.length === maxTips) abandon(tips.shift().unit);
     tips.push(tip);
   }
-  for (let root = 0; root < profile.roots; root++) {
-    const angle = ["coral", "bramble", "spore"].includes(id)
-      ? -Math.PI / 2 + (random() - 0.5) * 1.7
-      : (root / profile.roots) * tau + random() * 0.5;
-    spawn(origin, angle);
+  for (let root = 0; root < grammar.roots; root++) {
+    spawn(origin, grammar.initialAngle(root, grammar.roots));
   }
   function sprout(bounds) {
     let parent;
@@ -280,31 +244,6 @@ export function createGrowth(id, seed = 0) {
     }
     spawn(point, angle + (random() - 0.5) * profile.spread * 1.8);
   }
-  function decorate({ end }, angle, length) {
-    if (profile.leaf && commits % profile.leaf === 0) {
-      const side = random() < 0.5 ? -1 : 1;
-      const tip = [
-        end[0] + Math.cos(angle + side) * length * 0.85,
-        end[1] + Math.sin(angle + side) * length * 0.85,
-        end[2],
-      ];
-      append(end, [tip[0] - Math.sin(angle) * length * 0.3, tip[1], tip[2]], tip);
-      append(tip, [end[0], end[1] + Math.cos(angle) * length * 0.25, end[2]], end);
-    }
-    if (id === "bramble" && commits % 3 === 0) {
-      const thorn = [
-        end[0] + Math.cos(angle + 0.9) * length * 0.5,
-        end[1] + Math.sin(angle + 0.9) * length * 0.5,
-        end[2],
-      ];
-      append(end, end, thorn, true);
-    }
-    if (profile.bloom && random() < 1 / profile.bloom) {
-      for (const curve of ornamentCurves(end, angle, length, random)) {
-        append(curve.start, curve.control, curve.end, curve.accent);
-      }
-    }
-  }
   function advance(seconds, viewport = defaultBounds) {
     if (!Number.isFinite(seconds) || seconds <= 0) return;
     const bounds =
@@ -318,9 +257,9 @@ export function createGrowth(id, seed = 0) {
       remainder = Math.max(0, remainder - fixedStep);
       elapsed += fixedStep;
       birthClock += fixedStep;
-      const interval = 0.22 + profile.fork * 0.04;
-      if (birthClock >= interval || !tips.length) {
-        birthClock %= interval;
+      if (birthClock >= nextBirth || !tips.length) {
+        birthClock %= nextBirth;
+        nextBirth = grammar.birthInterval();
         sprout(bounds);
       }
       for (let index = tips.length - 1; index >= 0; index--) {
@@ -329,15 +268,22 @@ export function createGrowth(id, seed = 0) {
         if (tip.progress < 1) continue;
         const overflow = (tip.progress - 1) * tip.length;
         const curve = tip.curve;
-        append(curve.start, curve.control, curve.end, curve.accent);
-        commits++;
-        decorate(curve, tip.angle, tip.length);
+        append(curve, tip.unit);
+        const complete = tip.planIndex === tip.plan.curves.length;
+        if (complete) {
+          tip.point = tip.plan.exit;
+          for (const ornament of grammar.decorate(tip)) {
+            append(ornament, tip.unit);
+          }
+          finish(tip.unit);
+        }
         if (!inside(curve.end, bounds, 160)) {
+          if (!complete) abandon(tip.unit);
           tips.splice(index, 1);
           continue;
         }
-        tip.point = curve.end;
-        nextCurve(tip);
+        tip.point = complete ? tip.plan.exit : curve.end;
+        nextCurve(tip, bounds);
         tip.progress = overflow / tip.length;
       }
     }
@@ -375,12 +321,7 @@ export function createGrowth(id, seed = 0) {
       );
       drawing.segments++;
     }
-    // The outer ring wraps in memory, but exits always erase newest growth first.
-    const ordered =
-      retention < 1 && segments.length === completeLimit
-        ? [...segments.slice(0, core), ...segments.slice(cursor), ...segments.slice(core, cursor)]
-        : segments;
-    for (const curve of ordered) draw(curve);
+    for (const curve of segments) draw(curve);
     for (const { curve, progress } of live) draw(curve, Math.min(1, progress));
     return drawing;
   }
