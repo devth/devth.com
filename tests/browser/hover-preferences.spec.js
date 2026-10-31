@@ -91,6 +91,11 @@ test("CmdK fixed structure and generation choices persist across reload and page
   await expect(dialog.getByRole("switch", { name: "Generation", exact: true })).not.toBeChecked();
   const query = dialog.getByRole("combobox", { name: "Search pages" });
   await query.fill("about");
+  await expect(
+    dialog
+      .getByRole("listbox", { name: "Pages" })
+      .getByRole("option", { name: /^About Trevor Hartman/ }),
+  ).toBeVisible();
   await query.press("Enter");
   await expect(page).toHaveURL(/\/about$/);
   dialog = await menu(page);
