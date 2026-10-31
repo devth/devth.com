@@ -11,9 +11,13 @@ footerTop?.addEventListener("click", (event) => {
   scrollTo({ top: 0, behavior: motion.matches ? "instant" : "smooth" });
 });
 let sigils;
+let loadingSigils;
+let pendingSigil;
 function clearSigil() {
+  pendingSigil = null;
   sigils?.clearSigil();
 }
+window.addEventListener("blur", clearSigil);
 function loadSigils(event) {
   const link = event.target.closest("a");
   if (
@@ -24,14 +28,21 @@ function loadSigils(event) {
     link.classList.contains("skip-link")
   )
     return;
-  document.removeEventListener("pointerover", loadSigils);
-  document.removeEventListener("focusin", loadSigils);
-  import("./link-sigil.js")
+  pendingSigil = link;
+  if (loadingSigils) return;
+  loadingSigils = import("./link-sigil.js")
     .then((module) => {
       sigils = module;
-      if (link.matches(":hover") || document.activeElement === link) module.drawSigil(link);
+      document.removeEventListener("pointerover", loadSigils);
+      document.removeEventListener("focusin", loadSigils);
+      const current = pendingSigil;
+      pendingSigil = null;
+      if (current && (current.matches(":hover") || document.activeElement === current))
+        module.drawSigil(current);
     })
-    .catch(() => {});
+    .catch(() => {
+      loadingSigils = null;
+    });
 }
 document.addEventListener("pointerover", loadSigils);
 document.addEventListener("focusin", loadSigils);
@@ -73,7 +84,7 @@ if (quickNav?.showModal) {
     if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
       event.preventDefault();
       toggleQuickNav();
-    }
+    } else if (event.key === "Escape") clearSigil();
   });
 }
 

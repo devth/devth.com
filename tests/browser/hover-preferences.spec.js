@@ -6,6 +6,37 @@ async function menu(page) {
   await expect(dialog.getByLabel("Structure", { exact: true })).toBeVisible();
   return dialog;
 }
+for (const cancel of [false, true]) {
+  test(`cold hover loading ${cancel ? "respects Escape" : "replays the latest target"}`, async ({
+    page,
+  }) => {
+    await page.goto("/");
+    let release;
+    let requested = false;
+    const gate = new Promise((resolve) => {
+      release = resolve;
+    });
+    await page.route(/\/assets\/link-sigil-[^/]+\.js$/, async (route) => {
+      requested = true;
+      await gate;
+      await route.continue();
+    });
+    await page.locator('.site-header a[href="/overture"]').hover();
+    await expect.poll(() => requested).toBe(true);
+    if (cancel) await page.keyboard.press("Escape");
+    else await page.locator('.site-header a[href="/about"]').hover();
+    release();
+    const sigil = page.locator(".link-sigil");
+    await expect(sigil).toBeAttached();
+    if (cancel) {
+      await expect(sigil).toBeHidden();
+      await page.locator('.site-header a[href="/about"]').hover();
+    }
+    await expect(sigil).toBeVisible();
+    await expect(page.locator('.site-header a[href="/about"]')).toHaveClass(/link-distortion/);
+  });
+}
+
 test("defaults to random generation, rerolls each hover but not each frame", async ({ page }) => {
   await page.goto("/");
   const about = page.locator('.site-header a[href="/about"]');
