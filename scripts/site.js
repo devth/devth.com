@@ -178,7 +178,7 @@ function home(posts) {
     <div class="archive">${years
       .map(
         (year) =>
-          `<section class="year-group" aria-labelledby="year-${year}"><h2 id="year-${year}" class="year">${year}<span class="year-note" aria-hidden="true">${year} WAS A GOOD YEAR</span></h2><ol class="entries">${posts
+          `<section class="year-group" aria-labelledby="year-${year}"><h2 id="year-${year}" class="year">${year}</h2><ol class="entries">${posts
             .filter((post) => post.date.startsWith(year))
             .map(
               (post) =>

@@ -214,32 +214,6 @@ kbd {
   margin: 20px 0 0;
   color: var(--ink);
 }
-.year-note {
-  display: none;
-}
-@media (min-width: 1400px) and (hover: hover) and (pointer: fine) {
-  .year-note {
-    display: block;
-    position: fixed;
-    z-index: 6;
-    top: 50%;
-    right: 0;
-    margin: 0;
-    visibility: hidden;
-    opacity: 0.65;
-    font: 900 min(18dvh, 10vw, 240px) / 0.78 var(--sans);
-    text-transform: uppercase;
-    letter-spacing: -0.04em;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: translateY(-50%) rotate(180deg);
-    white-space: nowrap;
-    pointer-events: none;
-  }
-  .year:hover .year-note {
-    visibility: visible;
-  }
-}
 .entries {
   list-style: none;
   padding: 0;
@@ -267,7 +241,8 @@ kbd {
   z-index: 1;
 }
 .entry:hover .entry-title,
-.entry:focus-within .entry-title {
+.entry:focus-within .entry-title,
+.year-group:has(> .year:hover) .entry-title {
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 4px;
@@ -1356,8 +1331,7 @@ body[data-demolishing] > :not(.demolition-dialog) {
   }
 }
 @media print {
-  .article-toc,
-  .year-note {
+  .article-toc {
     display: none;
   }
 }

@@ -41,52 +41,92 @@ test("reading pages use the shared navigation instead of redundant back links", 
   await expect(page.getByRole("link", { name: /older post/ })).toBeVisible();
 });
 
-test("year inscription is decorative and does not shift the archive", async ({
+test("hovering a year activates its titles together and unwinds without shifting the archive", async ({
   page,
 }, testInfo) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() =>
+    localStorage.setItem(
+      "devth:hover-preferences:v1",
+      JSON.stringify({ structure: "double", generation: true }),
+    ),
+  );
+  await page.clock.install();
   await page.goto("/");
-  const year = page.getByRole("heading", { name: "2025", exact: true });
-  const note = year.locator(".year-note");
-  await expect(note).toHaveAttribute("aria-hidden", "true");
-  await expect(note).toHaveText("2025 WAS A GOOD YEAR");
-  const before = await page.locator(".entry").first().boundingBox();
-  await year.hover();
-  if (testInfo.project.name === "mobile") {
-    await expect(note).toBeHidden();
-  } else {
-    await expect(note).toBeVisible();
-    await expect(note).toHaveCSS("writing-mode", "vertical-rl");
-    await expect(note).toHaveCSS("text-transform", "uppercase");
-    const box = await note.boundingBox();
-    const viewport = page.viewportSize();
-    await expect(note).toHaveCSS("position", "fixed");
-    await expect(note).toHaveCSS("right", "0px");
-    await expect(note).toHaveCSS("font-weight", "900");
-    await expect(note).toHaveCSS("opacity", "0.65");
-    const naturalWidth = await note.evaluate((element) =>
-      parseFloat(getComputedStyle(element).width),
+  await expect(page.locator(".year-note")).toHaveCount(0);
+  const id = await page
+    .locator(".year-group")
+    .evaluateAll(
+      (groups) =>
+        [...groups]
+          .sort(
+            (a, b) => b.querySelectorAll(".entry").length - a.querySelectorAll(".entry").length,
+          )[0]
+          .querySelector(".year").id,
     );
-    expect(box.width).toBeCloseTo(naturalWidth, 1);
-    expect(box.x + box.width).toBeCloseTo(viewport.width, 0);
-    expect(box.height).toBeGreaterThan(viewport.height * 1.5);
-    expect(box.y).toBeLessThan(0);
-    expect(box.y + box.height).toBeGreaterThan(viewport.height);
-    expect(
-      parseFloat(await note.evaluate((element) => getComputedStyle(element).fontSize)),
-    ).toBeGreaterThanOrEqual(140);
-  }
-  expect(await page.locator(".entry").first().boundingBox()).toEqual(before);
-  if (testInfo.project.name === "desktop") {
-    await year.hover();
-    const noteBox = await note.boundingBox();
-    const footer = await page.locator(".site-footer").boundingBox();
-    expect(noteBox.x).toBeGreaterThanOrEqual(footer.x + footer.width);
-    expect(noteBox.x + noteBox.width).toBeCloseTo(page.viewportSize().width, 0);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
-      false,
-    );
-    await page.emulateMedia({ media: "print" });
-    await expect(note).toBeHidden();
-  }
+  const group = page.locator(`.year-group[aria-labelledby="${id}"]`);
+  await group.evaluate((element) =>
+    element.scrollIntoView({ block: "center", behavior: "instant" }),
+  );
+  const links = group.locator(".entry-link");
+  const count = await links.evaluateAll(
+    (elements) =>
+      elements.filter((element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element.querySelector(".entry-title"));
+        const bounds = range.getBoundingClientRect();
+        return bounds.bottom > 0 && bounds.top < innerHeight;
+      }).length,
+  );
+  expect(count).toBeGreaterThan(1);
+  const before = await group.boundingBox();
+  await group.locator(".year").hover();
+  await expect(group.locator(".entry-link.link-distortion")).toHaveCount(count);
+  await expect(page.locator(".entry-link.link-distortion")).toHaveCount(count);
+  await expect(page.locator('.link-sigil.is-visible[data-structure="double"]')).toHaveCount(count);
+  await page.clock.pauseAt(new Date(Date.now() + 50));
+  await page.clock.runFor(900);
+  expect(await group.boundingBox()).toEqual(before);
+  await page.screenshot({ path: testInfo.outputPath("year-hover.png") });
+  await page.mouse.move(0, 0);
+  await expect(page.locator(".entry-link.link-distortion")).toHaveCount(0);
+  await page.clock.runFor(400);
+  await expect(page.locator(".link-sigil:not([hidden])")).toHaveCount(count);
+  await page.clock.runFor(450);
+  await expect(page.locator(".link-sigil:not([hidden])")).toHaveCount(0);
+});
+
+test("year previews respect filtered entries, reduced motion and navigation cleanup", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator(".entry-meta a").first().click();
+  await expect(page.locator("[data-category-filter]")).toBeVisible();
+  const group = page.locator(".year-group:not([hidden])").first();
+  await group.evaluate((element) =>
+    element.scrollIntoView({ block: "center", behavior: "instant" }),
+  );
+  await group.locator(".year").hover();
+  await expect(
+    group.locator(".entry:not([hidden]) .entry-link.link-distortion").first(),
+  ).toBeVisible();
+  await expect(page.locator(".entry[hidden] .link-distortion")).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".link-sigil:not([hidden])")).toHaveCount(0);
+  await page.mouse.move(0, 0);
+  await group.locator(".year").hover();
+  await expect(page.locator(".link-sigil:not([hidden])")).toHaveCount(0);
+  await page.locator(".site-header nav").getByRole("link", { name: "about", exact: true }).click();
+  await expect(page.locator("main")).toHaveAttribute("data-page-class", "about-page");
+  await expect(page.locator(".link-sigil")).toHaveCount(1);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page
+    .locator(".site-header nav")
+    .getByRole("link", { name: "writing", exact: true })
+    .click();
+  const returned = page.locator(".year-group").first();
+  await returned.evaluate((element) =>
+    element.scrollIntoView({ block: "center", behavior: "instant" }),
+  );
+  await returned.locator(".year").hover();
+  await expect(returned.locator(".entry-link.link-distortion").first()).toBeVisible();
 });

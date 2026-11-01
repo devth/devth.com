@@ -1,4 +1,5 @@
 import { hoverTarget, hoverRegion } from "./hover-target.js";
+import { onPage } from "./page-lifecycle.js";
 import { studyFrame } from "./hover-studies.js";
 import { createGrowth } from "./organic-growth.js";
 import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
@@ -268,8 +269,67 @@ export function createSigil({ className = "link-sigil", follow = false } = {}) {
 }
 
 const linkSigil = createSigil();
-export const clearSigil = () => linkSigil.clear();
+let yearPreview;
+onPage(".archive", (archive, { on, dispose }) => {
+  const owners = new Map();
+  let active;
+  function release() {
+    active = null;
+    for (const owner of owners.values()) owner.release();
+  }
+  function clear() {
+    active = null;
+    for (const owner of owners.values()) owner.clear();
+  }
+  function draw(year) {
+    if (
+      active === year ||
+      motion.matches ||
+      document.hidden ||
+      document.querySelector("dialog[open]")
+    )
+      return;
+    release();
+    linkSigil.release();
+    active = year;
+    for (const link of year
+      .closest(".year-group")
+      .querySelectorAll(".entry:not([hidden]) .entry-link")) {
+      if (!owners.has(link)) owners.set(link, createSigil());
+      owners.get(link).draw(link);
+    }
+  }
+  const preview = (yearPreview = {
+    draw,
+    release,
+    clear,
+    scroll() {
+      if (!active?.matches(":hover")) clear();
+    },
+  });
+  for (const year of archive.querySelectorAll(".year")) {
+    on(year, "pointerenter", (event) => {
+      if (event.pointerType !== "touch") draw(year);
+    });
+    on(year, "pointerleave", () => {
+      if (active === year) release();
+    });
+  }
+  dispose(() => {
+    for (const owner of owners.values()) owner.destroy();
+    if (yearPreview === preview) yearPreview = null;
+  });
+});
+export const clearSigil = () => {
+  linkSigil.clear();
+  yearPreview?.clear();
+};
 export const drawSigil = (link) => {
+  if (link.matches(".year")) {
+    yearPreview?.draw(link);
+    return;
+  }
+  yearPreview?.release();
   // A visible destination owns the art; otherwise its ToC link can preview it.
   const heading = link.matches("[data-toc] a")
     ? document.getElementById(decodeURIComponent(link.hash.slice(1)))
@@ -312,6 +372,7 @@ document.addEventListener("focusout", (event) => {
 document.addEventListener(
   "scroll",
   () => {
+    yearPreview?.scroll();
     if (!linkSigil.target?.closest(".site-header")) {
       if (linkSigil.target) clearSigil();
     }

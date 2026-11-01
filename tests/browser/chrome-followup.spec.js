@@ -89,7 +89,7 @@ test("on-page writing is lowercase while acronyms and code retain their case", a
   await expect(title).toHaveCSS("text-transform", "lowercase");
   await expect(title.locator(".keep-case")).toHaveText(["YAML", "CI"]);
   await expect(title.locator(".keep-case").first()).toHaveCSS("text-transform", "none");
-  await expect(page.locator(".year-note").first().locator(".keep-case")).toHaveCount(0);
+  await expect(page.locator(".year-note")).toHaveCount(0);
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.getByRole("combobox", { name: "Search pages" }).fill("YAML");
   const result = page.getByRole("listbox", { name: "Pages" }).getByRole("option");

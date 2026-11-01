@@ -22,7 +22,7 @@ function clearSigil() {
 }
 window.addEventListener("blur", clearSigil);
 function loadSigils(event) {
-  const link = hoverTarget(event.target);
+  const link = hoverTarget(event.target) || event.target.closest?.(".year");
   if (
     !link ||
     motion.matches ||
