@@ -86,11 +86,14 @@ export function init(clearSigil) {
         !(event.deltaX || event.deltaY)
       )
         return;
+      const delta = event.deltaY || event.deltaX;
       if (hold) {
         event.preventDefault();
+        if (delta < 0) releaseHold();
         return;
       }
       if (
+        delta < 0 ||
         document.querySelector("dialog[open]") ||
         editing(event.target) ||
         editing(document.activeElement)

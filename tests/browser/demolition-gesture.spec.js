@@ -95,6 +95,36 @@ for (const level of ["controller", "physics"])
     await expect(page.locator("main")).toBeVisible();
   });
 
+test("Shift-scroll up unwinds a hold and scrolling down can start again without releasing Shift", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await ready(page);
+  await page.keyboard.down("Shift");
+  await page.evaluate(() => {
+    window.reverseWheelPrevented = new Promise((resolve) =>
+      window.addEventListener("wheel", (event) => resolve(event.defaultPrevented), { once: true }),
+    );
+  });
+  await page.mouse.wheel(0, -300);
+  expect(await page.evaluate(() => window.reverseWheelPrevented)).toBe(false);
+  await expect(effect(page)).toHaveCount(0);
+  await page.mouse.wheel(0, 300);
+  await expect(effect(page)).toBeVisible();
+  await page.clock.pauseAt(new Date(Date.now() + 50));
+  await page.clock.runFor(1800);
+  await page.mouse.wheel(0, -300);
+  await expect(effect(page)).toHaveAttribute("data-phase", "reversing");
+  await page.clock.runFor(400);
+  await expect(effect(page)).toHaveCount(0);
+  await page.mouse.wheel(0, 300);
+  await page.clock.runFor(100);
+  await expect(effect(page)).toHaveAttribute("data-phase", "falling");
+  await page.keyboard.up("Shift");
+  await page.clock.runFor(400);
+  await expect(effect(page)).toHaveCount(0);
+});
+
 test("Shift release does not dismiss a button-triggered collapse", async ({ page }) => {
   await page.clock.install();
   await ready(page);
@@ -103,6 +133,7 @@ test("Shift release does not dismiss a button-triggered collapse", async ({ page
   await page.clock.pauseAt(new Date(Date.now() + 50));
   await page.clock.runFor(1800);
   await hold(page);
+  await page.mouse.wheel(0, -300);
   await page.keyboard.up("Shift");
   await page.clock.runFor(400);
   await expect(effect(page)).toHaveAttribute("data-phase", "falling");

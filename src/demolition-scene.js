@@ -20,6 +20,7 @@ export function createScene(capture, host, onDone) {
   let frame = 0;
   let last = 0;
   let nextPaint = 0;
+  let nextRecord = 1 / 30;
   let visibleTime = 0;
   let cursor = 0;
   let reverseSpeed = 2;
@@ -94,6 +95,8 @@ export function createScene(capture, host, onDone) {
   }
   function reverse(callback, duration) {
     if (disposed || phase === "reverse") return;
+    if (phase === "forward")
+      history.record(visibleTime, physics.pieces, Number(host.style.opacity || 1));
     phase = "reverse";
     onRebuilt = callback;
     cursor = history.duration;
@@ -111,7 +114,7 @@ export function createScene(capture, host, onDone) {
     }
     const seconds = last ? (now - last) / 1000 : 0;
     last = now;
-    nextPaint = now + 1000 / 30;
+    nextPaint = Math.max(nextPaint + 1000 / 60, now);
     if (phase === "reverse") {
       // Replay the actual collisions and fractures; a released hold zips back in 250ms.
       cursor = Math.max(0, cursor - seconds * reverseSpeed);
@@ -127,9 +130,14 @@ export function createScene(capture, host, onDone) {
       physics.advance(seconds);
       const opacity = visibleTime > 23 ? Math.max(0, 24 - visibleTime) : 1;
       host.style.opacity = opacity;
-      history.record(visibleTime, physics.pieces, opacity);
+      const done = physics.done || visibleTime >= 24;
+      // Smooth display frames without doubling the bounded rewind recording.
+      if (visibleTime + 1e-6 >= nextRecord || done) {
+        history.record(visibleTime, physics.pieces, opacity);
+        nextRecord = (Math.floor((visibleTime + 1e-6) * 30) + 1) / 30;
+      }
       paint();
-      if (physics.done || visibleTime >= 24) {
+      if (done) {
         finish();
         return;
       }

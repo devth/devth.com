@@ -2,6 +2,36 @@ import { test, expect } from "@playwright/test";
 
 const collapseDialog = (page) => page.getByRole("dialog", { name: "page collapse", exact: true });
 
+test("falling renders near 60 fps instead of skipping every other display frame", async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto("/");
+  const button = page.locator(".site-footer [data-demolition-trigger]");
+  await expect(button).toBeVisible();
+  await button.click();
+  await expect(collapseDialog(page)).toBeVisible();
+  await page.clock.pauseAt(new Date(Date.now() + 50));
+  await page.clock.runFor(600);
+  await page.evaluate(() => {
+    window.paintTicks = new Set();
+    window.paintObserver = new MutationObserver(() => window.paintTicks.add(performance.now()));
+    window.paintObserver.observe(document.querySelector(".demolition-stage"), {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["style"],
+    });
+  });
+  // Simulated display frames test scheduling, not machine/browser performance.
+  await page.clock.runFor(960);
+  const count = await page.evaluate(() => {
+    window.paintObserver.disconnect();
+    return window.paintTicks.size;
+  });
+  expect(count).toBeGreaterThanOrEqual(50);
+  expect(count).toBeLessThanOrEqual(61);
+});
+
 test("footer content tumbles in three dimensions and Escape restores the same real page without counter reloads", async ({
   page,
 }) => {
