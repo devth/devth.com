@@ -1,5 +1,16 @@
 import { test, expect } from "@playwright/test";
 
+test("historical comment link reaches the quoted excerpt on the current article", async ({
+  page,
+}) => {
+  await page.goto("/thrush-cond-is-not-a-monad");
+  await page.locator('.prose a[href="#comment-2082941866"]').click();
+  await expect(page).toHaveURL(/#comment-2082941866$/);
+  const quote = page.locator("blockquote").filter({ has: page.locator("#comment-2082941866") });
+  await expect(quote).toBeInViewport();
+  await expect(quote).toContainText("ThrushCond[A]");
+});
+
 test("archive has one RSS action and no inline filter", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("link", { name: /^RSS/ })).toHaveCount(1);

@@ -40,7 +40,7 @@
     "compiled-queries-in-scala": {
       "title": "Compiled queries in Scala",
       "excerpt": "Compile a data structure representing a query into native code to speed up a query loop using ASM.",
-      "bodySha256": "4d1fe1cf90f8739f78b5fa37e852daefd0d3202bc6aa483a2a1fb624895b7f79"
+      "bodySha256": "a53705d0f41a0380deb02ece30d9c05de0a1b5e8f02c47a65a3143d25792f56c"
     },
     "dec-deep-environmental-config": {
       "title": "dec: Deep Environmental Config",
@@ -99,7 +99,7 @@
     },
     "glossary": {
       "title": "Glossary",
-      "bodySha256": "907cee373d0586ec494f1072f5592f929474902562eb17165d8d049988bf7a2b"
+      "bodySha256": "04d045ac18ac77a85daebfdd40b82e74f00700c7aa3664575d1b3536131edd89"
     }
   }
 }

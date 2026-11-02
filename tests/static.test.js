@@ -151,7 +151,7 @@ describe("static publishing contract", () => {
     ).toBe(4);
   });
 
-  it("uses verified Grokipedia references throughout published pages", () => {
+  it("labels Grokipedia references accurately throughout published pages", () => {
     const paths = [
       "index.html",
       "about/index.html",
@@ -161,6 +161,11 @@ describe("static publishing contract", () => {
       ...Object.keys(originalCopy.posts).map((slug) => slug + "/index.html"),
     ];
     const html = paths.map(read).join("\n");
+    for (const path of paths) {
+      for (const link of documentFor(path).querySelectorAll('a[href^="https://grokipedia.com/"]')) {
+        expect(link.textContent, path).not.toMatch(/wikipedia/i);
+      }
+    }
     expect(html).not.toContain("wikipedia.org/");
     for (const article of [
       "Isomorphism",
@@ -174,6 +179,23 @@ describe("static publishing contract", () => {
     ]) {
       expect(html).toContain("https://grokipedia.com/page/" + article);
     }
+  });
+
+  it("keeps the historical comment fragment attached to its existing quoted excerpt", () => {
+    const target = documentFor("thrush-cond-is-not-a-monad/index.html").getElementById(
+      "comment-2082941866",
+    );
+    expect(target).not.toBeNull();
+    expect(target.closest("blockquote").textContent).toContain("ThrushCond[A]");
+  });
+
+  it("links Understanding Yoneda directly to the author’s current article", () => {
+    const link = [...documentFor("glossary/index.html").querySelectorAll("a")].find(
+      (link) => link.textContent === "Understanding Yoneda",
+    );
+    expect(link.getAttribute("href")).toBe(
+      "https://bartoszmilewski.com/2013/05/15/understanding-yoneda/",
+    );
   });
 
   it("indexes original titles and excerpts for lazy global search", () => {

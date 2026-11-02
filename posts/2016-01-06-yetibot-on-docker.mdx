@@ -15,7 +15,7 @@ Docker](https://hub.docker.com/u/yetibot)! This is the fastest way
 to get up and running. To demonstrate, let's run it with Docker using the most
 minimal configuration possible: an in-memory (non-durable) Datomic configuration
 and a single IRC adapter config. (I'm assuming your local Docker is
-[installed](https://www.docker.com/docker-toolbox).)
+[installed](https://github.com/docker-archive/toolbox).)
 
 **Update 2024-05-01:** This configuration is outdated and no longer valid.
 Please refer to the [officiel Yetibot Ops guide](https://yetibot.com/ops-guide)
@@ -49,7 +49,7 @@ docker logs -f yetibot
 > If you are using Docker Machine on Mac or Windows, your Docker daemon has only
 > limited access to your OS X or Windows filesystem. Docker Machine tries to
 > auto-share your /Users (OS X) or C:\Users (Windows) directory.
-> — [Mount a host directory as a data volume](https://docs.docker.com/engine/userguide/dockervolumes/#mount-a-host-directory-as-a-data-volume)
+> — [Mount a host directory as a data volume](https://docs.docker.com/engine/storage/bind-mounts/#syntax)
 
 If you're not using Docker Machine feel free to put it wherever you like.
 
@@ -71,7 +71,7 @@ docker rm -f yetibot
 
 To get the most out of Yetibot you'll want to configure some of the optional
 services. See the full [config
-sample](https://github.com/devth/yetibot/blob/master/config/config-sample.edn)
+sample](https://github.com/yetibot/yetibot/blob/bcd6695e6607a173e642e827536db2a3085628bd/config/config-sample.edn)
 and check out [yetibot.com](http://yetibot.com) for more info on the cool things
 you can do with Yetibot!
 

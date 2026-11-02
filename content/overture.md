@@ -49,7 +49,7 @@ applying it over time.
 
 <ul>
 <li>
-<a href="http://learnyouahaskell.com/chapters">
+<a href="https://learnyouahaskell.github.io/chapters.html">
 Learn You a Haskell for Great Good!
 </a>
 by Miran Lipovača — Have you read a million monad tutorials and

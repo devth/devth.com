@@ -226,14 +226,14 @@ Monoids are Semigroups with an identity element.
 `ThrushCond`'s identity is simply a
 `ThrushCond` arguments.
 However, as [@lmm mentioned in the
-comments](http://devth.com/2015/thrush-cond-is-not-a-monad/#comment-2082941866):
+comments](#comment-2082941866):
 
-> it's not ThrushCond itself that forms a Monoid but rather ThrushCond[A] for
+> <span id="comment-2082941866"></span>it's not ThrushCond itself that forms a Monoid but rather ThrushCond[A] for
 > any given A
 
 This is where `PlusEmpty` comes in.
 `PlusEmpty` is a ["universally quantified
-Monoid"](https://github.com/scalaz/scalaz/blob/series/7.2.x/core/src/main/scala/scalaz/PlusEmpty.scala#L3-7)
+Monoid"](https://github.com/scalaz/scalaz/blob/series/7.2.x/core/src/main/scala/scalaz/PlusEmpty.scala#L3-L7)
 which means it's like a Monoid but for first-order `* -> *`
 types instead of proper `*` types.
 `PlusEmpty` itself is a higher-order `(* -> *) -> *` type. A

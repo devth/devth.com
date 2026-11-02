@@ -7,7 +7,7 @@ Terms and concepts.
 
 ## Natural Transformation
 
-A natural transformation is a mapping between functors that preserves the structure of the underlying categories. — <cite>Bartosz Milewski from [Understanding Yoneda](https://www.fpcomplete.com/user/bartosz/understanding-yoneda)</cite>
+A natural transformation is a mapping between functors that preserves the structure of the underlying categories. — <cite>Bartosz Milewski from [Understanding Yoneda](https://bartoszmilewski.com/2013/05/15/understanding-yoneda/)</cite>
 
 This is a case where definitions are confusing, but the actual thing is quite simple in practice. Let's try that out in Scala using the Functors `List` and `Option`.
 
@@ -33,7 +33,7 @@ optionToList(None)
 
 ## Isomorphism
 
-In mathematics, an isomorphism (from the Greek: isos "equal", and morphe "shape") is a homomorphism (or more generally a morphism) **that admits an inverse**. Two mathematical objects are isomorphic if an isomorphism exists between them. — <cite>[Wikipedia](https://grokipedia.com/page/Isomorphism)</cite>
+In mathematics, an isomorphism (from the Greek: isos "equal", and morphe "shape") is a homomorphism (or more generally a morphism) **that admits an inverse**. Two mathematical objects are isomorphic if an isomorphism exists between them. — <cite>[Grokipedia](https://grokipedia.com/page/Isomorphism)</cite>
 
 Now the Scala in which we'll describe the world's most trivial isomorphism:
 
@@ -99,7 +99,7 @@ trait ~>[F[_],G[_]] {
 
 ## Parametricity
 
-> captures the intuition that all instances of a polymorphic function act the same way — <cite>[Wikipedia](https://grokipedia.com/page/parametricity)</cite>
+> captures the intuition that all instances of a polymorphic function act the same way — <cite>[Grokipedia](https://grokipedia.com/page/parametricity)</cite>
 
 ## Partial Function
 
@@ -111,7 +111,7 @@ A function which is defined for all inputs, as opposed to a partial function.
 
 ## Extensionality and Intensionality
 
-In logic, extensionality, or extensional equality, refers to principles that judge objects to be equal if they have the same external properties. It stands in contrast to the concept of intensionality, which is concerned with whether the internal definitions of objects are the same. — <cite>[Wikipedia](https://grokipedia.com/page/Extensionality)</cite>
+In logic, extensionality, or extensional equality, refers to principles that judge objects to be equal if they have the same external properties. It stands in contrast to the concept of intensionality, which is concerned with whether the internal definitions of objects are the same. — <cite>[Grokipedia](https://grokipedia.com/page/Extensionality)</cite>
 
 ```haskell
 f :: Int -> Int
