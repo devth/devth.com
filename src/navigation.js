@@ -243,6 +243,8 @@ async function navigate(requested, { pop = false, keyboard = false } = {}) {
         new CustomEvent("site:navigation", { detail: { viewTransition: transition } }),
       );
       const current = transition;
+      // A skipped capture rejects ready independently of the finished promise.
+      current.ready.catch(() => {});
       const finish = () => {
         if (transition === current) {
           transition = null;

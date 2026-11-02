@@ -1,305 +1,261 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-
 import { onPage } from "./page-lifecycle.js";
-onPage("[data-cosmos-stage]", (stage, { on, dispose }) => {
+import { references, starDistance, starName, starPosition } from "./star-catalog.js";
+
+onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
   const canvas = stage.querySelector("canvas");
   const status = document.querySelector("[data-cosmos-status]");
   const pauseButton = document.querySelector("[data-cosmos-pause]");
-  const readout = document.querySelector("[data-cosmos-readout]");
+  const readout = stage.querySelector("[data-cosmos-readout]");
+  const picker = document.querySelector("[data-cosmos-reference]");
+  const distance = document.querySelector("[data-cosmos-distance]");
+  const labelLayer = stage.querySelector("[data-cosmos-labels]");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-
-  function randomFrom(seed) {
-    let state = seed || 1;
-    return () => {
-      state ^= state << 13;
-      state ^= state >>> 17;
-      state ^= state << 5;
-      return (state >>> 0) / 4294967296;
-    };
+  on(picker, "change", () => {
+    distance.textContent = `${picker.selectedOptions[0].dataset.distance} light-years from Earth`;
+  });
+  picker.disabled = false;
+  let renderer;
+  let catalogLoaded = false;
+  let controls;
+  let observer;
+  let resize;
+  let disposed = false;
+  const geometries = new Set();
+  const materials = new Set();
+  const geometry = (value) => {
+    geometries.add(value);
+    return value;
+  };
+  const material = (value) => {
+    materials.add(value);
+    return value;
+  };
+  function destroy() {
+    if (disposed) return;
+    disposed = true;
+    renderer?.setAnimationLoop(null);
+    observer?.disconnect();
+    resize?.disconnect();
+    controls?.dispose();
+    geometries.forEach((value) => value.dispose());
+    materials.forEach((value) => value.dispose());
+    renderer?.dispose();
+    renderer?.forceContextLoss();
+    labelLayer.replaceChildren();
   }
-
-  function disposeObject(object) {
-    const geometries = new Set();
-    const materials = new Set();
-    object.traverse((child) => {
-      if (child.geometry) geometries.add(child.geometry);
-      if (child.material) materials.add(child.material);
-      if (child.isInstancedMesh) child.dispose();
-    });
-    geometries.forEach((geometry) => geometry.dispose());
-    materials.forEach((material) => material.dispose());
-  }
-
-  function sculpture(seed) {
-    const random = randomFrom(seed);
-    const group = new THREE.Group();
-    const time = { value: 0 };
-    const phase = random() * Math.PI * 2;
-    const winding = 3 + Math.floor(random() * 3) * 2;
-    const positions = [];
-    const indices = [];
-    const segments = 360;
-    const across = 6;
-    const halfWidth = 0.07 + random() * 0.08;
-    const center = (t) => {
-      const radius = 1.55 + 0.5 * Math.cos(winding * t + phase);
-      return new THREE.Vector3(
-        radius * Math.cos(2 * t),
-        radius * Math.sin(2 * t),
-        0.85 * Math.sin(winding * t + phase),
-      );
+  dispose(destroy);
+  try {
+    const response = await fetch("/data/nearby-stars.json", { signal });
+    if (!response.ok) throw new Error("catalog");
+    const catalog = await response.json();
+    if (signal.aborted) return;
+    const landmarks = references(catalog);
+    catalogLoaded = true;
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.setClearColor("#06070b", 0);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000);
+    controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = !reducedMotion.matches;
+    controls.enablePan = false;
+    controls.minDistance = 8;
+    controls.maxDistance = 900;
+    controls.autoRotateSpeed = 0.18;
+    let paused = reducedMotion.matches;
+    let inView = true;
+    let dirty = true;
+    let seed;
+    let lastTime = 0;
+    const homePosition = new THREE.Vector3();
+    const invalidate = () => {
+      dirty = true;
     };
-    for (let i = 0; i <= segments; i++) {
-      const t = (i / segments) * Math.PI * 2;
-      const point = center(t);
-      const tangent = center(t + 0.001)
-        .sub(point)
-        .normalize();
-      const normal = new THREE.Vector3(0, 0, 1).cross(tangent).normalize();
-      const binormal = tangent.clone().cross(normal).normalize();
-      const bank = t * 2 + phase;
-      const side = normal.multiplyScalar(Math.cos(bank)).addScaledVector(binormal, Math.sin(bank));
-      for (let j = 0; j <= across; j++) {
-        const width = halfWidth * (1 + 0.3 * Math.sin(t * 5 + phase));
-        const vertex = point.clone().addScaledVector(side, ((j / across) * 2 - 1) * width);
-        positions.push(vertex.x, vertex.y, vertex.z);
-        if (i < segments && j < across) {
-          const a = i * (across + 1) + j;
-          const b = a + across + 1;
-          indices.push(a, b, a + 1, b, b + 1, a + 1);
-        }
-      }
+    controls.addEventListener("change", invalidate);
+    dispose(() => controls.removeEventListener("change", invalidate));
+
+    const positions = [],
+      colors = [],
+      sizes = [];
+    const blue = new THREE.Color("#d6e5ff");
+    const cream = new THREE.Color("#fff7e5");
+    const amber = new THREE.Color("#efa46e");
+    const color = new THREE.Color();
+    for (const star of catalog.stars) {
+      positions.push(...starPosition(star));
+      const index = star[6];
+      color.copy(blue);
+      if (index === null) color.set("#e8e8e8");
+      else if (index < 0.6) color.lerp(cream, THREE.MathUtils.clamp((index + 0.3) / 0.9, 0, 1));
+      else color.set("#fff7e5").lerp(amber, THREE.MathUtils.clamp((index - 0.6) / 1.4, 0, 1));
+      colors.push(color.r, color.g, color.b);
+      sizes.push(star[0] === 0 ? 5 : THREE.MathUtils.clamp(3.1 - star[5] * 0.15, 0.8, 3.8));
     }
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-    geometry.setIndex(indices);
-    geometry.computeVertexNormals();
-    const vertexShader = `
-    uniform float time;
-    uniform float phase;
-    varying vec3 vNormal;
-    varying vec3 vView;
-    varying vec3 vPosition;
-    void main() {
-      vec3 p = position;
-      p += normal * sin(p.y * 3.0 + time * 1.2 + phase) * 0.13;
-      p.x += sin(p.z * 2.4 - time * 0.7 + phase) * 0.18;
-      p.y += cos(p.x * 2.0 + time * 0.6 + phase) * 0.12;
-      vec4 view = modelViewMatrix * vec4(p, 1.0);
-      vNormal = normalize(normalMatrix * normal);
-      vView = -view.xyz;
-      vPosition = p;
-      gl_Position = projectionMatrix * view;
-    }
-  `;
-    const fragmentShader = `
-    uniform float time;
-    uniform float phase;
-    uniform vec3 colorA;
-    uniform vec3 colorB;
-    varying vec3 vNormal;
-    varying vec3 vView;
-    varying vec3 vPosition;
-    void main() {
-      vec3 n = normalize(vNormal);
-      float facing = abs(dot(n, normalize(vView)));
-      float rim = pow(1.0 - facing, 2.0);
-      float band = 0.5 + 0.5 * sin(vPosition.z * 3.0 + time * 0.65 + phase);
-      vec3 color = mix(colorA, colorB, band);
-      float light = 0.18 + 0.55 * abs(dot(n, normalize(vec3(0.5, 0.8, 1.0))));
-      gl_FragColor = vec4(color * light + colorB * rim * 0.35, 1.0);
-      #include <tonemapping_fragment>
-      #include <colorspace_fragment>
-    }
-  `;
-    const ribbons = [];
-    for (let i = 0; i < 3; i++) {
-      const hue = (random() * 0.15 + i / 3 + 0.48) % 1;
-      const uniforms = {
-        time,
-        phase: { value: phase + i * 2 },
-        colorA: { value: new THREE.Color().setHSL(hue, 0.65, 0.3) },
-        colorB: { value: new THREE.Color().setHSL((hue + 0.22) % 1, 0.6, 0.42) },
-      };
-      const ribbon = new THREE.Group();
-      ribbon.add(
-        new THREE.Mesh(
-          geometry,
-          new THREE.ShaderMaterial({
-            uniforms,
-            vertexShader,
-            fragmentShader,
-            side: THREE.DoubleSide,
-          }),
-        ),
-      );
-      const wire = new THREE.Mesh(
-        geometry,
+    const stars = new THREE.Points(
+      geometry(
+        new THREE.BufferGeometry()
+          .setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
+          .setAttribute("color", new THREE.Float32BufferAttribute(colors, 3))
+          .setAttribute("starSize", new THREE.Float32BufferAttribute(sizes, 1)),
+      ),
+      material(
         new THREE.ShaderMaterial({
-          uniforms,
-          vertexShader,
+          uniforms: { pixelRatio: { value: renderer.getPixelRatio() } },
+          vertexShader: `
+          attribute vec3 color;
+          attribute float starSize;
+          uniform float pixelRatio;
+          varying vec3 vColor;
+          void main() {
+            vColor = color;
+            vec4 view = modelViewMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * view;
+            gl_PointSize = clamp(starSize * 200.0 / max(1.0, -view.z), 0.75, 7.0) * pixelRatio;
+          }`,
           fragmentShader: `
-        uniform vec3 colorB;
-        void main() {
-          gl_FragColor = vec4(colorB, 0.055);
-          #include <colorspace_fragment>
-        }
-      `,
-          wireframe: true,
+          varying vec3 vColor;
+          void main() {
+            float radius = length(gl_PointCoord - 0.5) * 2.0;
+            float alpha = 1.0 - smoothstep(0.15, 1.0, radius);
+            if (alpha < 0.02) discard;
+            gl_FragColor = vec4(vColor, alpha);
+            #include <colorspace_fragment>
+          }`,
           transparent: true,
           depthWrite: false,
           blending: THREE.AdditiveBlending,
         }),
-      );
-      wire.scale.setScalar(1.002);
-      ribbon.add(wire);
-      ribbon.rotation.set((i * Math.PI) / 3, i * 0.7, i * 0.4);
-      ribbon.userData.scale = 1.6 - i * 0.3;
-      ribbon.scale.setScalar(ribbon.userData.scale);
-      ribbons.push(ribbon);
-      group.add(ribbon);
-    }
-
-    const cages = [];
-    for (const [radius, color] of [
-      [4.2, "#e8ab7c"],
-      [5.8, "#7cd4d7"],
-    ]) {
-      const solid = new THREE.IcosahedronGeometry(radius, 0);
-      const cage = new THREE.LineSegments(
-        new THREE.EdgesGeometry(solid),
-        new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 }),
-      );
-      solid.dispose();
-      cages.push(cage);
-      group.add(cage);
-    }
-    const orbits = [];
-    for (let i = 0; i < 5; i++) {
-      const points = Array.from({ length: 180 }, (_, j) => {
-        const angle = (j / 180) * Math.PI * 2;
-        return new THREE.Vector3(
-          Math.cos(angle) * (4.8 + i * 0.65),
-          Math.sin(angle) * (2.1 + i * 0.25),
-          0,
-        );
-      });
-      const orbit = new THREE.LineLoop(
-        new THREE.BufferGeometry().setFromPoints(points),
-        new THREE.LineBasicMaterial({
-          color: i % 2 ? "#a18de0" : "#87d9d0",
-          transparent: true,
-          opacity: 0.25,
-        }),
-      );
-      orbit.rotation.set(i * 0.65, i * 0.4, i * 0.5);
-      orbits.push(orbit);
-      group.add(orbit);
-    }
-
-    const starPositions = [];
-    const starColors = [];
-    for (let i = 0; i < 2600; i++) {
-      const point = new THREE.Vector3(random() - 0.5, random() - 0.5, random() - 0.5)
-        .normalize()
-        .multiplyScalar(7 + random() * 28);
-      starPositions.push(...point.toArray());
-      const color = new THREE.Color().setHSL(0.5 + random() * 0.35, 0.35, 0.6 + random() * 0.3);
-      starColors.push(color.r, color.g, color.b);
-    }
-    const stars = new THREE.Points(
-      new THREE.BufferGeometry()
-        .setAttribute("position", new THREE.Float32BufferAttribute(starPositions, 3))
-        .setAttribute("color", new THREE.Float32BufferAttribute(starColors, 3)),
-      new THREE.PointsMaterial({
-        size: 0.035,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.85,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
+      ),
     );
-    group.add(stars);
-    group.rotation.set(0.2, 0.6, -0.1);
-    return {
-      group,
-      animate(elapsed) {
-        time.value = elapsed;
-        ribbons.forEach((ribbon, i) => {
-          ribbon.rotation.y = i * 0.7 + elapsed * (i % 2 ? -0.16 : 0.12);
-          ribbon.rotation.z = i * 0.4 + Math.sin(elapsed * 0.4 + i) * 0.22;
-          ribbon.scale.setScalar(ribbon.userData.scale * (1 + Math.sin(elapsed * 0.6 + i) * 0.06));
-        });
-        cages.forEach((cage, i) =>
-          cage.rotation.set(elapsed * (i ? -0.08 : 0.1), i + elapsed * 0.05, i * 0.6),
-        );
-        orbits.forEach((orbit, i) => {
-          orbit.rotation.z = i * 0.5 + elapsed * (i % 2 ? -0.035 : 0.045);
-        });
-        stars.rotation.y = elapsed * -0.012;
-      },
-    };
-  }
-
-  function start() {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
-    renderer.setClearColor("#06070b", 0);
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
-    camera.position.set(0, 0, 9.5);
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-    controls.enablePan = false;
-    controls.enableZoom = true;
-    controls.minDistance = 3.5;
-    controls.maxDistance = 18;
-
-    let paused = reducedMotion.matches;
-    let dirty = true;
-    let seed;
-    let object;
-    let lastTime = 0;
-    let sceneTime = 0;
-    let inView = true;
-    let disposed = false;
-    function updatePause() {
-      pauseButton.textContent = paused ? "Resume" : "Pause";
-      pauseButton.setAttribute("aria-pressed", String(paused));
-    }
-    function newUniverse(nextSeed) {
-      if (object) {
-        scene.remove(object.group);
-        disposeObject(object.group);
-      }
-      seed = nextSeed >>> 0;
-      object = sculpture(seed);
-      sceneTime = 0;
-      object.animate(sceneTime);
-      scene.add(object.group);
-      stage.dataset.seed = String(seed);
-      status.textContent = "Seed: " + seed.toString(16).padStart(8, "0");
+    scene.add(stars);
+    const guideGeometry = geometry(
+      new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+    );
+    const guide = new THREE.Line(
+      guideGeometry,
+      material(new THREE.LineBasicMaterial({ color: "#fba388", transparent: true, opacity: 0.35 })),
+    );
+    scene.add(guide);
+    const marker = new THREE.Points(
+      geometry(
+        new THREE.BufferGeometry()
+          .setAttribute("position", new THREE.Float32BufferAttribute([0, 0, 0], 3))
+          .setAttribute(
+            "color",
+            new THREE.Float32BufferAttribute(new THREE.Color("#fba388").toArray(), 3),
+          )
+          .setAttribute("starSize", new THREE.Float32BufferAttribute([7], 1)),
+      ),
+      stars.material,
+    );
+    scene.add(marker);
+    const labels = landmarks.map((star) => {
+      const node = document.createElement("span");
+      node.className = "cosmos-star-label";
+      const name = document.createElement("strong");
+      name.textContent = starName(star);
+      const value = document.createElement("span");
+      value.textContent = starDistance(star).toFixed(2) + " ly";
+      node.append(name, value);
+      labelLayer.append(node);
+      return { star, node, position: new THREE.Vector3(...starPosition(star)) };
+    });
+    let selected;
+    function selectStar() {
+      selected = landmarks.find((star) => String(star[0]) === picker.value);
+      distance.textContent = `${starDistance(selected).toFixed(2)} light-years from Earth`;
+      const position = new THREE.Vector3(...starPosition(selected));
+      guideGeometry.setFromPoints([new THREE.Vector3(), position]);
+      guideGeometry.computeBoundingSphere();
+      marker.position.copy(position);
       dirty = true;
     }
-    function frame(time) {
-      const elapsed = Math.min((time - lastTime) / 1000, 0.05);
-      lastTime = time;
-      if (!paused) {
-        sceneTime += elapsed;
-        object.animate(sceneTime);
-        object.group.rotation.y += elapsed * 0.11;
-        object.group.rotation.x += elapsed * 0.045;
-        object.group.rotation.z += elapsed * 0.025;
-        dirty = true;
+    on(picker, "change", selectStar);
+    selectStar();
+
+    function fitView() {
+      const fit =
+        110 / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * Math.min(camera.aspect, 1));
+      const angle = (seed / 4294967296) * Math.PI * 2 + 0.55;
+      homePosition.set(Math.sin(angle), 0.34, Math.cos(angle)).normalize().multiplyScalar(fit);
+    }
+    function resetView() {
+      fitView();
+      controls.target.set(0, 0, 0);
+      camera.position.copy(homePosition);
+      camera.lookAt(controls.target);
+      controls.update();
+      dirty = true;
+    }
+    function viewpoint(nextSeed) {
+      seed = nextSeed >>> 0;
+      stage.dataset.seed = String(seed);
+      resetView();
+    }
+    function updatePause() {
+      controls.autoRotate = !paused;
+      pauseButton.textContent = paused ? "Resume" : "Pause";
+      pauseButton.setAttribute("aria-pressed", String(paused));
+      dirty = true;
+    }
+    function placeLabels() {
+      const width = stage.clientWidth,
+        height = stage.clientHeight;
+      const occupied = [];
+      const priority = (label) => (label.star[0] === 0 ? 2 : Number(label.star === selected));
+      const ordered = [...labels].sort((a, b) => priority(b) - priority(a));
+      const limit = width < 700 ? 5 : 9;
+      for (const label of ordered) {
+        const point = label.position.clone().project(camera);
+        const x = ((point.x + 1) * width) / 2;
+        const y = ((1 - point.y) * height) / 2;
+        const landscape = height < 500;
+        const candidates = [
+          [x + 9, y - 12],
+          [x - 150, y - 12],
+          [x + 9, y - 48],
+          [x - 150, y + 16],
+        ];
+        const placement = candidates
+          .map(([left, top]) => ({ left, top, right: left + 140, bottom: top + 35 }))
+          .find((rect) => {
+            const overlap = occupied.some(
+              (old) =>
+                rect.left < old.right &&
+                rect.right > old.left &&
+                rect.top < old.bottom &&
+                rect.bottom > old.top,
+            );
+            const panel = landscape
+              ? rect.right > width - 280 && rect.top < 260
+              : rect.left < 320 && rect.top < 360;
+            return (
+              rect.left >= 12 &&
+              rect.right <= width - 12 &&
+              rect.top >= (landscape ? 90 : 185) &&
+              rect.bottom <= height - (landscape ? 100 : width < 700 ? 245 : 175) &&
+              !panel &&
+              !overlap
+            );
+          });
+        const hidden = !placement || point.z < -1 || point.z > 1 || occupied.length >= limit;
+        label.node.hidden = hidden;
+        label.node.toggleAttribute("data-selected", label.star === selected);
+        if (hidden) continue;
+        label.node.style.transform = `translate3d(${placement.left}px,${placement.top}px,0)`;
+        occupied.push(placement);
       }
-      if (controls.update()) dirty = true;
+    }
+    function frame(time) {
+      const delta = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+      if (controls.update(delta)) dirty = true;
       if (!dirty) return;
       renderer.render(scene, camera);
-      const r = object.group.rotation;
-      readout.textContent = `X ${r.x.toFixed(2)} / Y ${r.y.toFixed(2)} / Z ${r.z.toFixed(2)} / θ ${controls.getAzimuthalAngle().toFixed(2)}`;
+      placeLabels();
+      readout.textContent = `θ ${controls.getAzimuthalAngle().toFixed(2)} / ${camera.position.length().toFixed(1)} ly from origin`;
       dirty = false;
     }
     function syncLoop() {
@@ -307,93 +263,81 @@ onPage("[data-cosmos-stage]", (stage, { on, dispose }) => {
       lastTime = performance.now();
       renderer.setAnimationLoop(inView && !document.hidden ? frame : null);
     }
-    const observer = new IntersectionObserver(([entry]) => {
+    observer = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       syncLoop();
     });
     observer.observe(stage);
-    on(document, "visibilitychange", syncLoop);
-    on(window, "pageshow", syncLoop);
-    on(canvas, "site:before-capture", () => renderer.render(scene, camera));
-    const resize = new ResizeObserver(() => {
+    resize = new ResizeObserver(() => {
       if (disposed || !stage.clientWidth || !stage.clientHeight) return;
       camera.aspect = stage.clientWidth / stage.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(stage.clientWidth, stage.clientHeight, false);
-      dirty = true;
+      resetView();
     });
     resize.observe(stage);
-    const togglePause = () => {
-      paused = !paused;
-      updatePause();
-    };
-    pauseButton.addEventListener("click", togglePause);
-    on(reducedMotion, "change", () => {
-      if (reducedMotion.matches) {
-        paused = true;
-        updatePause();
-      }
-    });
-    document.querySelector("[data-cosmos-shuffle]").addEventListener("click", () => {
-      newUniverse(crypto.getRandomValues(new Uint32Array(1))[0]);
-      const url = new URL(location.href);
-      url.searchParams.set("seed", String(seed));
-      history.replaceState(history.state, "", url);
-    });
-    document.querySelector("[data-cosmos-reset]").addEventListener("click", () => {
-      controls.reset();
-      object.group.rotation.set(0.2, 0.6, -0.1);
-      dirty = true;
-    });
-    canvas.addEventListener("keydown", (event) => {
-      const r = object.group.rotation;
-      if (event.key === "ArrowLeft") r.y -= 0.15;
-      else if (event.key === "ArrowRight") r.y += 0.15;
-      else if (event.key === "ArrowUp") r.x -= 0.15;
-      else if (event.key === "ArrowDown") r.x += 0.15;
-      else if (["+", "=", "-"].includes(event.key)) {
-        const distance = THREE.MathUtils.clamp(
-          camera.position.length() * (event.key === "-" ? 1.12 : 0.89),
-          controls.minDistance,
-          controls.maxDistance,
-        );
-        camera.position.setLength(distance);
-      } else if (event.key === " ") togglePause();
-      else return;
-      event.preventDefault();
-      dirty = true;
-    });
-    function destroy() {
-      if (disposed) return;
-      disposed = true;
-      renderer.setAnimationLoop(null);
-      observer.disconnect();
-      resize.disconnect();
-      disposeObject(object.group);
-      controls.dispose();
-      renderer.dispose();
-      renderer.forceContextLoss();
-    }
-    dispose(destroy);
+    on(document, "visibilitychange", syncLoop);
+    on(window, "pageshow", syncLoop);
     on(window, "pagehide", (event) => {
       renderer.setAnimationLoop(null);
       if (!event.persisted) destroy();
     });
-    newUniverse(
-      Number(
-        new URLSearchParams(location.search).get("seed") ??
-          crypto.getRandomValues(new Uint32Array(1))[0],
-      ),
-    );
+    on(canvas, "site:before-capture", () => renderer.render(scene, camera));
+    on(pauseButton, "click", () => {
+      paused = !paused;
+      updatePause();
+    });
+    on(reducedMotion, "change", () => {
+      controls.enableDamping = !reducedMotion.matches;
+      if (reducedMotion.matches) paused = true;
+      updatePause();
+    });
+    on(document.querySelector("[data-cosmos-shuffle]"), "click", () => {
+      viewpoint(crypto.getRandomValues(new Uint32Array(1))[0]);
+      const url = new URL(location.href);
+      url.searchParams.set("seed", String(seed));
+      history.replaceState(history.state, "", url);
+    });
+    on(document.querySelector("[data-cosmos-reset]"), "click", resetView);
+    on(canvas, "keydown", (event) => {
+      const spherical = new THREE.Spherical().setFromVector3(
+        camera.position.clone().sub(controls.target),
+      );
+      if (event.key === "ArrowLeft") spherical.theta -= 0.15;
+      else if (event.key === "ArrowRight") spherical.theta += 0.15;
+      else if (event.key === "ArrowUp") spherical.phi -= 0.15;
+      else if (event.key === "ArrowDown") spherical.phi += 0.15;
+      else if (["+", "=", "-"].includes(event.key))
+        spherical.radius = THREE.MathUtils.clamp(
+          spherical.radius * (event.key === "-" ? 1.12 : 0.89),
+          controls.minDistance,
+          controls.maxDistance,
+        );
+      else if (event.key === " ") {
+        paused = !paused;
+        updatePause();
+      } else return;
+      spherical.makeSafe();
+      camera.position.setFromSpherical(spherical).add(controls.target);
+      controls.update();
+      dirty = true;
+      event.preventDefault();
+    });
+    viewpoint(Number(new URLSearchParams(location.search).get("seed") ?? 123));
     updatePause();
-    document.querySelector("[data-cosmos-controls]").hidden = false;
+    stage.dataset.stars = String(catalog.stars.length);
     stage.dataset.ready = "";
+    status.textContent = `${catalog.stars.length.toLocaleString("en-US")} catalogued stars · 100 ly radius`;
+    document.querySelector("[data-cosmos-controls]").hidden = false;
     syncLoop();
-  }
-
-  try {
-    start();
   } catch {
-    status.textContent = "WebGL unavailable.";
+    if (signal.aborted) return;
+    const webglStarted = Boolean(renderer);
+    destroy();
+    status.textContent = webglStarted
+      ? "Star map unavailable. Reference distances remain available."
+      : catalogLoaded
+        ? "WebGL unavailable. Reference distances remain available."
+        : "Star catalog unavailable. Reference distances remain available.";
   }
 });

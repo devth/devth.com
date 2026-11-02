@@ -196,7 +196,7 @@ test("a paused Cosmos keeps its actual WebGL canvas and seed through destruction
   await expect(stage).toHaveAttribute("data-ready", "");
   await page.getByRole("button", { name: "Pause", exact: true }).click();
   await expect(page.getByRole("button", { name: "Resume", exact: true })).toBeVisible();
-  await page.getByLabel(/Interactive 3D ribbon/).evaluate((canvas) => {
+  await page.getByLabel(/Interactive 3D stellar neighborhood/).evaluate((canvas) => {
     window.originalCosmosCanvas = canvas;
   });
   const menu = await openMenu(page);
@@ -216,7 +216,7 @@ test("a paused Cosmos keeps its actual WebGL canvas and seed through destruction
   await expect(page.getByRole("button", { name: "Resume", exact: true })).toBeVisible();
   expect(
     await page
-      .getByLabel(/Interactive 3D ribbon/)
+      .getByLabel(/Interactive 3D stellar neighborhood/)
       .evaluate((canvas) => canvas === window.originalCosmosCanvas),
   ).toBe(true);
   expect(errors).toEqual([]);

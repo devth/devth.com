@@ -1485,6 +1485,7 @@ body {
 }
 ::view-transition {
   pointer-events: none;
+  overflow: clip;
 }
 ::view-transition-group(root) {
   animation: none;
@@ -1502,14 +1503,108 @@ body {
 html[data-soft-navigation] {
   view-transition-name: none;
 }
-html[data-soft-navigation] main {
+html[data-soft-navigation] .site-header {
+  view-transition-name: site-header;
+  view-transition-class: live-shell;
+}
+html[data-soft-navigation] .site-footer {
+  view-transition-name: site-footer;
+  view-transition-class: live-shell;
+}
+html[data-soft-navigation] :is(.link-sigil, .geometric-cursor) {
+  view-transition-name: match-element;
+  view-transition-class: live-front;
+}
+html[data-soft-navigation] .sigil-rear {
+  view-transition-name: match-element;
+  view-transition-class: live-rear;
+}
+html[data-soft-navigation] main[aria-busy="true"] {
+  view-transition-name: page-outgoing;
+}
+html[data-soft-navigation] main:not([aria-busy="true"]) {
   view-transition-name: page-content;
 }
-::view-transition-old(page-content) {
-  animation: pane-exit 160ms ease-out both;
+::view-transition-group(page-outgoing),
+::view-transition-group(page-content) {
+  animation: none;
+}
+::view-transition-group(page-outgoing) {
+  z-index: 0;
+}
+::view-transition-group(page-content) {
+  z-index: 1;
+}
+::view-transition-group(.live-shell),
+::view-transition-group(.live-front),
+::view-transition-group(.live-rear) {
+  animation: none;
+}
+::view-transition-group(.live-rear) {
+  z-index: 2;
+}
+::view-transition-group(.live-shell) {
+  z-index: 3;
+}
+::view-transition-group(site-brand) {
+  z-index: 4;
+}
+::view-transition-group(.live-front) {
+  z-index: 5;
+}
+::view-transition-old(.live-shell),
+::view-transition-old(.live-front),
+::view-transition-old(.live-rear) {
+  display: none;
+}
+::view-transition-new(.live-shell),
+::view-transition-new(.live-front),
+::view-transition-new(.live-rear) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(page-outgoing),
+::view-transition-new(page-content) {
+  outline: 100vmax solid var(--paper);
+  clip-path: inset(-100vmax calc(50% - 50vw));
+  background: var(--paper);
+  mix-blend-mode: normal;
+}
+::view-transition-old(page-outgoing) {
+  animation: drawer-underlay 400ms step-end both;
 }
 ::view-transition-new(page-content) {
-  animation: pane-enter 200ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  --drawer-paper: var(--paper);
+  --drawer-ink: var(--ink);
+  animation:
+    drawer-enter 400ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    drawer-settle 220ms ease-out 400ms both;
+}
+@keyframes drawer-underlay {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes drawer-enter {
+  from {
+    transform: translate3d(100vw, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+@keyframes drawer-settle {
+  from {
+    background-color: color-mix(in srgb, var(--drawer-paper) 94%, var(--drawer-ink));
+    outline-color: color-mix(in srgb, var(--drawer-paper) 94%, var(--drawer-ink));
+  }
+  to {
+    background-color: var(--drawer-paper);
+    outline-color: var(--drawer-paper);
+  }
 }
 ::view-transition-old(root) {
   animation: pane-exit 160ms ease-out both;
