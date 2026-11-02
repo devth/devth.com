@@ -373,10 +373,10 @@ button,
   stroke-width: 1;
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  html[data-geometric-cursor]:not(:has(dialog[open])) * {
+  html[data-geometric-cursor] * {
     cursor: none !important;
   }
-  html[data-geometric-cursor]:not(:has(dialog[open])) .geometric-cursor {
+  html[data-geometric-cursor] .geometric-cursor {
     display: block;
   }
 }

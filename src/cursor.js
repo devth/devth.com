@@ -97,6 +97,7 @@ export function init() {
     "visibilitychange",
   ])
     document.addEventListener(type, hide);
+  document.addEventListener("beforetoggle", hide, { capture: true });
   document.addEventListener("scroll", hide, { passive: true, capture: true });
   for (const type of ["blur", "pagehide", "resize"]) window.addEventListener(type, hide);
   sync();

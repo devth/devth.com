@@ -96,6 +96,31 @@ test("editing, dragging, modal search and blur keep the native cursor", async ({
   await expect(root(page)).not.toHaveAttribute("data-geometric-cursor");
 });
 
+test("programmatic dialogs immediately release the geometric cursor", async ({ page }) => {
+  const fine = await ready(page);
+  if (!fine) return;
+  await expect(cursor(page)).toHaveCount(1);
+  await page.mouse.move(20, 150);
+  await expect(cursor(page)).toBeVisible();
+  const released = await page.evaluate(() => {
+    const dialog = document.createElement("dialog");
+    dialog.id = "cursor-modal-check";
+    dialog.textContent = "native pointing";
+    document.body.append(dialog);
+    dialog.showModal();
+    return !document.documentElement.hasAttribute("data-geometric-cursor");
+  });
+  expect(released).toBe(true);
+  await expect(cursor(page)).toBeHidden();
+  await page.evaluate(() => {
+    const dialog = document.querySelector("#cursor-modal-check");
+    dialog.close();
+    dialog.remove();
+  });
+  await page.mouse.move(20, 160);
+  await expect(cursor(page)).toBeVisible();
+});
+
 test("one cursor survives navigation and reduced motion or high contrast restores native pointing", async ({
   page,
 }) => {
