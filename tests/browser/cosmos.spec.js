@@ -103,7 +103,8 @@ test("link sigils randomize without moving text and respect reduced motion", asy
   const sigil = page.locator(".link-sigil:not([data-retiring])");
   await expect(sigil).toBeVisible();
   expect(await about.boundingBox()).toEqual(before);
-  await expect(sigil.locator("path")).toHaveCount(6);
+  const key = await sigil.getAttribute("data-sigil-key");
+  await expect(page.locator(`svg[data-sigil-key="${key}"] path`)).toHaveCount(6);
   const first = await sigil.getAttribute("data-structure");
   await page.getByRole("link", { name: "overture", exact: true }).hover();
   await expect(sigil).not.toHaveAttribute("data-structure", first);

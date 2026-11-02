@@ -22,15 +22,15 @@ for (const { id } of studies) {
     const sigil = page.locator(".link-sigil:not([data-retiring])");
     await expect(sigil).toBeVisible();
     await expect(sigil).toHaveAttribute("data-structure", id);
-    await expect(sigil.locator("path")).toHaveCount(6);
+    const key = await sigil.getAttribute("data-sigil-key");
+    const surfaces = page.locator(`svg[data-sigil-key="${key}"]`);
+    await expect(surfaces.locator("path")).toHaveCount(6);
     const source = sigil.locator("g").first();
     const transform = await source.getAttribute("transform");
     await page.clock.runFor(6000);
     expect(await source.getAttribute("transform")).toBe(transform);
-    const curves = await sigil
-      .locator("g")
-      .nth(1)
-      .locator("path")
+    const curves = await surfaces
+      .locator("g:nth-child(2) path")
       .evaluateAll((paths) =>
         paths.flatMap((path) => path.getAttribute("d").match(/M[^M]+/g) || []),
       );

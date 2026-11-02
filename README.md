@@ -110,7 +110,11 @@ Open [/cosmos](https://preview.devth.com/cosmos). The scene fills the viewport b
 
 Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs. There is no loading diagram or substitute sculpture: the background stays dark while the renderer loads or JavaScript is unavailable. A WebGL failure shows a short status; header navigation remains usable. Only this page downloads the 3D renderer. Other pages never request Three.js; search code and its static index load only when the dialog is first opened, and the contents tracker loads only on pages with a ToC.
 
-Link hovers draw a short, randomized node/edge sigil beside the link without moving or obscuring its text. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
+Link hovers draw a short, randomized node/edge sigil beside the link without moving its text. Generated strands weave in front of and behind the actual lettering, including the logo and page titles; paired pointer-transparent SVG layers share the same six paths, with no per-frame letter collision work. Keyboard focus works too. Reduced-motion users get ordinary link/focus styling, without the animation.
+
+### Geometric cursor
+
+On fine mouse pointers, a small wireframe cursor morphs between geometric solids as it moves and holds its shape when it stops. Its center stays at the actual pointer position, without a trailing follower or idle animation. Editing controls, dragging, dialogs, the Cosmos canvas, touch, reduced motion, and forced colors retain the native cursor. It persists across internal navigation and falls back to native pointing if its optional script cannot load.
 
 ### Hover Lab
 

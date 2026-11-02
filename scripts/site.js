@@ -318,6 +318,8 @@ export async function generateSite() {
       "style.css",
       "main.js",
       "collapse-trigger.js",
+      "cursor.js",
+      "cursor-geometry.js",
       "demolition.js",
       "demolition-scene.js",
       "demolition-capture.js",

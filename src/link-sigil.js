@@ -7,26 +7,38 @@ import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
 const layers = ["back", "front", "accent"];
+let nextKey = 0;
 
 // Heading holds and ordinary link hovers retain independent lifetimes.
 function createEffect({ className, follow, finished }) {
   const sigil = document.createElementNS(namespace, "svg");
   sigil.classList.add(className);
-  sigil.setAttribute("aria-hidden", "true");
-  sigil.setAttribute("focusable", "false");
-  sigil.setAttribute("hidden", "");
+  const rear = document.createElementNS(namespace, "svg");
+  rear.classList.add("sigil-rear");
+  rear.toggleAttribute("data-follow", follow);
+  const surfaces = [sigil, rear];
+  const key = String(++nextKey);
+  for (const surface of surfaces) {
+    surface.dataset.sigilKey = key;
+    surface.setAttribute("aria-hidden", "true");
+    surface.setAttribute("focusable", "false");
+    surface.setAttribute("hidden", "");
+  }
+  const rearOriginal = document.createElementNS(namespace, "g");
+  const rearBranches = document.createElementNS(namespace, "g");
+  rear.append(rearOriginal, rearBranches);
   const original = document.createElementNS(namespace, "g");
   const branches = document.createElementNS(namespace, "g");
   const paths = [original, branches].map((group) =>
     layers.map((layer) => {
       const path = document.createElementNS(namespace, "path");
       path.classList.add(`study-${layer}`);
-      group.append(path);
+      (layer === "back" ? (group === original ? rearOriginal : rearBranches) : group).append(path);
       return path;
     }),
   );
   sigil.append(original, branches);
-  document.body.append(sigil);
+  document.body.append(rear, sigil);
   let activeLink;
   let frame = 0;
   let hideTimer = 0;
@@ -36,25 +48,22 @@ function createEffect({ className, follow, finished }) {
   let unwind;
   const release = () => unwind?.();
 
+  function finish() {
+    for (const surface of surfaces) surface.setAttribute("hidden", "");
+    finished(api);
+  }
   function clear(fade = false) {
     if (fade && !activeLink) return;
     cancelAnimationFrame(frame);
     clearTimeout(hideTimer);
     frame = hideTimer = 0;
     unwind = null;
-    original.style.opacity = "";
+    original.style.opacity = rearOriginal.style.opacity = "";
     activeLink?.classList.remove("link-distortion");
     activeLink = range = null;
-    sigil.classList.remove("is-visible");
-    if (fade && !motion.matches)
-      hideTimer = setTimeout(() => {
-        sigil.setAttribute("hidden", "");
-        finished(api);
-      }, 180);
-    else {
-      sigil.setAttribute("hidden", "");
-      finished(api);
-    }
+    for (const surface of surfaces) surface.classList.remove("is-visible");
+    if (fade && !motion.matches) hideTimer = setTimeout(finish, 180);
+    else finish();
   }
   function position(link) {
     const rect = (range || link.querySelector(".entry-title") || link).getBoundingClientRect();
@@ -62,17 +71,19 @@ function createEffect({ className, follow, finished }) {
     const x = Math.min(innerWidth - 36, Math.max(36, follow ? rect.right + 42 : rect.right - 6));
     const y = Math.min(innerHeight - 36, Math.max(36, rect.top + rect.height / 2));
     const unit = 72 / 128;
-    if (generating) {
-      sigil.setAttribute("viewBox", `0 0 ${innerWidth} ${innerHeight}`);
-      sigil.style.left = sigil.style.top = "0px";
-      original.setAttribute("transform", `translate(${x} ${y}) scale(${unit})`);
-      branches.setAttribute("transform", `translate(${x} ${y}) scale(${unit})`);
-    } else {
-      sigil.setAttribute("viewBox", "0 0 80 80");
-      sigil.style.left = x - 36 + "px";
-      sigil.style.top = y - 36 + "px";
-      original.setAttribute("transform", "translate(40 40) scale(0.625)");
+    for (const surface of surfaces) {
+      surface.setAttribute(
+        "viewBox",
+        generating ? `0 0 ${innerWidth} ${innerHeight}` : "0 0 80 80",
+      );
+      surface.style.left = generating ? "0px" : x - 36 + "px";
+      surface.style.top = generating ? "0px" : y - 36 + "px";
     }
+    for (const group of [original, branches, rearOriginal, rearBranches])
+      group.setAttribute(
+        "transform",
+        generating ? `translate(${x} ${y}) scale(${unit})` : "translate(40 40) scale(0.625)",
+      );
     bounds = {
       left: -x / unit,
       right: (innerWidth - x) / unit,
@@ -97,9 +108,12 @@ function createEffect({ className, follow, finished }) {
       return;
     const preferences = getHoverPreferences();
     generating = preferences.generation;
-    sigil.toggleAttribute("data-generating", generating);
+    (generating ? rearOriginal : original).prepend(paths[0][0]);
     const id = chooseStructure(preferences.structure);
-    sigil.dataset.structure = id;
+    for (const surface of surfaces) {
+      surface.toggleAttribute("data-generating", generating);
+      surface.dataset.structure = id;
+    }
     const title = link.querySelector(".entry-title");
     if (follow || title) {
       range = document.createRange();
@@ -119,9 +133,9 @@ function createEffect({ className, follow, finished }) {
     let painted = -Infinity;
     let grown = 0;
     paint(paths[1], { back: "", front: "", accent: "" });
-    sigil.removeAttribute("hidden");
+    for (const surface of surfaces) surface.removeAttribute("hidden");
     if (follow) sigil.getBoundingClientRect();
-    sigil.classList.add("is-visible");
+    for (const surface of surfaces) surface.classList.add("is-visible");
     function animate(now) {
       if (
         !activeLink ||
@@ -179,7 +193,7 @@ function createEffect({ className, follow, finished }) {
         if (now - painted >= 1000 / 30) {
           if (growth) paint(paths[1], growth.frame(remaining));
           paint(paths[0], studyFrame(id, phase + age - Math.min(age, 0.8) * (1 - remaining)));
-          original.style.opacity = String(remaining);
+          original.style.opacity = rearOriginal.style.opacity = String(remaining);
           painted = now;
         }
         frame = requestAnimationFrame(retract);
@@ -199,12 +213,12 @@ function createEffect({ className, follow, finished }) {
       return !sigil.hasAttribute("hidden");
     },
     retire() {
-      sigil.dataset.retiring = "";
+      for (const surface of surfaces) surface.dataset.retiring = "";
       release();
     },
     destroy() {
       clear();
-      sigil.remove();
+      for (const surface of surfaces) surface.remove();
     },
   };
   return api;

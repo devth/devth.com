@@ -1,3 +1,6 @@
+.cosmos-page .sigil-rear {
+  z-index: 1;
+}
 body.cosmos-page {
   --paper: #06070b;
   --ink: #f4f3ec;
