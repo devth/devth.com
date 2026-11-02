@@ -33,17 +33,17 @@ test("social icons live in the borderless footer, not the header", async ({ page
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
 
-test("About photograph is full bleed without cropping or a frame, including without JS", async ({
+test("About photograph repeats across a 600px full-bleed strip, including without JS", async ({
   browser,
   baseURL,
-}) => {
+}, testInfo) => {
   const context = await browser.newContext({
     javaScriptEnabled: false,
     viewport: { width: 1440, height: 1000 },
   });
   try {
     const page = await context.newPage();
-    for (const width of [320, 393, 768, 1440]) {
+    for (const width of [320, 393, 768, 1440, 2560]) {
       await page.setViewportSize({ width, height: 1000 });
       await page.goto(baseURL + "/about");
       const photo = page.getByRole("img", {
@@ -51,10 +51,22 @@ test("About photograph is full bleed without cropping or a frame, including with
         exact: true,
       });
       await photo.scrollIntoViewIfNeeded();
-      const box = await photo.boundingBox();
+      const strip = page.locator(".about-photo-strip");
+      await expect(strip).toBeVisible();
+      const box = await strip.boundingBox();
       expect(box.x).toBeCloseTo(0, 0);
       expect(box.width).toBeCloseTo(width, 0);
-      expect(box.height).toBeCloseTo(width, 0);
+      expect(box.height).toBeCloseTo(600, 0);
+      const image = await photo.boundingBox();
+      expect(image.width).toBeCloseTo(600, 0);
+      expect(image.height).toBeCloseTo(600, 0);
+      expect(image.x).toBeCloseTo((width - 600) / 2, 0);
+      await expect(strip).toHaveCSS("background-repeat", "repeat-x");
+      await expect(strip).toHaveCSS("background-size", "auto 100%");
+      await expect(strip).toHaveCSS("background-image", /dakota-50\.jpg/);
+      await expect(photo).toHaveAttribute("loading", "lazy");
+      if ([393, 1440].includes(width))
+        await strip.screenshot({ path: testInfo.outputPath(`about-photo-strip-${width}.png`) });
       await expect(photo).toHaveCSS("border-top-width", "0px");
       expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
         false,

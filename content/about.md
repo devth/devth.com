@@ -80,8 +80,10 @@ mountain biker
 listener of music
 </a>, and maker of things.
 </p>
+<div class="about-photo-strip">
 <img
 loading="lazy" width="1271" height="1271"
 src="/images/dakota-50.jpg"
 alt="Trevor Hartman at the Dakota 5-0 mountain bike race"
 />
+</div>

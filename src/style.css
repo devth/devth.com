@@ -626,10 +626,21 @@ button,
 .about-page {
   overflow-x: clip;
 }
-.about-page .prose img[src="/images/dakota-50.jpg"] {
+.about-page .prose .about-photo-strip {
+  display: flex;
+  justify-content: center;
   width: 100vw;
+  height: 600px;
+  margin: 2em calc(50% - 50vw);
+  overflow: hidden;
+  background: url("/images/dakota-50.jpg") center / auto 100% repeat-x;
+}
+.about-page .prose .about-photo-strip img {
+  flex: none;
+  width: auto;
   max-width: none;
-  margin-inline: calc(50% - 50vw);
+  height: 100%;
+  margin: 0;
   border: 0;
 }
 .prose table {
