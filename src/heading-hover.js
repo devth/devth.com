@@ -22,6 +22,10 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
   let revision = 0;
   let intent = 0;
   let unwindExit = false;
+  let focused = true,
+    paused = false,
+    holdUntil = 0,
+    holdRemaining = 0;
 
   function preferred() {
     const latest = sources.reduce(
@@ -35,11 +39,12 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
   }
   function updateGlyph() {
     queued = 0;
+    if (paused || document.hidden) return;
     const target = preferred();
     const version = ++revision;
-    if (!target || motion.matches || document.hidden) {
-      if (!target && unwindExit && !motion.matches && !document.hidden) renderer?.release();
-      else renderer?.clear(!motion.matches && !document.hidden);
+    if (!target || motion.matches) {
+      if (!target && unwindExit && !motion.matches) renderer?.release();
+      else renderer?.clear(!motion.matches);
       return;
     }
     loading ||= import("./link-sigil.js")
@@ -57,6 +62,7 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
         version === revision &&
         preferred() === target &&
         !motion.matches &&
+        !paused &&
         !document.hidden
       )
         instance.draw(target);
@@ -80,7 +86,7 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
       );
     }
     cancelAnimationFrame(queued);
-    queued = requestAnimationFrame(updateGlyph);
+    if (!paused) queued = requestAnimationFrame(updateGlyph);
   }
   function clearIntents(heading) {
     for (const source of sources) {
@@ -92,15 +98,33 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
     if (selected) clearIntents(selected);
     clearIntents(heading);
     selected = heading;
-    timer = setTimeout(() => {
-      // Return to the original state after five seconds even if the pointer or
-      // keyboard focus has stayed put. A fresh enter/focus activates it again.
-      clearIntents(heading);
-      selected = null;
-      timer = 0;
-      refresh();
-    }, 5000);
+    scheduleHold(5000);
     refresh();
+  }
+  function scheduleHold(duration) {
+    holdRemaining = duration;
+    if (paused) return;
+    holdUntil = performance.now() + duration;
+    timer = setTimeout(() => {
+      clearIntents(selected);
+      selected = null;
+      timer = holdUntil = holdRemaining = 0;
+      refresh();
+    }, duration);
+  }
+  function activity() {
+    if (!focused || document.hidden) {
+      if (paused) return;
+      paused = true;
+      if (timer) holdRemaining = Math.max(0, holdUntil - performance.now());
+      clearTimeout(timer);
+      cancelAnimationFrame(queued);
+      timer = queued = 0;
+    } else if (paused) {
+      paused = false;
+      if (selected) scheduleHold(holdRemaining);
+      if (preferred() && !renderer?.target) refresh();
+    }
   }
   function register(element, heading) {
     const source = { element, heading, hovered: false, focused: false, order: 0 };
@@ -112,7 +136,8 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
         refresh();
       }
     });
-    element.addEventListener("pointerleave", () => {
+    element.addEventListener("pointerleave", (event) => {
+      if (!event.relatedTarget || paused || document.hidden) return;
       source.hovered = false;
       refresh(true);
     });
@@ -122,6 +147,7 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
       refresh();
     });
     element.addEventListener("blur", () => {
+      if (paused || document.hidden) return;
       source.focused = false;
       refresh(true);
     });
@@ -158,6 +184,7 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
     cancelAnimationFrame(queued);
     timer = queued = 0;
     selected = null;
+    holdUntil = holdRemaining = 0;
     clearIntents();
     revision++;
     renderer?.clear();
@@ -168,23 +195,45 @@ onPage(".prose :is(h2, h3, h4, h5, h6)", (_, { on, dispose, signal }) => {
     window,
     "scroll",
     () => {
-      if (!queued && preferred()) queued = requestAnimationFrame(updateGlyph);
+      if (!paused && !queued && preferred()) queued = requestAnimationFrame(updateGlyph);
     },
     { passive: true },
   );
+  on(document, "pointerover", (event) => {
+    if (
+      paused ||
+      document.hidden ||
+      event.pointerType === "touch" ||
+      document.documentElement.hasAttribute("data-soft-navigation")
+    )
+      return;
+    let changed = false;
+    for (const source of sources) {
+      if (source.hovered && !source.element.contains(event.target)) {
+        source.hovered = false;
+        changed = true;
+      }
+    }
+    if (changed) refresh(true);
+  });
   on(document, "keydown", (event) => {
     if (event.key === "Escape" && !event.defaultPrevented) clear();
   });
-  on(window, "blur", clear);
+  on(window, "blur", () => {
+    focused = false;
+    activity();
+  });
+  on(window, "focus", () => {
+    focused = true;
+    activity();
+  });
   on(window, "pagehide", clear);
   on(window, "popstate", clear);
   on(window, "resize", () => {
     renderer?.clear();
     if (preferred()) refresh();
   });
-  on(document, "visibilitychange", () => {
-    if (document.hidden) clear();
-  });
+  on(document, "visibilitychange", activity);
   on(motion, "change", () => {
     renderer?.clear();
     refresh();

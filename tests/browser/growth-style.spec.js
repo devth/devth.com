@@ -27,7 +27,19 @@ for (const { id } of studies) {
     await expect(surfaces.locator("path")).toHaveCount(6);
     const source = sigil.locator("g").first();
     const transform = await source.getAttribute("transform");
+    const ink = (selector) =>
+      surfaces
+        .locator(selector)
+        .evaluateAll((paths) => paths.map((path) => path.getAttribute("d") || "").join(""));
+    expect(await ink("g:first-child path")).toBe("");
+    await page.clock.runFor(200);
+    const early = await ink("g:first-child path");
+    expect(early.length).toBeGreaterThan(0);
+    expect(await ink("g:nth-child(2) path")).toBe("");
     await page.clock.runFor(6000);
+    expect((await ink("g:first-child path")).match(/M/g).length).toBeGreaterThan(
+      early.match(/M/g).length,
+    );
     expect(await source.getAttribute("transform")).toBe(transform);
     const curves = await surfaces
       .locator("g:nth-child(2) path")

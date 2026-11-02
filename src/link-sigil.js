@@ -1,6 +1,6 @@
 import { hoverTarget, hoverRegion } from "./hover-target.js";
 import { onPage } from "./page-lifecycle.js";
-import { studyFrame } from "./hover-studies.js";
+import { studyFrame, studyDrawDuration } from "./hover-studies.js";
 import { createGrowth } from "./organic-growth.js";
 import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
 
@@ -8,6 +8,8 @@ const motion = matchMedia("(prefers-reduced-motion: reduce)");
 const namespace = "http://www.w3.org/2000/svg";
 const layers = ["back", "front", "accent"];
 let nextKey = 0;
+let pageFocused = true;
+const liveEffects = new Set();
 
 // Heading holds and ordinary link hovers retain independent lifetimes.
 function createEffect({ className, follow, finished }) {
@@ -45,10 +47,24 @@ function createEffect({ className, follow, finished }) {
   let range;
   let bounds;
   let generating = false;
-  let unwind;
+  let unwind,
+    run,
+    timerAction,
+    timerDeadline = 0,
+    pausedAt = null;
   const release = () => unwind?.();
 
+  function schedule(action, delay) {
+    timerAction = action;
+    timerDeadline = performance.now() + delay;
+    hideTimer = setTimeout(() => {
+      timerAction = null;
+      action();
+    }, delay);
+  }
   function finish() {
+    liveEffects.delete(api);
+    run = timerAction = null;
     for (const surface of surfaces) surface.setAttribute("hidden", "");
     finished(api);
   }
@@ -57,12 +73,13 @@ function createEffect({ className, follow, finished }) {
     cancelAnimationFrame(frame);
     clearTimeout(hideTimer);
     frame = hideTimer = 0;
-    unwind = null;
+    unwind = run = timerAction = null;
+    pausedAt = null;
     original.style.opacity = rearOriginal.style.opacity = "";
     activeLink?.classList.remove("link-distortion");
     activeLink = range = null;
     for (const surface of surfaces) surface.classList.remove("is-visible");
-    if (fade && !motion.matches) hideTimer = setTimeout(finish, 180);
+    if (fade && !motion.matches) schedule(finish, 180);
     else finish();
   }
   function position(link) {
@@ -100,6 +117,7 @@ function createEffect({ className, follow, finished }) {
     clear();
     if (
       motion.matches ||
+      !pageFocused ||
       document.hidden ||
       link.classList.contains("skip-link") ||
       link.closest("dialog") ||
@@ -124,6 +142,7 @@ function createEffect({ className, follow, finished }) {
       return;
     }
     activeLink = link;
+    liveEffects.add(api);
     link.classList.add("link-distortion");
     const growth = generating ? createGrowth(id, Math.floor(Math.random() * 0x100000000)) : null;
     delete sigil.dataset.growthRoots;
@@ -137,10 +156,14 @@ function createEffect({ className, follow, finished }) {
     if (follow) sigil.getBoundingClientRect();
     for (const surface of surfaces) surface.classList.add("is-visible");
     function animate(now) {
+      frame = 0;
+      if (!pageFocused || document.hidden) {
+        api.pause();
+        return;
+      }
       if (
         !activeLink ||
         motion.matches ||
-        document.hidden ||
         document.querySelector("dialog[open]") ||
         !position(activeLink)
       ) {
@@ -150,10 +173,11 @@ function createEffect({ className, follow, finished }) {
       age += Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       if (now - painted >= 1000 / 30) {
-        paint(paths[0], studyFrame(id, phase + age));
+        paint(paths[0], studyFrame(id, phase + age, Math.min(1, age / studyDrawDuration)));
         if (generating) {
-          growth.advance(age - grown, bounds);
-          grown = age;
+          const growthAge = Math.max(0, age - studyDrawDuration);
+          growth.advance(growthAge - grown, bounds);
+          grown = growthAge;
           const drawing = growth.frame();
           paint(paths[1], drawing);
           sigil.dataset.growthRoots = drawing.roots;
@@ -164,7 +188,7 @@ function createEffect({ className, follow, finished }) {
     }
     unwind = () => {
       if (!activeLink) return;
-      if (motion.matches || document.hidden) {
+      if (motion.matches) {
         clear();
         return;
       }
@@ -172,16 +196,21 @@ function createEffect({ className, follow, finished }) {
       activeLink.classList.remove("link-distortion");
       activeLink = null;
       cancelAnimationFrame(frame);
-      const started = performance.now();
+      let started = performance.now();
+      pausedAt = null;
       painted = -Infinity;
-      hideTimer = setTimeout(() => {
+      schedule(() => {
         paint(paths[1], { back: "", front: "", accent: "" });
         clear();
       }, 800);
       function retract(now) {
+        frame = 0;
+        if (!pageFocused || document.hidden) {
+          api.pause();
+          return;
+        }
         if (
           motion.matches ||
-          document.hidden ||
           document.querySelector("dialog[open]") ||
           ((follow || target.closest(".site-header")) && !position(target))
         ) {
@@ -192,13 +221,28 @@ function createEffect({ className, follow, finished }) {
         const remaining = 1 - progress * progress * (3 - 2 * progress);
         if (now - painted >= 1000 / 30) {
           if (growth) paint(paths[1], growth.frame(remaining));
-          paint(paths[0], studyFrame(id, phase + age - Math.min(age, 0.8) * (1 - remaining)));
+          paint(
+            paths[0],
+            studyFrame(
+              id,
+              phase + age - Math.min(age, 0.8) * (1 - remaining),
+              Math.min(1, age / studyDrawDuration) * remaining,
+            ),
+          );
           original.style.opacity = rearOriginal.style.opacity = String(remaining);
           painted = now;
         }
         frame = requestAnimationFrame(retract);
       }
+      run = (now, gap) => {
+        started += gap;
+        retract(now);
+      };
       retract(started);
+    };
+    run = (now) => {
+      last = now;
+      animate(now);
     };
     animate(last);
   }
@@ -206,6 +250,21 @@ function createEffect({ className, follow, finished }) {
     draw,
     clear,
     release,
+    pause() {
+      if (pausedAt !== null) return;
+      pausedAt = performance.now();
+      cancelAnimationFrame(frame);
+      clearTimeout(hideTimer);
+      frame = hideTimer = 0;
+    },
+    resume() {
+      if (pausedAt === null) return;
+      const now = performance.now(),
+        gap = now - pausedAt;
+      pausedAt = null;
+      if (timerAction) schedule(timerAction, Math.max(0, timerDeadline + gap - now));
+      run?.(now, gap);
+    },
     get target() {
       return activeLink;
     },
@@ -298,6 +357,7 @@ onPage(".archive", (archive, { on, dispose }) => {
   function draw(year) {
     if (
       active === year ||
+      !pageFocused ||
       motion.matches ||
       document.hidden ||
       document.querySelector("dialog[open]")
@@ -317,6 +377,9 @@ onPage(".archive", (archive, { on, dispose }) => {
     draw,
     release,
     clear,
+    move(target) {
+      if (active && !active.contains(target)) release();
+    },
     scroll() {
       if (!active?.matches(":hover")) clear();
     },
@@ -325,8 +388,8 @@ onPage(".archive", (archive, { on, dispose }) => {
     on(year, "pointerenter", (event) => {
       if (event.pointerType !== "touch") draw(year);
     });
-    on(year, "pointerleave", () => {
-      if (active === year) release();
+    on(year, "pointerleave", (event) => {
+      if (event.relatedTarget && pageFocused && !document.hidden && active === year) release();
     });
   }
   dispose(() => {
@@ -361,9 +424,20 @@ export const drawSigil = (link) => {
 document.addEventListener("pointerover", (event) => {
   if (event.pointerType === "touch") return;
   const link = hoverTarget(event.target);
+  if (
+    !pageFocused ||
+    document.hidden ||
+    (event.target === document.documentElement &&
+      document.documentElement.hasAttribute("data-soft-navigation"))
+  )
+    return;
+  yearPreview?.move(event.target);
   if (link && !hoverRegion(link).contains(event.relatedTarget)) drawSigil(link);
+  else if (!link && linkSigil.target && !hoverRegion(linkSigil.target).contains(event.target))
+    linkSigil.release();
 });
 document.addEventListener("pointerout", (event) => {
+  if (!event.relatedTarget || !pageFocused || document.hidden) return;
   const link = linkSigil.target;
   const region = hoverRegion(link);
   // View-transition capture briefly hit-tests the root instead of the live nav.
@@ -380,6 +454,7 @@ document.addEventListener("focusin", (event) => {
   if (link) drawSigil(link);
 });
 document.addEventListener("focusout", (event) => {
+  if (!pageFocused || document.hidden) return;
   const region = hoverRegion(linkSigil.target);
   if (region?.contains(event.target) && !region.matches(":hover")) linkSigil.release();
 });
@@ -396,10 +471,21 @@ document.addEventListener(
 document.addEventListener("site:before-swap", () => {
   if (linkSigil.target && !linkSigil.target.closest(".site-header")) linkSigil.release();
 });
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) clearSigil();
+function syncActivity() {
+  for (const effect of liveEffects) {
+    if (pageFocused && !document.hidden) effect.resume();
+    else effect.pause();
+  }
+}
+document.addEventListener("visibilitychange", syncActivity);
+window.addEventListener("blur", () => {
+  pageFocused = false;
+  syncActivity();
 });
-window.addEventListener("blur", clearSigil);
+window.addEventListener("focus", () => {
+  pageFocused = true;
+  syncActivity();
+});
 window.addEventListener("resize", clearSigil);
 window.addEventListener("pagehide", clearSigil);
 motion.addEventListener("change", clearSigil);

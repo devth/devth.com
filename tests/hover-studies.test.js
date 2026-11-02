@@ -44,6 +44,40 @@ it("renders fifteen distinct deterministic finite studies that evolve within the
   }
 });
 
+it("draws every seed from empty through partial strokes to its unchanged complete geometry", () => {
+  for (const { id } of studies) {
+    const full = studyFrame(id, 1);
+    expect(Object.values(studyFrame(id, 1, 0)).join("")).toBe("");
+    const partial = Object.values(studyFrame(id, 1, 0.35)).join("");
+    expect(partial.length).toBeGreaterThan(0);
+    expect(partial.match(/M/g).length).toBeLessThan(
+      Object.values(full).join("").match(/M/g).length,
+    );
+    expect(studyFrame(id, 1, 1)).toEqual(full);
+  }
+  for (const id of ["sigil", "tendril"]) {
+    const full = studyFrame(id, 1);
+    const count = Object.values(full).join("").match(/M/g).length;
+    const partial = studyFrame(id, 1, 0.5 / count);
+    const [layer, ink] = Object.entries(partial).find(([, path]) => path);
+    const points = ink.match(/-?\d+(?:\.\d+)?/g).map(Number);
+    const original = full[layer]
+      .match(/^M[^M]+/)[0]
+      .match(/-?\d+(?:\.\d+)?/g)
+      .map(Number);
+    expect(points.slice(0, 2)).toEqual(original.slice(0, 2));
+    const expected =
+      original.length === 4
+        ? [(original[0] + original[2]) / 2, (original[1] + original[3]) / 2]
+        : [
+            (original[0] + 2 * original[2] + original[4]) / 4,
+            (original[1] + 2 * original[3] + original[5]) / 4,
+          ];
+    for (let axis = 0; axis < 2; axis++)
+      expect(points.at(-2 + axis)).toBeCloseTo(expected[axis], 1);
+  }
+});
+
 it("uses asymmetric branching and distinct leaf/blossom topology, not renamed helices", () => {
   const signatures = [];
   for (const id of organicIds) {

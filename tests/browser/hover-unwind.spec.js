@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { studyFrame } from "../../src/hover-studies.js";
 async function setup(page, path = "/") {
   await page.clock.install({ time: new Date("2026-10-31T12:00:00Z") });
   await page.clock.pauseAt(new Date("2026-10-31T12:00:01Z"));
@@ -13,6 +14,42 @@ const segments = (sigil) =>
       paths.map((p) => (p.getAttribute("d").match(/Q/g) || []).length).reduce((a, b) => a + b, 0),
     );
 
+for (const structure of ["triple", "tendril"]) {
+  test(`leaving during ${structure} construction never reveals an undrawn full seed`, async ({
+    page,
+  }) => {
+    await page.addInitScript(
+      (structure) =>
+        localStorage.setItem(
+          "devth:hover-preferences:v1",
+          JSON.stringify({ structure, generation: true }),
+        ),
+      structure,
+    );
+    await setup(page);
+    await page.locator('.site-header a[href="/about"]').hover();
+    const glyph = page.locator(".link-sigil:not([data-retiring])");
+    await expect(glyph).toBeVisible();
+    const key = await glyph.getAttribute("data-sigil-key");
+    const core = page.locator(`svg[data-sigil-key="${key}"] g:first-child path`);
+    const count = () =>
+      core.evaluateAll((paths) =>
+        paths.reduce((n, path) => n + (path.getAttribute("d").match(/M/g) || []).length, 0),
+      );
+    const full = Object.values(studyFrame(structure)).join("").match(/M/g).length;
+    await page.clock.runFor(120);
+    const partial = await count();
+    expect(partial).toBeGreaterThan(0);
+    expect(partial).toBeLessThan(full);
+    await page.mouse.move(1, 1);
+    expect(await count()).toBeLessThan(full);
+    await page.clock.runFor(400);
+    expect(await count()).toBeLessThanOrEqual(partial);
+    await page.clock.runFor(450);
+    await expect(glyph).toBeHidden();
+  });
+}
+
 test("mouse leave retracts roots over 800ms without advancing or stretching them", async ({
   page,
 }) => {
@@ -20,7 +57,8 @@ test("mouse leave retracts roots over 800ms without advancing or stretching them
   const sigil = page.locator(".link-sigil:not([data-retiring])");
   await page.locator('.site-header a[href="/about"]').hover();
   await expect(sigil).toBeVisible();
-  await page.clock.runFor(1800);
+  // Finish the 650ms seed draw, then grow for the original 1800ms.
+  await page.clock.runFor(2450);
   const count = await segments(sigil);
   const roots = await sigil.getAttribute("data-growth-roots");
   const transform = await sigil.locator("g").first().getAttribute("transform");

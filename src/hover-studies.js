@@ -1,6 +1,10 @@
 import { rotate } from "./graph-geometry.js";
 import { organicCurves } from "./organic-growth.js";
 
+export const studyDrawDuration = 0.65;
+const mix = (a, b, amount) =>
+  Object.fromEntries(Object.keys(a).map((axis) => [axis, a[axis] + (b[axis] - a[axis]) * amount]));
+
 export const studies = [
   {
     id: "sigil",
@@ -200,7 +204,7 @@ const organicGeometries = Object.fromEntries(
   studies.slice(9).map(({ id }) => [id, organicCurves(id, 2)]),
 );
 
-function organicStudyFrame(curves, time) {
+function organicStudyFrame(curves, time, progress) {
   const radius = Math.max(
     ...curves.flatMap(({ start, control, end }) =>
       [start, control, end].map((point) => Math.hypot(...point)),
@@ -219,18 +223,26 @@ function organicStudyFrame(curves, time) {
   };
   const coordinate = ({ x, y }) => `${x.toFixed(2)} ${y.toFixed(2)}`;
   const frame = { back: "", front: "", accent: "" };
-  for (const curve of curves) {
+  for (let index = 0; index < curves.length; index++) {
+    const amount = Math.min(1, progress * curves.length - index);
+    if (amount <= 0) break;
+    const curve = curves[index];
     const start = project(curve.start);
-    const control = project(curve.control);
-    const end = project(curve.end);
+    let control = project(curve.control);
+    let end = project(curve.end);
     const layer = curve.accent ? "accent" : start.z + end.z < 0 ? "back" : "front";
+    if (amount < 1) {
+      const nextControl = mix(start, control, amount);
+      end = mix(nextControl, mix(control, end, amount), amount);
+      control = nextControl;
+    }
     frame[layer] += `M${coordinate(start)}Q${coordinate(control)} ${coordinate(end)}`;
   }
   return frame;
 }
 
-export function studyFrame(id, time = 0) {
-  if (organicGeometries[id]) return organicStudyFrame(organicGeometries[id], time);
+export function studyFrame(id, time = 0, progress = 1) {
+  if (organicGeometries[id]) return organicStudyFrame(organicGeometries[id], time, progress);
   const source =
     id === "spring" ? helix(1, 4, 22, 78 + Math.sin(time * 1.2) * 14, false) : geometries[id];
   const radius = Math.max(...source.vertices.map((point) => Math.hypot(...point)));
@@ -251,6 +263,9 @@ export function studyFrame(id, time = 0) {
   });
   const frame = { back: "", front: "", accent: "" };
   source.edges.forEach(([a, b], index) => {
+    const amount = Math.min(1, progress * source.edges.length - index);
+    if (amount <= 0) return;
+    const end = amount < 1 ? mix(points[a], points[b], amount) : points[b];
     const key =
       index === Math.floor(source.edges.length * 0.55)
         ? "accent"
@@ -258,7 +273,7 @@ export function studyFrame(id, time = 0) {
           ? "back"
           : "front";
     frame[key] +=
-      `M${points[a].x.toFixed(2)} ${points[a].y.toFixed(2)}L${points[b].x.toFixed(2)} ${points[b].y.toFixed(2)}`;
+      `M${points[a].x.toFixed(2)} ${points[a].y.toFixed(2)}L${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
   });
   return frame;
 }

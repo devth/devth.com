@@ -1,4 +1,4 @@
-import { studyFrame } from "./hover-studies.js";
+import { studyFrame, studyDrawDuration } from "./hover-studies.js";
 import { createGrowth } from "./organic-growth.js";
 import { getHoverPreferences, setHoverPreferences } from "./hover-preferences.js";
 
@@ -132,13 +132,14 @@ onPage("[data-hover-board]", (board, { on, dispose }) => {
     for (const state of states) {
       if (!state.running) continue;
       state.time += delta;
-      if (generating) state.age += delta;
+      state.age += delta;
       if (!redraw) continue;
-      const drawing = studyFrame(state.id, state.time);
+      const drawing = studyFrame(state.id, state.time, Math.min(1, state.age / studyDrawDuration));
       if (generating) {
         ensureGarden(state);
-        state.garden.growth.advance(state.age - state.garden.paintedAge, state.garden.bounds);
-        state.garden.paintedAge = state.age;
+        const growthAge = Math.max(0, state.age - studyDrawDuration);
+        state.garden.growth.advance(growthAge - state.garden.paintedAge, state.garden.bounds);
+        state.garden.paintedAge = growthAge;
         const roots = state.garden.growth.frame();
         state.garden.root.dataset.growthRoots = roots.roots;
         paint(state.garden.basePaths, drawing);

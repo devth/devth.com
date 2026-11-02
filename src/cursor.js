@@ -9,46 +9,25 @@ export function init() {
   const native =
     "input,textarea,select,[contenteditable]:not([contenteditable=false]),[role=textbox],[role=combobox],canvas,iframe,object,embed,[draggable=true],[disabled],[aria-disabled=true]";
   let cursor,
-    paths,
-    active = false,
-    frame = 0,
-    phase = 0,
-    x = 0,
-    y = 0;
+    active = false;
   function create() {
     if (cursor) return;
     const namespace = "http://www.w3.org/2000/svg";
     cursor = document.createElementNS(namespace, "svg");
     cursor.classList.add("geometric-cursor");
-    cursor.setAttribute("viewBox", "0 0 28 28");
+    cursor.setAttribute("viewBox", "0 0 20 26");
     cursor.setAttribute("aria-hidden", "true");
     cursor.setAttribute("focusable", "false");
     cursor.setAttribute("hidden", "");
-    paths = ["cursor-outline", "cursor-wire"].map((name) => {
-      const path = document.createElementNS(namespace, "path");
-      path.classList.add(name);
-      cursor.append(path);
-      return path;
-    });
-    const dot = document.createElementNS(namespace, "circle");
-    dot.setAttribute("cx", "14");
-    dot.setAttribute("cy", "14");
-    dot.setAttribute("r", "1.2");
-    cursor.append(dot);
+    const path = document.createElementNS(namespace, "path");
+    path.setAttribute("d", cursorPath());
+    cursor.append(path);
     document.body.append(cursor);
   }
   function hide() {
-    cancelAnimationFrame(frame);
-    frame = 0;
     active = false;
     root.removeAttribute("data-geometric-cursor");
     cursor?.setAttribute("hidden", "");
-  }
-  function paint() {
-    frame = 0;
-    if (!active) return;
-    const drawing = cursorPath(phase);
-    for (const path of paths) path.setAttribute("d", drawing);
   }
   function move(event) {
     const target = event.target;
@@ -66,17 +45,13 @@ export function init() {
       return;
     }
     create();
-    if (active) phase = (phase + Math.hypot(event.clientX - x, event.clientY - y) / 180) % 4;
-    x = event.clientX;
-    y = event.clientY;
-    cursor.style.transform = `translate3d(${x - 14}px,${y - 14}px,0)`;
+    cursor.style.transform = `translate3d(${event.clientX - 2}px,${event.clientY - 2}px,0)`;
     cursor.classList.toggle("is-action", !!target.closest("a,button,summary,[role=button],.entry"));
     if (!active) {
       active = true;
-      paint();
       cursor.removeAttribute("hidden");
       root.setAttribute("data-geometric-cursor", "");
-    } else if (!frame) frame = requestAnimationFrame(paint);
+    }
   }
   function sync() {
     if (allowed()) create();

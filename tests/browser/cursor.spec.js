@@ -8,7 +8,7 @@ async function ready(page) {
   return page.evaluate(() => matchMedia("(hover: hover) and (pointer: fine)").matches);
 }
 
-test("geometric cursor morphs with movement, tracks the exact hotspot and stops painting at rest", async ({
+test("one simple geometric pointer keeps its shape, tracks its tip hotspot and stays idle at rest", async ({
   page,
 }, testInfo) => {
   await page.clock.install();
@@ -22,12 +22,15 @@ test("geometric cursor morphs with movement, tracks the exact hotspot and stops 
   await expect(cursor(page)).toHaveCount(1);
   await page.mouse.move(20, 150);
   await expect(cursor(page)).toBeVisible();
-  const first = await cursor(page).locator(".cursor-wire").getAttribute("d");
+  const first = await cursor(page).locator("path").getAttribute("d");
   await page.mouse.move(20, 450, { steps: 12 });
-  await expect(cursor(page).locator(".cursor-wire")).not.toHaveAttribute("d", first);
+  await expect(cursor(page).locator("path")).toHaveCount(1);
+  await expect(cursor(page).locator("path")).toHaveAttribute("d", first);
   const box = await cursor(page).boundingBox();
-  expect(box.x + box.width / 2).toBeCloseTo(20, 1);
-  expect(box.y + box.height / 2).toBeCloseTo(450, 1);
+  expect(box.x + 2).toBeCloseTo(20, 1);
+  expect(box.y + 2).toBeCloseTo(450, 1);
+  expect(box.width).toBeLessThanOrEqual(20);
+  expect(box.height).toBeLessThanOrEqual(26);
   await expect(cursor(page)).toHaveCSS("pointer-events", "none");
   await expect(cursor(page)).toHaveAttribute("aria-hidden", "true");
   await page.clock.pauseAt(new Date(Date.now() + 50));
@@ -130,6 +133,7 @@ test("one cursor survives navigation and reduced motion or high contrast restore
     return;
   }
   await expect(cursor(page)).toHaveCount(1);
+  const shape = await cursor(page).locator("path").getAttribute("d");
   await page.evaluate(() => (window.originalCursor = document.querySelector(".geometric-cursor")));
   await page.locator(".site-header nav").getByRole("link", { name: "about", exact: true }).click();
   await expect(page.locator("main")).toHaveAttribute("data-page-class", "about-page");
@@ -152,4 +156,5 @@ test("one cursor survives navigation and reduced motion or high contrast restore
   await page.mouse.move(20, 210);
   await expect(cursor(page)).toBeVisible();
   await expect(cursor(page)).toHaveCount(1);
+  await expect(cursor(page).locator("path")).toHaveAttribute("d", shape);
 });

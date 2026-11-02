@@ -85,6 +85,10 @@ test("Scalaz heading hover and keyboard focus light its ToC entry without changi
   await permalink.focus();
   await expect(link).toHaveClass(active);
   await page.evaluate(() => dispatchEvent(new Event("blur")));
+  await expect(link).toHaveClass(active);
+  await expect(heading).toHaveClass(active);
+  await page.evaluate(() => dispatchEvent(new Event("focus")));
+  await page.keyboard.press("Escape");
   await expect(link).not.toHaveClass(active);
   await expect(heading).not.toHaveClass(active);
 });

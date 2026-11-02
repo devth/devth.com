@@ -20,7 +20,9 @@ function clearSigil() {
   pendingSigil = null;
   sigils?.clearSigil();
 }
-window.addEventListener("blur", clearSigil);
+window.addEventListener("blur", () => {
+  pendingSigil = null;
+});
 function loadSigils(event) {
   const link = hoverTarget(event.target) || event.target.closest?.(".year");
   if (
