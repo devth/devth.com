@@ -18,11 +18,8 @@ body.cosmos-page {
   max-width: none;
   padding: 0;
 }
-:root::view-transition-new(page-content) {
-  --drawer-paper: #06070b;
-  --drawer-ink: #f4f3ec;
-}
 .cosmos {
+  background: var(--paper);
   min-height: 100svh;
   height: 100dvh;
 }

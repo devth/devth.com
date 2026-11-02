@@ -71,14 +71,7 @@ you'd like to chat, I usually hang out on
 you can Tweet <a href="https://twitter.com/devth">@devth</a>.
 </p>
 <p>
-I live in Montana with my wife and five kids. I'm an aspiring
-electronics tinkerer, musician, climber,
-<a href="https://www.strava.com/athletes/devth">
-mountain biker
-</a>, health and fitness nerd, permabeginner, avid
-<a href="https://www.last.fm/user/trevorhartman">
-listener of music
-</a>, and maker of things.
+I live in Montana with my wife and five kids.
 </p>
 <div class="about-photo-strip">
 <img

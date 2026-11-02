@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const drawerAnimations = ["drawer-enter", "drawer-settle", "drawer-underlay"];
+const pageAnimations = ["page-enter", "page-exit"];
 
 async function openEnhancedPage(page) {
   await page.goto("/");
@@ -19,9 +19,7 @@ async function observeTransitions(page, capture = false) {
           .then(() => {
             const animations = document
               .getAnimations()
-              .filter((animation) =>
-                [...names, "pane-enter", "pane-exit"].includes(animation.animationName),
-              );
+              .filter((animation) => names.includes(animation.animationName));
             root.dataset.transitionAnimations = animations
               .map((animation) => animation.animationName)
               .sort()
@@ -38,19 +36,24 @@ async function observeTransitions(page, capture = false) {
           .catch(() => {
             root.dataset.transition = "skipped";
           });
-        viewTransition.finished.then(() => {
-          root.dataset.transition = "finished";
-        });
+        viewTransition.finished.then(
+          () => {
+            root.dataset.transition = "finished";
+          },
+          () => {
+            root.dataset.transition = "skipped";
+          },
+        );
       };
       window.addEventListener("pagereveal", observe);
       document.addEventListener("site:navigation", observe);
     },
-    { capture, names: drawerAnimations },
+    { capture, names: pageAnimations },
   );
 }
 
 for (const colorScheme of ["light", "dark"]) {
-  test(`a ${colorScheme} content drawer slides over the old page, then settles to paper`, async ({
+  test(`a ${colorScheme} page exits left while its replacement enters from the right`, async ({
     page,
   }, testInfo) => {
     await page.emulateMedia({ reducedMotion: "no-preference", colorScheme });
@@ -60,64 +63,89 @@ for (const colorScheme of ["light", "dark"]) {
     await expect(page).toHaveURL(/\/about$/);
     const root = page.locator("html");
     await expect(root).toHaveAttribute("data-transition", "ready");
-    await expect(root).toHaveAttribute("data-transition-animations", drawerAnimations.join(","));
+    await expect(root).toHaveAttribute("data-transition-animations", pageAnimations.join(","));
     const effects = await page.evaluate(() => {
-      const canvas = document.createElement("canvas");
-      canvas.width = canvas.height = 1;
-      const context = canvas.getContext("2d");
-      const rgb = (color) => {
-        context.fillStyle = color;
-        context.fillRect(0, 0, 1, 1);
-        return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
-      };
       const animations = document.getAnimations();
-      const animation = (name) => animations.find((item) => item.animationName === name);
-      const entrance = animation("drawer-enter");
-      const settle = animation("drawer-settle");
-      const frames = settle.effect.getKeyframes();
+      const incoming = animations.find((item) => item.animationName === "page-enter");
+      const outgoing = animations.find((item) => item.animationName === "page-exit");
       const moving = getComputedStyle(
         document.documentElement,
         "::view-transition-new(page-content)",
       );
+      const leaving = getComputedStyle(
+        document.documentElement,
+        "::view-transition-old(page-outgoing)",
+      );
       return {
-        entranceDuration: entrance.effect.getTiming().duration,
-        settleDuration: settle.effect.getTiming().duration,
-        settleDelay: settle.effect.getTiming().delay,
-        tint: rgb(frames[0].backgroundColor),
-        paper: rgb(frames.at(-1).backgroundColor),
-        outline: rgb(frames[0].outlineColor),
-        x: new DOMMatrix(moving.transform).m41,
-        viewport: innerWidth,
+        entrance: incoming.effect.getTiming(),
+        exit: outgoing.effect.getTiming(),
+        incomingFrames: incoming.effect.getKeyframes().map((frame) => ({
+          x: new DOMMatrix(frame.transform).m41,
+          opacity: Number(frame.opacity),
+        })),
+        outgoingFrames: outgoing.effect.getKeyframes().map((frame) => ({
+          x: new DOMMatrix(frame.transform).m41,
+          opacity: Number(frame.opacity),
+        })),
+        extraColorAnimation: animations.some((animation) =>
+          animation.effect
+            .getKeyframes()
+            .some(
+              (frame) =>
+                Object.hasOwn(frame, "backgroundColor") || Object.hasOwn(frame, "outlineColor"),
+            ),
+        ),
+        incomingX: new DOMMatrix(moving.transform).m41,
+        outgoingX: new DOMMatrix(leaving.transform).m41,
+        incomingOpacity: Number(moving.opacity),
+        outgoingOpacity: Number(leaving.opacity),
+        paper: moving.backgroundColor,
+        outline: moving.outlineColor,
+        rootPaper: getComputedStyle(document.documentElement).backgroundColor,
         verticalBleed: -parseFloat(moving.clipPath.slice("inset(".length)),
         requiredBleed: Math.max(
           document.querySelector("main").getBoundingClientRect().top,
           innerHeight - document.querySelector("main").getBoundingClientRect().bottom,
         ),
-        underlay: getComputedStyle(document.documentElement, "::view-transition-old(page-outgoing)")
-          .opacity,
+        viewport: innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
       };
     });
-    expect(effects.entranceDuration).toBe(400);
-    expect(effects.settleDelay).toBe(effects.entranceDuration);
-    expect(effects.settleDuration).toBe(220);
-    expect(effects.outline).toEqual(effects.tint);
-    const brightness = (rgb) => rgb.reduce((a, b) => a + b);
-    if (colorScheme === "light")
-      expect(brightness(effects.tint)).toBeLessThan(brightness(effects.paper));
-    else expect(brightness(effects.tint)).toBeGreaterThan(brightness(effects.paper));
-    expect(effects.x).toBeGreaterThan(0);
-    expect(effects.x).toBeLessThan(effects.viewport);
-    expect(effects.underlay).toBe("1");
+    expect(effects.entrance.duration).toBe(280);
+    expect(effects.exit.duration).toBe(150);
+    expect(effects.entrance.delay).toBe(0);
+    expect(effects.exit.delay).toBe(0);
+    expect(effects.incomingFrames).toEqual([
+      { x: 48, opacity: 0 },
+      { x: 0, opacity: 1 },
+    ]);
+    expect(effects.outgoingFrames).toEqual([
+      { x: 0, opacity: 1 },
+      { x: -32, opacity: 0 },
+    ]);
+    expect(effects.extraColorAnimation).toBe(false);
+    expect(effects.incomingX).toBeGreaterThan(0);
+    expect(effects.incomingX).toBeLessThan(48);
+    expect(effects.outgoingX).toBeLessThan(0);
+    expect(effects.outgoingX).toBeGreaterThan(-32);
+    for (const opacity of [effects.incomingOpacity, effects.outgoingOpacity]) {
+      expect(opacity).toBeGreaterThan(0);
+      expect(opacity).toBeLessThan(1);
+    }
+    expect(effects.paper).toBe(effects.rootPaper);
+    expect(effects.outline).toBe(effects.paper);
     expect(effects.scrollWidth).toBe(effects.viewport);
     expect(effects.verticalBleed).toBeGreaterThanOrEqual(effects.requiredBleed);
-    await page.screenshot({ path: testInfo.outputPath(`drawer-${colorScheme}-enter.png`) });
-    await page.evaluate(() =>
-      document.getAnimations().forEach((animation) => {
-        animation.currentTime = 510;
-      }),
-    );
-    await page.screenshot({ path: testInfo.outputPath(`drawer-${colorScheme}-settle.png`) });
+    for (const time of [0, 45, 80, 150, 280]) {
+      await page.evaluate(
+        (time) =>
+          document.getAnimations().forEach((animation) => {
+            animation.currentTime = time;
+          }),
+        time,
+      );
+      await page.screenshot({ path: testInfo.outputPath(`page-${colorScheme}-${time}.png`) });
+    }
     await page.evaluate(() => document.getAnimations().forEach((animation) => animation.finish()));
     await expect(root).toHaveAttribute("data-transition", "finished");
     await expect(root).not.toHaveAttribute("data-soft-navigation");
@@ -131,7 +159,7 @@ for (const colorScheme of ["light", "dark"]) {
   });
 }
 
-test("a second navigation interrupts the drawer without leaving transition state", async ({
+test("a second navigation interrupts the slide/fade without leaving transition state", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
@@ -141,7 +169,7 @@ test("a second navigation interrupts the drawer without leaving transition state
   await expect(page.locator("html")).toHaveAttribute("data-transition", "ready");
   await expect(page.locator("html")).toHaveAttribute(
     "data-transition-animations",
-    drawerAnimations.join(","),
+    pageAnimations.join(","),
   );
   await page.getByRole("link", { name: "glossary", exact: true }).click();
   await expect(page).toHaveURL(/\/glossary$/);
@@ -150,7 +178,7 @@ test("a second navigation interrupts the drawer without leaving transition state
   await expect(page.locator("main")).not.toHaveAttribute("aria-busy");
 });
 
-test("the Cosmos drawer uses its own dark paper even in a light system theme", async ({ page }) => {
+test("Cosmos keeps a dark full-viewport surface even in a light system theme", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "no-preference", colorScheme: "light" });
   await observeTransitions(page, true);
   await openEnhancedPage(page);
@@ -159,13 +187,79 @@ test("the Cosmos drawer uses its own dark paper even in a light system theme", a
   const palette = await page.evaluate(() => {
     const style = getComputedStyle(document.documentElement, "::view-transition-new(page-content)");
     return [
-      style.getPropertyValue("--drawer-paper").trim(),
-      style.getPropertyValue("--drawer-ink").trim(),
+      style.backgroundColor,
+      style.outlineColor,
+      getComputedStyle(document.querySelector(".cosmos")).backgroundColor,
     ];
   });
-  expect(palette).toEqual(["#06070b", "#f4f3ec"]);
+  expect(palette).toEqual(["rgb(6, 7, 11)", "rgb(6, 7, 11)", "rgb(6, 7, 11)"]);
   await page.evaluate(() => document.getAnimations().forEach((animation) => animation.finish()));
   await expect(page.locator("[data-cosmos-stage]")).toHaveAttribute("data-ready", "");
+});
+
+test("Cosmos entry and exit keep the paper continuous at both viewport edges", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference", colorScheme: "light" });
+  // Keep the sky empty so the check measures paper, not individual stars.
+  await page.route("**/data/nearby-stars.json", (route) => route.abort());
+  await observeTransitions(page, true);
+  await openEnhancedPage(page);
+  for (const destination of ["cosmos", "about"]) {
+    await page.evaluate(() => sessionStorage.removeItem("transition-captured"));
+    await page.getByRole("link", { name: new RegExp(`^${destination}$`, "i") }).click();
+    await expect(page.locator("html")).toHaveAttribute("data-transition", "ready");
+    for (const time of [45, 80]) {
+      await page.evaluate(
+        (time) =>
+          document.getAnimations().forEach((animation) => {
+            animation.currentTime = time;
+          }),
+        time,
+      );
+      const screenshot = await page.screenshot();
+      const rows = await page.evaluate(async (data) => {
+        const image = new Image();
+        image.src = `data:image/png;base64,${data}`;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0);
+        const scaleX = canvas.width / innerWidth;
+        const scaleY = canvas.height / innerHeight;
+        // A scrolled-out word can intersect any one pixel; sample the paper's median instead.
+        const columns = [2, innerWidth / 2, innerWidth - 3].map((x) =>
+          Array.from({ length: 33 }, (_, index) => [
+            ...context.getImageData(
+              Math.floor(x * scaleX),
+              Math.floor(((index + 0.5) / 33) * innerHeight * scaleY),
+              1,
+              1,
+            ).data,
+          ]),
+        );
+        return [
+          columns.map((column) =>
+            [0, 1, 2].map(
+              (channel) => column.map((pixel) => pixel[channel]).sort((a, b) => a - b)[16],
+            ),
+          ),
+        ];
+      }, screenshot.toString("base64"));
+      for (const [left, center, right] of rows) {
+        for (const edge of [left, right]) {
+          for (let channel = 0; channel < 3; channel++) {
+            expect(
+              Math.abs(edge[channel] - center[channel]),
+              `${destination} at ${time}ms: edges must match the paper: ${JSON.stringify(rows)}`,
+            ).toBeLessThanOrEqual(6);
+          }
+        }
+      }
+    }
+    await page.evaluate(() => document.getAnimations().forEach((animation) => animation.finish()));
+    await expect(page.locator("html")).not.toHaveAttribute("data-soft-navigation");
+  }
 });
 
 test("skipping a pending capture completes navigation without an unhandled rejection", async ({
