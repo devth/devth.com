@@ -81,7 +81,10 @@ describe("static publishing contract", () => {
     }
     const cosmos = documentFor("cosmos/index.html");
     expect(cosmos.querySelector("h1").textContent).toBe("Cosmos");
-    expect(cosmos.querySelector(".cosmos-heading").textContent.trim()).toBe("Cosmos");
+    expect(cosmos.querySelector(".cosmos-heading > p").textContent).toBe(
+      "Our stellar neighborhood",
+    );
+    expect(cosmos.querySelector(".cosmos-scale").textContent).toContain("100 light-year radius");
     expect(cosmos.querySelector(".cosmos-colophon").textContent.trim()).toBe("Home ↗");
   });
 
