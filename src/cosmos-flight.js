@@ -1,6 +1,6 @@
 import { Quaternion, Vector3 } from "three";
 
-export const flightSeconds = 0.72;
+export const flightSeconds = 2.4;
 export const flightEase = (time) => {
   const t = Math.max(0, Math.min(1, time));
   return t * t * t * (t * (t * 6 - 15) + 10);

@@ -341,49 +341,11 @@ button,
 .prose :is(h2, h3, h4, h5, h6).is-destination-active {
   color: var(--accent);
 }
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) and (forced-colors: none) {
-  :root {
-    --cursor-arrow: url("/images/cursors/arrow.svg") 4 4, default;
-    --cursor-text: url("/images/cursors/text.svg") 16 24, text;
-    --cursor-action: url("/images/cursors/hand.svg") 18 5, pointer;
-    cursor: var(--cursor-arrow);
-  }
-  :where(p, li, dt, dd, blockquote, h1, h2, h3, h4, h5, h6, pre, code, figcaption) {
-    cursor: var(--cursor-text);
-  }
-  :where(a[href], button, summary, [role="button"], .entry),
-  :where(a[href], button, summary, [role="button"], .entry) * {
-    cursor: var(--cursor-action) !important;
-  }
-  :where([disabled], [aria-disabled="true"]),
-  :where([disabled], [aria-disabled="true"]) * {
-    cursor: not-allowed !important;
-  }
-  :is(
-    input,
-    textarea,
-    select,
-    [contenteditable]:not([contenteditable="false"]),
-    [role="textbox"],
-    [role="combobox"],
-    iframe,
-    object,
-    embed,
-    [draggable="true"]
-  ),
-  :is([contenteditable]:not([contenteditable="false"]), [draggable="true"]) *,
-  dialog,
-  dialog *,
-  dialog::backdrop {
-    cursor: auto !important;
-  }
-  canvas {
-    cursor: auto;
-  }
-  dialog :where(a[href], button, summary, [role="button"]),
-  dialog :where(a[href], button, summary, [role="button"]) * {
-    cursor: pointer !important;
-  }
+:where(button, summary, [role="button"], .entry) {
+  cursor: pointer;
+}
+:where(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed !important;
 }
 .link-sigil,
 .heading-sigil,
