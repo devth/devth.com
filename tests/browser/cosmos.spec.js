@@ -58,7 +58,7 @@ test("real stars support keyboard, orbit, new viewpoints, recenter and pause", a
   await page.screenshot({ path: testInfo.outputPath("cosmos.png"), fullPage: true });
 });
 
-test("reference selection and New viewpoint fly quickly, ease speed and allow interruption", async ({
+test("reference selection and New viewpoint fly smoothly, ease speed and allow interruption", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });

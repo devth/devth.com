@@ -2,7 +2,7 @@ import { Vector3 } from "three";
 import { it, expect } from "vite-plus/test";
 import { cameraFlight, sampleFlight, flightEase, flightSeconds } from "../src/cosmos-flight.js";
 
-it("finishes a quick smooth flight at the exact requested star and range", () => {
+it("finishes a smooth flight at the exact requested star and range", () => {
   const position = new Vector3(0, 0, 200),
     target = new Vector3();
   const destination = new Vector3(4, 2, -1),
@@ -14,7 +14,7 @@ it("finishes a quick smooth flight at the exact requested star and range", () =>
   expect(last.target.distanceTo(destination)).toBe(0);
   expect(last.position.distanceTo(destination.clone().add(offset))).toBeLessThan(1e-12);
   expect(position.toArray()).toEqual([0, 0, 200]);
-  expect(flightSeconds).toBeLessThan(1);
+  expect(flightSeconds).toBe(2.4);
 });
 it("accelerates and decelerates with zero endpoint velocity and logarithmic zoom", () => {
   const step = 0.001;
