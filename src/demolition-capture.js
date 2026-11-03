@@ -49,7 +49,7 @@ export function capturePage() {
         ".hit-counter",
         ".site-footer > div > *",
         "dialog.quick-nav[open]",
-        "body > svg:not(.geometric-cursor)",
+        "body > svg",
       ].join(","),
     ),
   ].filter((element) => {

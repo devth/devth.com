@@ -2,12 +2,22 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { onPage } from "./page-lifecycle.js";
 import { references, starDistance, starName, starPosition } from "./star-catalog.js";
+import { cameraFlight, sampleFlight, flightSeconds } from "./cosmos-flight.js";
+import {
+  createSolarSystem,
+  lightYearsPerAU,
+  orbitEpoch,
+  millisecondsPerDay,
+  orbitDaysPerSecond,
+} from "./solar-system.js";
 
 onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
   const canvas = stage.querySelector("canvas");
   const status = document.querySelector("[data-cosmos-status]");
   const pauseButton = document.querySelector("[data-cosmos-pause]");
   const readout = stage.querySelector("[data-cosmos-readout]");
+  const orbitClock = stage.querySelector("[data-cosmos-orbit-clock]");
+  const orbitTime = orbitClock.querySelector("time");
   const picker = document.querySelector("[data-cosmos-reference]");
   const distance = document.querySelector("[data-cosmos-distance]");
   const labelLayer = stage.querySelector("[data-cosmos-labels]");
@@ -59,9 +69,10 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000);
     controls = new OrbitControls(camera, canvas);
+    controls.cursorStyle = "grab";
     controls.enableDamping = !reducedMotion.matches;
     controls.enablePan = false;
-    controls.minDistance = 8;
+    controls.minDistance = 0.02 * lightYearsPerAU;
     controls.maxDistance = 900;
     controls.autoRotateSpeed = 0.18;
     let paused = reducedMotion.matches;
@@ -70,6 +81,14 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     let seed;
     let lastTime = 0;
     const homePosition = new THREE.Vector3();
+    const previousPosition = new THREE.Vector3();
+    let flight = null;
+    let flightFocus;
+    let cameraSpeed = 0;
+    let orbitDays = (Date.now() - orbitEpoch) / millisecondsPerDay;
+    let clockTime = -Infinity;
+    stage.dataset.flight = "idle";
+    stage.dataset.focus = "neighborhood";
     const invalidate = () => {
       dirty = true;
     };
@@ -102,7 +121,7 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       ),
       material(
         new THREE.ShaderMaterial({
-          uniforms: { pixelRatio: { value: renderer.getPixelRatio() } },
+          uniforms: { pixelRatio: { value: renderer.getPixelRatio() }, skyOpacity: { value: 1 } },
           vertexShader: `
           attribute vec3 color;
           attribute float starSize;
@@ -116,11 +135,12 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
           }`,
           fragmentShader: `
           varying vec3 vColor;
+          uniform float skyOpacity;
           void main() {
             float radius = length(gl_PointCoord - 0.5) * 2.0;
             float alpha = 1.0 - smoothstep(0.15, 1.0, radius);
             if (alpha < 0.02) discard;
-            gl_FragColor = vec4(vColor, alpha);
+            gl_FragColor = vec4(vColor, alpha * skyOpacity);
             #include <colorspace_fragment>
           }`,
           transparent: true,
@@ -162,17 +182,39 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       labelLayer.append(node);
       return { star, node, position: new THREE.Vector3(...starPosition(star)) };
     });
+    const solar = createSolarSystem(geometry, material);
+    scene.add(solar.group);
+    const solarLabels = solar.bodies.map((body) => {
+      const node = document.createElement("span");
+      node.className = "cosmos-star-label";
+      node.dataset.solarBody = body.name;
+      const name = document.createElement("strong");
+      name.textContent = body.name;
+      const value = document.createElement("span");
+      value.textContent = body.a ? `${body.a.toFixed(2)} AU orbit` : "0 AU · origin";
+      value.className = "keep-case";
+      node.append(name, value);
+      labelLayer.append(node);
+      return { body, node, position: new THREE.Vector3() };
+    });
     let selected;
-    function selectStar() {
+    function describeDistance() {
+      distance.textContent =
+        solar.group.visible && selected[0] === 0
+          ? "Earth–Sun ≈ 1 AU"
+          : `${starDistance(selected).toFixed(2)} light-years from Earth`;
+    }
+    function selectStar(fly = false) {
       selected = landmarks.find((star) => String(star[0]) === picker.value);
-      distance.textContent = `${starDistance(selected).toFixed(2)} light-years from Earth`;
+      describeDistance();
       const position = new THREE.Vector3(...starPosition(selected));
       guideGeometry.setFromPoints([new THREE.Vector3(), position]);
       guideGeometry.computeBoundingSphere();
       marker.position.copy(position);
+      if (fly) focusSelected();
       dirty = true;
     }
-    on(picker, "change", selectStar);
+    on(picker, "change", () => selectStar(true));
     selectStar();
 
     function fitView() {
@@ -181,21 +223,71 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       const angle = (seed / 4294967296) * Math.PI * 2 + 0.55;
       homePosition.set(Math.sin(angle), 0.34, Math.cos(angle)).normalize().multiplyScalar(fit);
     }
-    function resetView() {
-      fitView();
-      controls.target.set(0, 0, 0);
-      camera.position.copy(homePosition);
-      camera.lookAt(controls.target);
-      controls.update();
+    function interruptFlight() {
+      if (!flight) return;
+      flight = null;
+      stage.dataset.flight = "interrupted";
+      controls.enableDamping = !reducedMotion.matches;
+      controls.autoRotate = !paused;
       dirty = true;
     }
-    function viewpoint(nextSeed) {
+    controls.addEventListener("start", interruptFlight);
+    dispose(() => controls.removeEventListener("start", interruptFlight));
+    function finishFlight() {
+      sampleFlight(flight, 1, camera.position, controls.target);
+      flight = null;
+      stage.dataset.flight = "idle";
+      stage.dataset.focus = flightFocus;
+      controls.enableDamping = !reducedMotion.matches;
+      controls.autoRotate = !paused;
+      dirty = true;
+    }
+    function focusSelected() {
+      controls.autoRotate = false;
+      controls.enableDamping = false;
+      controls.update(0);
+      const angle = (seed / 4294967296) * Math.PI * 2 + 0.55;
+      const offset = new THREE.Vector3(
+        Math.sin(angle),
+        selected[0] === 0 ? 0.8 : 0.34,
+        Math.cos(angle),
+      )
+        .normalize()
+        .multiplyScalar(selected[0] === 0 ? 20 * lightYearsPerAU : 0.8);
+      flight = cameraFlight(
+        camera.position,
+        controls.target,
+        new THREE.Vector3(...starPosition(selected)),
+        offset,
+      );
+      flightFocus = String(selected[0]);
+      stage.dataset.flight = "flying";
+      if (reducedMotion.matches) {
+        finishFlight();
+        controls.update(0);
+        previousPosition.copy(camera.position);
+      }
+      dirty = true;
+    }
+    function resetView() {
+      focusSelected();
+    }
+    function viewpoint(nextSeed, fly = true) {
       seed = nextSeed >>> 0;
       stage.dataset.seed = String(seed);
-      resetView();
+      if (fly) focusSelected();
+      else {
+        fitView();
+        controls.target.set(0, 0, 0);
+        camera.position.copy(homePosition);
+        camera.lookAt(controls.target);
+        controls.update(0);
+        previousPosition.copy(camera.position);
+        dirty = true;
+      }
     }
     function updatePause() {
-      controls.autoRotate = !paused;
+      controls.autoRotate = !paused && !flight;
       pauseButton.textContent = paused ? "Resume" : "Pause";
       pauseButton.setAttribute("aria-pressed", String(paused));
       dirty = true;
@@ -204,8 +296,23 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       const width = stage.clientWidth,
         height = stage.clientHeight;
       const occupied = [];
-      const priority = (label) => (label.star[0] === 0 ? 2 : Number(label.star === selected));
-      const ordered = [...labels].sort((a, b) => priority(b) - priority(a));
+      for (const label of solarLabels) {
+        label.node.hidden = !solar.group.visible;
+        if (solar.group.visible) label.body.mesh.getWorldPosition(label.position);
+      }
+      for (const label of labels) if (solar.group.visible) label.node.hidden = true;
+      const activeLabels = solar.group.visible ? solarLabels : labels;
+      const priority = (label) =>
+        label.body
+          ? label.body.name === "Sun"
+            ? 3
+            : label.body.name === "Earth"
+              ? 2
+              : 0
+          : label.star[0] === 0
+            ? 2
+            : Number(label.star === selected);
+      const ordered = [...activeLabels].sort((a, b) => priority(b) - priority(a));
       const limit = width < 700 ? 5 : 9;
       for (const label of ordered) {
         const point = label.position.clone().project(camera);
@@ -235,27 +342,76 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
               rect.left >= 12 &&
               rect.right <= width - 12 &&
               rect.top >= (landscape ? 90 : 185) &&
-              rect.bottom <= height - (landscape ? 100 : width < 700 ? 245 : 175) &&
+              rect.bottom <= height - (landscape ? 100 : width < 700 ? 340 : 175) &&
               !panel &&
               !overlap
             );
           });
         const hidden = !placement || point.z < -1 || point.z > 1 || occupied.length >= limit;
         label.node.hidden = hidden;
-        label.node.toggleAttribute("data-selected", label.star === selected);
+        label.node.toggleAttribute(
+          "data-selected",
+          label.body ? label.body.name === "Sun" : label.star === selected,
+        );
         if (hidden) continue;
         label.node.style.transform = `translate3d(${placement.left}px,${placement.top}px,0)`;
         occupied.push(placement);
       }
     }
     function frame(time) {
-      const delta = Math.min((time - lastTime) / 1000, 0.05);
+      const elapsed = Math.max((time - lastTime) / 1000, 0.000001);
+      const delta = Math.min(elapsed, 0.05);
       lastTime = time;
-      if (controls.update(delta)) dirty = true;
+      if (flight) {
+        flight.elapsed += elapsed;
+        sampleFlight(flight, flight.elapsed / flightSeconds, camera.position, controls.target);
+        if (flight.elapsed >= flightSeconds) finishFlight();
+        dirty = true;
+      }
+      if (controls.update(flight ? 0 : delta)) dirty = true;
+      const speed = camera.position.distanceTo(previousPosition) / elapsed;
+      previousPosition.copy(camera.position);
+      if (speed !== cameraSpeed) dirty = true;
+      cameraSpeed = speed;
+      if (!paused) {
+        orbitDays += elapsed * orbitDaysPerSecond;
+        if (solar.group.visible) dirty = true;
+      }
       if (!dirty) return;
+      const range = camera.position.distanceTo(controls.target);
+      camera.near = Math.max(1e-11, Math.min(0.1, range * 0.002));
+      camera.updateProjectionMatrix();
+      solar.update(orbitDays, camera, stage.clientHeight);
+      stars.material.uniforms.skyOpacity.value = solar.group.visible
+        ? THREE.MathUtils.lerp(
+            0.18,
+            1,
+            THREE.MathUtils.smoothstep(camera.position.length() / lightYearsPerAU, 40, 400),
+          )
+        : 1;
+      const scale = solar.group.visible ? "solar" : "stellar";
+      if (stage.dataset.scale !== scale) {
+        stage.dataset.scale = scale;
+        document.querySelector(".cosmos-heading > p").textContent = solar.group.visible
+          ? "Our solar system"
+          : "Our stellar neighborhood";
+        document.querySelector(".cosmos-scale").textContent = solar.group.visible
+          ? "Planetary orbits · astronomical units"
+          : "100 light-year radius · linear positions";
+        describeDistance();
+      }
+      orbitClock.hidden = !solar.group.visible;
+      if (solar.group.visible && (time - clockTime > 200 || paused)) {
+        const date = new Date(orbitEpoch + orbitDays * millisecondsPerDay);
+        orbitTime.dateTime = date.toISOString();
+        orbitTime.textContent = `orbit ${date.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+        clockTime = time;
+      }
       renderer.render(scene, camera);
       placeLabels();
-      readout.textContent = `θ ${controls.getAzimuthalAngle().toFixed(2)} / ${camera.position.length().toFixed(1)} ly from origin`;
+      const units = solar.group.visible ? lightYearsPerAU : 1;
+      const unit = solar.group.visible ? "AU" : "ly";
+      readout.textContent = `camera ${(cameraSpeed / units).toFixed(2)} ${unit}/s · range ${(range / units).toFixed(2)} ${unit}\nθ ${controls.getAzimuthalAngle().toFixed(2)} / ${(camera.position.length() / units).toFixed(solar.group.visible ? 2 : 1)} ${unit} from origin`;
       dirty = false;
     }
     function syncLoop() {
@@ -268,12 +424,15 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       syncLoop();
     });
     observer.observe(stage);
+    let viewSized = false;
     resize = new ResizeObserver(() => {
       if (disposed || !stage.clientWidth || !stage.clientHeight) return;
       camera.aspect = stage.clientWidth / stage.clientHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(stage.clientWidth, stage.clientHeight, false);
-      resetView();
+      if (!viewSized && stage.dataset.focus === "neighborhood" && !flight) viewpoint(seed, false);
+      viewSized = true;
+      dirty = true;
     });
     resize.observe(stage);
     on(document, "visibilitychange", syncLoop);
@@ -285,11 +444,16 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     on(canvas, "site:before-capture", () => renderer.render(scene, camera));
     on(pauseButton, "click", () => {
       paused = !paused;
+      if (paused) interruptFlight();
       updatePause();
     });
     on(reducedMotion, "change", () => {
       controls.enableDamping = !reducedMotion.matches;
-      if (reducedMotion.matches) paused = true;
+      if (reducedMotion.matches) {
+        paused = true;
+        if (flight) finishFlight();
+        previousPosition.copy(camera.position);
+      }
       updatePause();
     });
     on(document.querySelector("[data-cosmos-shuffle]"), "click", () => {
@@ -317,13 +481,14 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
         paused = !paused;
         updatePause();
       } else return;
+      interruptFlight();
       spherical.makeSafe();
       camera.position.setFromSpherical(spherical).add(controls.target);
       controls.update();
       dirty = true;
       event.preventDefault();
     });
-    viewpoint(Number(new URLSearchParams(location.search).get("seed") ?? 123));
+    viewpoint(Number(new URLSearchParams(location.search).get("seed") ?? 123), false);
     updatePause();
     stage.dataset.stars = String(catalog.stars.length);
     stage.dataset.ready = "";

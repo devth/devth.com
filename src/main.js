@@ -134,10 +134,6 @@ onPage("section.writing", (_, { on }) => {
   filter();
   on(window, "pageshow", filter);
 });
-import("./cursor.js").then(
-  (module) => module.init(),
-  () => {},
-);
 import("./navigation.js").catch(() => {
   /* Native anchors remain the fallback. */
 });
