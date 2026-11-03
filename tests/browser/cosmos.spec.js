@@ -20,6 +20,11 @@ test("real stars support keyboard, orbit, new viewpoints, recenter and pause", a
   await expect(page.locator("[data-cosmos-distance]")).toHaveText("8.60 light-years from Earth");
   await expect(stage).toHaveAttribute("data-stars", "4060");
   const readout = page.locator("[data-cosmos-readout]");
+  await expect(readout).toContainText("range 0.80 ly");
+  await expect(stage).toHaveAttribute(
+    "data-focus",
+    await page.getByLabel("Reference star").inputValue(),
+  );
   await expect(readout).toContainText("ly from origin");
   const initialView = await readout.textContent();
   await canvas.focus();
@@ -51,6 +56,113 @@ test("real stars support keyboard, orbit, new viewpoints, recenter and pause", a
   );
   expect(errors).toEqual([]);
   await page.screenshot({ path: testInfo.outputPath("cosmos.png"), fullPage: true });
+});
+
+test("reference selection and New viewpoint fly quickly, ease speed and allow interruption", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/cosmos?seed=123");
+  const stage = page.locator("[data-cosmos-stage]");
+  await expect(stage).toHaveAttribute("data-ready", "");
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  await page.evaluate(() => {
+    window.cameraSpeeds = [];
+    window.speedObserver = new MutationObserver(() => {
+      const match = document
+        .querySelector("[data-cosmos-readout]")
+        .textContent.match(/camera ([\d.]+) ly\/s/);
+      if (match) window.cameraSpeeds.push(Number(match[1]));
+    });
+    window.speedObserver.observe(document.querySelector("[data-cosmos-readout]"), {
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+  });
+  const picker = page.getByLabel("Reference star");
+  const vega = await picker
+    .locator("option")
+    .filter({ hasText: /^Vega$/ })
+    .getAttribute("value");
+  await picker.selectOption({ label: "Vega" });
+  await expect(stage).toHaveAttribute("data-focus", vega);
+  await expect(stage).toHaveAttribute("data-flight", "idle");
+  await expect(page.locator("[data-cosmos-readout]")).toContainText("camera 0.00 ly/s");
+  await expect(page.locator("[data-cosmos-readout]")).toContainText("range 0.80 ly");
+  const speeds = await page.evaluate(() => {
+    window.speedObserver.disconnect();
+    return window.cameraSpeeds;
+  });
+  const moving = speeds.filter((speed) => speed > 0);
+  expect(moving.length).toBeGreaterThan(3);
+  expect(Math.max(...moving)).toBeGreaterThan(moving[0]);
+  expect(Math.max(...moving)).toBeGreaterThan(moving.at(-1));
+  expect(speeds.at(-1)).toBe(0);
+  await page.getByRole("button", { name: "New viewpoint" }).click();
+  await expect(stage).toHaveAttribute("data-flight", "flying");
+  const canvas = page.getByLabel(/Interactive 3D stellar neighborhood/);
+  await canvas.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(stage).toHaveAttribute("data-flight", "interrupted");
+  await picker.selectOption({ label: "Sirius" });
+  await picker.selectOption({ label: "Altair" });
+  const altair = await picker
+    .locator("option")
+    .filter({ hasText: /^Altair$/ })
+    .getAttribute("value");
+  await expect(stage).toHaveAttribute("data-focus", altair);
+  await expect(stage).toHaveAttribute("data-flight", "idle");
+});
+
+test("solar zoom reveals orbiting planets and a modest clock that pauses without reseeding", async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/cosmos?seed=123");
+  const stage = page.locator("[data-cosmos-stage]");
+  await expect(stage).toHaveAttribute("data-ready", "");
+  await page.getByLabel("Reference star").selectOption({ label: "Solar system" });
+  await expect(stage).toHaveAttribute("data-focus", "0");
+  await expect(stage).toHaveAttribute("data-scale", "solar");
+  await expect(stage).toHaveAttribute("data-flight", "idle");
+  await expect(page.locator("[data-solar-body]")).toHaveCount(9);
+  const clock = page.locator("[data-cosmos-orbit-clock]");
+  const time = clock.locator("time");
+  await expect(clock).toBeVisible();
+  await expect(clock).toContainText("1 day / second");
+  await expect(clock).toContainText("illustrative orbits");
+  const initial = await time.getAttribute("datetime");
+  await page.getByRole("button", { name: "Resume", exact: true }).click();
+  await expect.poll(() => time.getAttribute("datetime")).not.toBe(initial);
+  await page.getByRole("button", { name: "Pause", exact: true }).click();
+  const samples = await time.evaluate(async (node) => {
+    const values = [];
+    for (let i = 0; i < 8; i++) {
+      await new Promise(requestAnimationFrame);
+      values.push(node.dateTime);
+    }
+    return values;
+  });
+  expect(new Set(samples).size).toBe(1);
+  const pausedTime = await time.getAttribute("datetime");
+  await page.getByRole("button", { name: "New viewpoint" }).click();
+  await expect(stage).not.toHaveAttribute("data-seed", "123");
+  await expect(stage).toHaveAttribute("data-focus", "0");
+  await expect(time).toHaveAttribute("datetime", pausedTime);
+  await page.screenshot({ path: testInfo.outputPath("solar-system.png") });
+  const canvas = page.getByLabel(/Interactive 3D stellar neighborhood/);
+  await expect(canvas).toHaveCSS("cursor", "grab");
+  await canvas.focus();
+  for (let i = 0; i < 30; i++) await page.keyboard.press("-");
+  await expect(stage).toHaveAttribute("data-scale", "stellar");
+  await expect(clock).toBeHidden();
+  await page.getByRole("button", { name: "Recenter" }).click();
+  await expect(stage).toHaveAttribute("data-scale", "solar");
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(stage).toHaveAttribute("data-focus", "0");
+  await expect(clock).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test("cosmos fills the viewport without a frame and resizes with it", async ({ page }) => {

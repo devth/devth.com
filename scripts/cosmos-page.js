@@ -28,7 +28,10 @@ export const cosmosBody = `
   <div class="cosmos-stage" data-cosmos-stage>
     <canvas class="cosmos-canvas" aria-label="Interactive 3D stellar neighborhood. Catalogued stars within 100 light-years. Drag to orbit. Use the arrow keys to turn, plus and minus to zoom." tabindex="0"></canvas>
     <div class="cosmos-labels" data-cosmos-labels aria-hidden="true"></div>
-    <span class="cosmos-coordinate keep-case" data-cosmos-readout aria-hidden="true"></span>
+    <div class="cosmos-coordinate keep-case">
+      <span data-cosmos-readout></span>
+      <span data-cosmos-orbit-clock hidden><time></time><br>1 day / second · bodies enlarged · illustrative orbits</span>
+    </div>
   </div>
   <aside class="cosmos-reference" aria-label="Stellar references">
     <label for="cosmos-reference">Reference star</label>
@@ -39,7 +42,7 @@ export const cosmosBody = `
     <details class="cosmos-reference-list">
       <summary>Reference distances</summary>
       <dl>${landmarks.map((star) => `<div><dt>${escape(starName(star))}</dt><dd>${starDistance(star).toFixed(2)} ly</dd></div>`).join("")}</dl>
-      <p>Approximate catalog distances. Earth and the Sun share the origin at this scale.</p>
+      <p>Approximate catalog distances. Earth and the Sun share the origin at stellar scale; in the solar view, Earth orbits about 1 AU from the Sun. Choose Solar system to explore the planets. Planet orbits use <a href="https://ssd.jpl.nasa.gov/planets/approx_pos.html">approximate J2000 elements</a>; bodies are enlarged and time is accelerated, not a live ephemeris.</p>
     </details>
   </aside>
   <div class="cosmos-controls" data-cosmos-controls hidden>
