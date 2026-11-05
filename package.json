@@ -27,13 +27,13 @@
     "@playwright/test": "^1.64.1",
     "github-slugger": "^2.0.0",
     "gray-matter": "^4.0.3",
-    "linkedom": "^0.18.12",
+    "linkedom": "^0.18.15",
     "markdown-it": "^15.0.3",
     "markdown-it-anchor": "^10.0.0",
-    "shiki": "^4.5.0",
-    "three": "^0.186.1",
+    "shiki": "^4.6.0",
+    "three": "^0.187.0",
     "vite-plus": "1.4.0",
-    "wrangler": "4.153.0"
+    "wrangler": "4.156.2"
   },
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
