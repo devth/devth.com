@@ -17,7 +17,7 @@
     "deploy:production": "wrangler deploy --config wrangler.www.jsonc && wrangler deploy --config wrangler.production.jsonc"
   },
   "dependencies": {
-    "@cfworker/json-schema": "4.1.1",
+    "@cfworker/json-schema": "4.1.4",
     "@modelcontextprotocol/sdk": "1.32.2",
     "cannon-es": "0.20.0",
     "zod": "4.6.7"
