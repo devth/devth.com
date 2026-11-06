@@ -143,7 +143,7 @@ export function organicCurves(id, ageSeconds, seed = 0) {
  * old offscreen tips are replenished from existing branch nodes, not magnified.
  * Advance is capped for suspended frames; callers own pause/resume and rendering.
  */
-export function createGrowth(id, seed = 0) {
+export function createGrowth(id, seed = 0, steer) {
   const profile = profiles[id];
   if (!profile) throw new RangeError(`Unknown growth study: ${id}`);
   const random = randomSource(id, seed, "live-roots");
@@ -158,6 +158,7 @@ export function createGrowth(id, seed = 0) {
   const tips = [];
   let coreSize = 0;
   let roots = 0;
+  let contacts = 0;
   let elapsed = 0;
   let remainder = 0;
   let birthClock = 0;
@@ -194,6 +195,9 @@ export function createGrowth(id, seed = 0) {
   }
   function nextCurve(tip, bounds = defaultBounds) {
     if (!tip.plan || tip.planIndex === tip.plan.curves.length) {
+      const heading = steer?.(tip.point, tip.angle) ?? tip.angle;
+      if (heading !== tip.angle) contacts++;
+      tip.angle = heading;
       tip.plan = grammar.unit(tip, (point) => {
         for (let attempt = 0; attempt < 12 && segments.length; attempt++) {
           const candidate = segments[Math.floor(random() * segments.length)].end;
@@ -296,6 +300,7 @@ export function createGrowth(id, seed = 0) {
       extent: 0,
       segments: 0,
       roots,
+      contacts,
       tips: tips.length,
     };
     const coordinate = ([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`;
