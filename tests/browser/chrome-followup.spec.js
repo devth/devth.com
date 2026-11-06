@@ -94,6 +94,34 @@ test("About and search capitalize Trevor Hartman while keeping about lowercase",
   await expect(result.locator(".keep-case")).toHaveCSS("display", "inline");
 });
 
+test("post-navigation titles keep acronyms inline at the same size as the rest of the title", async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  for (const path of ["iteration-and-play", "you-might-not-want-a-monorepo"]) {
+    await page.goto(`/${path}`);
+    const nav = page.getByRole("navigation", { name: "More writing" });
+    const link = nav.locator('a[href="/dumb-yaml-ci"]');
+    await link.scrollIntoViewIfNeeded();
+    await expect(link.locator(".keep-case")).toHaveText(["YAML", "CI"]);
+    await nav.screenshot({ path: testInfo.outputPath(`post-navigation-${path}.png`) });
+    const titleStyle = await link.evaluate((node) => {
+      const style = getComputedStyle(node);
+      return { size: style.fontSize, family: style.fontFamily };
+    });
+    for (const acronym of await link.locator(".keep-case").all()) {
+      await expect(acronym).toHaveCSS("display", "inline");
+      await expect(acronym).toHaveCSS("font-size", titleStyle.size);
+      await expect(acronym).toHaveCSS("font-family", titleStyle.family);
+      await expect(acronym).toHaveCSS("text-transform", "none");
+      await expect(acronym).toHaveCSS("margin-bottom", "0px");
+    }
+    const direction = link.locator(":scope > span").first();
+    await expect(direction).toHaveCSS("display", "block");
+    await expect(direction).toHaveCSS("font-size", "10px");
+  }
+});
+
 test("on-page writing is lowercase while acronyms and code retain their case", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("body")).toHaveCSS("text-transform", "lowercase");

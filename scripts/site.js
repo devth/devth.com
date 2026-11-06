@@ -218,7 +218,7 @@ function articleBody(page, { isPost = false, previous, next } = {}) {
   </header>
   <div class="reading-layout${isPost ? "" : " standalone-reading"}${toc ? " with-toc" : ""}">${isPost ? `<aside class="reading-aside"><span>categories</span><p>${page.categories.map(categoryLink).join("<br>")}</p></aside>` : ""}${toc}<article class="prose">${rendered}</article></div>
   ${page.slug === "about" ? '<p class="x-profile"><a href="https://x.com/devth">@devth on X ↗</a></p>' : ""}
-  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span>← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span>newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : ""}`;
+  ${isPost ? `<nav class="post-navigation" aria-label="More writing">${previous ? `<a href="/${previous.slug}"><span class="post-direction">← older post</span>${escape(previous.title)}</a>` : "<div></div>"}${next ? `<a href="/${next.slug}"><span class="post-direction">newer post →</span>${escape(next.title)}</a>` : "<div></div>"}</nav>` : ""}`;
 }
 
 export async function generateSite() {

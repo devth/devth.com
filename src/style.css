@@ -652,7 +652,7 @@ button,
   line-height: 1.4;
   max-width: 34ch;
 }
-.post-navigation span {
+.post-navigation .post-direction {
   display: block;
   font: 10px var(--mono);
   color: var(--muted);
@@ -890,7 +890,7 @@ button,
 }
 .site-header nav,
 .site-footer a,
-.post-navigation span,
+.post-navigation .post-direction,
 .cosmos-colophon a,
 .cosmos-buttons button,
 .category-link {
