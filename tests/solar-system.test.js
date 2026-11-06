@@ -38,7 +38,7 @@ it("keeps all eight planetary orbits in proportional AU with bounded elliptic mo
   }
   expect((360 * 36525) / planets[2].rate / 60).toBeCloseTo(6.09, 1);
 });
-it("reveals the Sun and planets only near their real stellar origin, with registered disposable resources", () => {
+it("renders the Sun and planets at stellar and solar scales, with registered disposable resources", () => {
   const resources = new Set();
   const register = (value) => {
     resources.add(value);
@@ -48,7 +48,12 @@ it("reveals the Sun and planets only near their real stellar origin, with regist
   const camera = new PerspectiveCamera(55);
   camera.position.set(0, 0, 1);
   solar.update(0, camera, 800);
-  expect(solar.group.visible).toBe(false);
+  expect(solar.group.visible).toBe(true);
+  const distantEarth = solar.bodies.find((body) => body.name === "Earth").mesh.position.clone();
+  solar.update(1, camera, 800);
+  expect(
+    solar.bodies.find((body) => body.name === "Earth").mesh.position.distanceTo(distantEarth),
+  ).toBeGreaterThan(0);
   camera.position.set(0, 0, 20 * lightYearsPerAU);
   solar.update(0, camera, 800);
   expect(solar.group.visible).toBe(true);

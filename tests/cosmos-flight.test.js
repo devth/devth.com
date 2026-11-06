@@ -1,6 +1,12 @@
 import { Vector3 } from "three";
 import { it, expect } from "vite-plus/test";
-import { cameraFlight, sampleFlight, flightEase, flightSeconds } from "../src/cosmos-flight.js";
+import {
+  cameraFlight,
+  sampleFlight,
+  flightEase,
+  flightSeconds,
+  inwardOffset,
+} from "../src/cosmos-flight.js";
 
 it("finishes a smooth flight at the exact requested star and range", () => {
   const position = new Vector3(0, 0, 200),
@@ -16,6 +22,28 @@ it("finishes a smooth flight at the exact requested star and range", () => {
   expect(position.toArray()).toEqual([0, 0, 200]);
   expect(flightSeconds).toBe(2.4);
 });
+it("arrives beyond the selected star looking inward, with deterministic seeded variation", () => {
+  const center = new Vector3(1.7, 4.5, 0.15);
+  for (const destination of [new Vector3(), new Vector3(8, -2, 4), new Vector3(1.7, 20, 0.15)]) {
+    const towardCenter = center.clone().sub(destination).normalize();
+    for (const seed of [0, 123, 1450000000, 3000000000, 4294967295]) {
+      const offset = inwardOffset(destination, center, 0.8, seed);
+      expect(offset.length()).toBeCloseTo(0.8, 12);
+      expect(offset.clone().negate().normalize().dot(towardCenter)).toBeGreaterThan(0.98);
+      expect(destination.clone().add(offset).distanceTo(center)).toBeGreaterThan(
+        destination.distanceTo(center),
+      );
+      expect(offset.toArray()).toEqual(inwardOffset(destination, center, 0.8, seed).toArray());
+    }
+  }
+  expect(
+    inwardOffset(new Vector3(), center, 0.8, 0).distanceTo(
+      inwardOffset(new Vector3(), center, 0.8, 1450000000),
+    ),
+  ).toBeGreaterThan(0.1);
+  expect(inwardOffset(center, center, 0.8, 123).toArray().every(Number.isFinite)).toBe(true);
+});
+
 it("accelerates and decelerates with zero endpoint velocity and logarithmic zoom", () => {
   const step = 0.001;
   expect(flightEase(step) / step).toBeLessThan(0.00002);

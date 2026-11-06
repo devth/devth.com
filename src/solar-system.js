@@ -153,7 +153,6 @@ export function planetPosition(planet, days) {
 export function createSolarSystem(geometry, material) {
   const group = new THREE.Group();
   group.scale.setScalar(lightYearsPerAU);
-  group.visible = false;
   const sphere = geometry(new THREE.SphereGeometry(1, 24, 16));
   const sun = new THREE.Mesh(sphere, material(new THREE.MeshBasicMaterial({ color: "#ffdd91" })));
   group.add(
@@ -205,8 +204,6 @@ export function createSolarSystem(geometry, material) {
   }
   const cameraAU = new THREE.Vector3();
   function update(days, camera, height) {
-    group.visible = camera.position.length() / lightYearsPerAU < 400;
-    if (!group.visible) return;
     cameraAU.copy(camera.position).divideScalar(lightYearsPerAU);
     for (const body of bodies) {
       if (body.a) body.mesh.position.fromArray(planetPosition(body, days));

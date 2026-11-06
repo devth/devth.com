@@ -115,6 +115,52 @@ test("reference selection and New viewpoint fly smoothly, ease speed and allow i
   await expect(stage).toHaveAttribute("data-flight", "idle");
 });
 
+test("stars and solar meshes render together at both scales without dimming the sky", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    window.cosmosDraws = [];
+    for (const method of ["drawArrays", "drawElements"]) {
+      const draw = WebGL2RenderingContext.prototype[method];
+      WebGL2RenderingContext.prototype[method] = function (mode, ...args) {
+        if (this.canvas.matches("[data-cosmos-stage] canvas")) {
+          const program = this.getParameter(this.CURRENT_PROGRAM);
+          const opacity = this.getUniformLocation(program, "skyOpacity");
+          window.cosmosDraws.push({
+            mode,
+            opacity: opacity ? this.getUniform(program, opacity) : 1,
+          });
+        }
+        return draw.call(this, mode, ...args);
+      };
+    }
+  });
+  await page.goto("/cosmos?seed=123");
+  const stage = page.locator("[data-cosmos-stage]");
+  await expect(stage).toHaveAttribute("data-ready", "");
+  for (const scale of ["stellar", "solar"]) {
+    if (scale === "solar") {
+      await page.evaluate(() => {
+        window.cosmosDraws = [];
+      });
+      await page.getByLabel("Reference star").selectOption({ label: "Solar system" });
+    }
+    await expect(stage).toHaveAttribute("data-scale", scale);
+    await expect
+      .poll(() =>
+        page.evaluate(() => ({
+          stars: window.cosmosDraws.some((draw) => draw.mode === 0),
+          bodies: window.cosmosDraws.some((draw) => draw.mode === 4),
+          undimmed: window.cosmosDraws
+            .filter((draw) => draw.mode === 0)
+            .every((draw) => draw.opacity === 1),
+        })),
+      )
+      .toEqual({ stars: true, bodies: true, undimmed: true });
+  }
+});
+
 test("solar zoom reveals orbiting planets and a modest clock that pauses without reseeding", async ({
   page,
 }, testInfo) => {
