@@ -338,6 +338,7 @@ export async function generateSite() {
       "cosmos.js",
       "star-catalog.js",
       "cosmos-flight.js",
+      "constellations.js",
       "solar-system.js",
       "hover-lab.css",
       "hover-lab.js",
