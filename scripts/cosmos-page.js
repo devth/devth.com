@@ -5,6 +5,9 @@ const catalog = JSON.parse(
   readFileSync(new URL("../public/data/nearby-stars.json", import.meta.url)),
 );
 const landmarks = references(catalog);
+const { figures } = JSON.parse(
+  readFileSync(new URL("../public/data/constellations.json", import.meta.url)),
+);
 const escape = (value) =>
   String(value).replace(
     /[&<>"']/g,
@@ -26,7 +29,7 @@ export const cosmosBody = `
     <p class="cosmos-scale">100 light-year radius · linear positions</p>
   </header>
   <div class="cosmos-stage" data-cosmos-stage>
-    <canvas class="cosmos-canvas" aria-label="Interactive 3D stellar neighborhood. Catalogued stars within 100 light-years. Drag to orbit. Use the arrow keys to turn, plus and minus to zoom." tabindex="0"></canvas>
+    <canvas class="cosmos-canvas" aria-label="Interactive 3D stellar neighborhood. Nearby stars within 100 light-years, plus real stars for seven constellation guides. Drag to orbit. Use the arrow keys to turn, plus and minus to zoom." tabindex="0"></canvas>
     <div class="cosmos-labels" data-cosmos-labels aria-hidden="true"></div>
     <div class="cosmos-coordinate keep-case">
       <span data-cosmos-readout></span>
@@ -34,15 +37,17 @@ export const cosmosBody = `
     </div>
   </div>
   <aside class="cosmos-reference" aria-label="Stellar references">
-    <label for="cosmos-reference">Reference star</label>
+    <label for="cosmos-reference">Reference star / constellation</label>
     <select id="cosmos-reference" data-cosmos-reference disabled>
-      ${landmarks.map((star) => `<option value="${star[0]}" data-distance="${starDistance(star).toFixed(2)}"${star[1] === "Proxima Centauri" ? " selected" : ""}>${escape(starName(star))}</option>`).join("")}
+      <optgroup label="Nearby stars">${landmarks.map((star) => `<option value="${star[0]}" data-distance="${starDistance(star).toFixed(2)}"${star[1] === "Proxima Centauri" ? " selected" : ""}>${escape(starName(star))}</option>`).join("")}</optgroup>
+      <optgroup label="Constellations">${figures.map((figure) => `<option value="constellation:${figure.id}">${escape(figure.name)}</option>`).join("")}</optgroup>
     </select>
     <p class="cosmos-distance" data-cosmos-distance>4.23 light-years from Earth</p>
     <details class="cosmos-reference-list">
       <summary>Reference distances</summary>
       <dl>${landmarks.map((star) => `<div><dt>${escape(starName(star))}</dt><dd>${starDistance(star).toFixed(2)} ly</dd></div>`).join("")}</dl>
       <p>Approximate catalog distances. Earth and the Sun share the origin at stellar scale; in the solar view, Earth orbits about 1 AU from the Sun. Choose Solar system to explore the planets. Planet orbits use <a href="https://ssd.jpl.nasa.gov/planets/approx_pos.html">approximate J2000 elements</a>; bodies are enlarged and time is accelerated, not a live ephemeris.</p>
+      <p>Choose a constellation to see its familiar pattern from near the Sun. Guide lines connect stars at their real catalog distances, not physical structures or IAU boundaries. Patterns change with viewpoint. The Big Dipper is an asterism within Ursa Major.</p>
     </details>
   </aside>
   <div class="cosmos-controls" data-cosmos-controls hidden>
@@ -50,11 +55,12 @@ export const cosmosBody = `
       <button type="button" data-cosmos-pause aria-pressed="false">Pause</button>
       <button type="button" data-cosmos-shuffle>New viewpoint</button>
       <button type="button" data-cosmos-reset>Recenter</button>
+      <button type="button" data-cosmos-constellations aria-label="Constellation guides" aria-pressed="true">Guides</button>
     </div>
     <p>DRAG TO ORBIT <span aria-hidden="true">/</span> PINCH TO ZOOM<br>KEYBOARD: ARROWS, + / −</p>
   </div>
   <p class="cosmos-status" data-cosmos-status role="status"></p>
-  <p class="cosmos-source">Positions: <a href="https://github.com/astronexus/HYG-Database">HYG 4.1</a> · J2000 · <a href="/data/README.md">data &amp; license</a><br>Star sizes and brightness exaggerated; catalog sample, not a complete census.</p>
+  <p class="cosmos-source">Positions: <a href="https://github.com/astronexus/HYG-Database">HYG 4.1</a> · J2000 · <a href="/data/README.md">data &amp; license</a><br>Star sizes and brightness exaggerated; constellation stars emphasized. Guide lines are not physical structures; catalog sample, not a complete census.</p>
   <noscript><p class="cosmos-status">3D needs JavaScript. Reference distances remain available.</p></noscript>
   <div class="cosmos-colophon"><a href="/">Home ↗</a></div>
 </section>

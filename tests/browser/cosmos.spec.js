@@ -113,6 +113,10 @@ test("reference selection and New viewpoint fly smoothly, ease speed and allow i
     .getAttribute("value");
   await expect(stage).toHaveAttribute("data-focus", altair);
   await expect(stage).toHaveAttribute("data-flight", "idle");
+  await picker.selectOption({ label: "Orion" });
+  await expect(stage).toHaveAttribute("data-flight", "flying");
+  await expect(stage).toHaveAttribute("data-focus", "constellation:Ori");
+  await expect(stage).toHaveAttribute("data-flight", "idle");
 });
 
 test("stars and solar meshes render together at both scales without dimming the sky", async ({
@@ -209,6 +213,86 @@ test("solar zoom reveals orbiting planets and a modest clock that pauses without
   await expect(stage).toHaveAttribute("data-focus", "0");
   await expect(clock).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("common constellations frame real stars from the Sun and toggle their guides", async ({
+  page,
+}, testInfo) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    window.constellationDraws = [];
+    const draw = WebGL2RenderingContext.prototype.drawArrays;
+    WebGL2RenderingContext.prototype.drawArrays = function (mode, first, count) {
+      if (this.canvas.matches("[data-cosmos-stage] canvas"))
+        window.constellationDraws.push({ mode, count });
+      return draw.call(this, mode, first, count);
+    };
+  });
+  await page.goto("/cosmos?seed=123");
+  const stage = page.locator("[data-cosmos-stage]");
+  await expect(stage).toHaveAttribute("data-ready", "");
+  await expect(stage).toHaveAttribute("data-constellation-stars", "62");
+  const picker = page.getByLabel("Reference star");
+  await picker.selectOption({ label: "Orion" });
+  await expect(stage).toHaveAttribute("data-focus", "constellation:Ori");
+  await expect(page.locator(".cosmos-heading").getByText("Orion", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-cosmos-distance]")).toContainText("view from the solar system");
+  await expect
+    .poll(() =>
+      page.evaluate(() => window.constellationDraws.some((d) => d.mode === 1 && d.count === 160)),
+    )
+    .toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("orion.png") });
+  const toggle = page.getByRole("button", { name: "Constellation guides", exact: true });
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await page.evaluate(() => {
+    window.constellationDraws = [];
+  });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await expect.poll(() => page.evaluate(() => window.constellationDraws.length)).toBeGreaterThan(0);
+  expect(
+    await page.evaluate(() =>
+      window.constellationDraws.some((d) => d.mode === 1 && d.count === 160),
+    ),
+  ).toBe(false);
+  await expect(page.locator(".cosmos-constellation-label:visible")).toHaveCount(0);
+  await expect(stage).toHaveAttribute("data-stars", "4060");
+  for (const [name, id] of [
+    ["Big Dipper", "UMa"],
+    ["Cassiopeia", "Cas"],
+    ["Cygnus", "Cyg"],
+    ["Leo", "Leo"],
+    ["Scorpius", "Sco"],
+    ["Southern Cross", "Cru"],
+  ]) {
+    await picker.selectOption({ label: name });
+    await expect(stage).toHaveAttribute("data-focus", `constellation:${id}`);
+    await expect(page.locator(".cosmos-heading").getByText(name, { exact: true })).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    if (id === "UMa") await page.screenshot({ path: testInfo.outputPath("big-dipper.png") });
+  }
+  await page.setViewportSize({ width: 320, height: 800 });
+  await expect(toggle).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await picker.selectOption({ label: "Solar system" });
+  await expect(stage).toHaveAttribute("data-scale", "solar");
+  await expect(page.locator("[data-cosmos-readout]")).toContainText("range 20.00 AU");
+});
+
+test("constellation data failure preserves the nearby scene and its reference controls", async ({
+  page,
+}) => {
+  await page.route("**/data/constellations.json", (route) => route.abort());
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/cosmos");
+  await expect(page.locator("[data-cosmos-stage]")).toHaveAttribute("data-ready", "");
+  await expect(page.getByRole("status")).toContainText("constellation guides unavailable");
+  await expect(
+    page.getByRole("button", { name: "Constellation guides", exact: true }),
+  ).toBeDisabled();
+  await page.getByLabel("Reference star").selectOption({ label: "Sirius" });
+  await expect(page.locator("[data-cosmos-readout]")).toContainText("range 0.80 ly");
 });
 
 test("cosmos fills the viewport without a frame and resizes with it", async ({ page }) => {

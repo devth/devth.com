@@ -2,7 +2,14 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { onPage } from "./page-lifecycle.js";
 import { references, starDistance, starName, starPosition } from "./star-catalog.js";
-import { cameraFlight, sampleFlight, flightSeconds, inwardOffset } from "./cosmos-flight.js";
+import { createConstellations, constellationView } from "./constellations.js";
+import {
+  cameraFlight,
+  sampleFlight,
+  flightSeconds,
+  inwardOffset,
+  flightEase,
+} from "./cosmos-flight.js";
 import {
   createSolarSystem,
   lightYearsPerAU,
@@ -15,6 +22,7 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
   const canvas = stage.querySelector("canvas");
   const status = document.querySelector("[data-cosmos-status]");
   const pauseButton = document.querySelector("[data-cosmos-pause]");
+  const constellationButton = document.querySelector("[data-cosmos-constellations]");
   const readout = stage.querySelector("[data-cosmos-readout]");
   const orbitClock = stage.querySelector("[data-cosmos-orbit-clock]");
   const orbitTime = orbitClock.querySelector("time");
@@ -23,7 +31,9 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
   const labelLayer = stage.querySelector("[data-cosmos-labels]");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   on(picker, "change", () => {
-    distance.textContent = `${picker.selectedOptions[0].dataset.distance} light-years from Earth`;
+    distance.textContent = picker.value.startsWith("constellation:")
+      ? "Sky pattern · view from the solar system"
+      : `${picker.selectedOptions[0].dataset.distance} light-years from Earth`;
   });
   picker.disabled = false;
   let renderer;
@@ -57,7 +67,12 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
   }
   dispose(destroy);
   try {
-    const response = await fetch("/data/nearby-stars.json", { signal });
+    const [response, figureData] = await Promise.all([
+      fetch("/data/nearby-stars.json", { signal }),
+      fetch("/data/constellations.json", { signal })
+        .then((result) => (result.ok ? result.json() : null))
+        .catch(() => null),
+    ]);
     if (!response.ok) throw new Error("catalog");
     const catalog = await response.json();
     if (signal.aborted) return;
@@ -67,7 +82,7 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     renderer.setClearColor("#06070b", 0);
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 2000);
+    const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 10000);
     controls = new OrbitControls(camera, canvas);
     controls.cursorStyle = "grab";
     controls.enableDamping = !reducedMotion.matches;
@@ -103,19 +118,26 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     const cream = new THREE.Color("#fff7e5");
     const amber = new THREE.Color("#efa46e");
     const color = new THREE.Color();
-    for (const star of catalog.stars) {
+    const extraStars = figureData?.stars ?? [];
+    const nearbyIds = new Set(catalog.stars.map((star) => star[0]));
+    const figureIds = new Set(extraStars.map((star) => star[0]));
+    const allStars = [...catalog.stars, ...extraStars.filter((star) => !nearbyIds.has(star[0]))];
+    for (const star of allStars) {
       const position = starPosition(star);
       positions.push(...position);
-      neighborhoodCenter.x += position[0];
-      neighborhoodCenter.y += position[1];
-      neighborhoodCenter.z += position[2];
+      if (nearbyIds.has(star[0])) {
+        neighborhoodCenter.x += position[0];
+        neighborhoodCenter.y += position[1];
+        neighborhoodCenter.z += position[2];
+      }
       const index = star[6];
       color.copy(blue);
       if (index === null) color.set("#e8e8e8");
       else if (index < 0.6) color.lerp(cream, THREE.MathUtils.clamp((index + 0.3) / 0.9, 0, 1));
       else color.set("#fff7e5").lerp(amber, THREE.MathUtils.clamp((index - 0.6) / 1.4, 0, 1));
       colors.push(color.r, color.g, color.b);
-      sizes.push(star[0] === 0 ? 5 : THREE.MathUtils.clamp(3.1 - star[5] * 0.15, 0.8, 3.8));
+      const size = star[0] === 0 ? 5 : THREE.MathUtils.clamp(3.1 - star[5] * 0.15, 0.8, 3.8);
+      sizes.push(figureIds.has(star[0]) ? Math.max(size, starDistance(star) * 0.016) : size);
     }
     neighborhoodCenter.divideScalar(catalog.stars.length);
     const stars = new THREE.Points(
@@ -155,6 +177,34 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       ),
     );
     scene.add(stars);
+    const constellations = createConstellations(
+      figureData ?? { stars: [], figures: [] },
+      geometry,
+      material,
+    );
+    scene.add(constellations.group);
+    constellationButton.disabled = !constellations.figures.length;
+    for (const option of picker.querySelectorAll('[value^="constellation:"]'))
+      option.disabled = !constellations.figures.some(
+        (figure) => option.value === `constellation:${figure.id}`,
+      );
+    const constellationLabels = constellations.figures.map((figure) => {
+      const node = document.createElement("span");
+      node.className = "cosmos-star-label cosmos-constellation-label";
+      node.dataset.constellation = figure.id;
+      const name = document.createElement("strong");
+      name.textContent = figure.name;
+      node.append(name);
+      labelLayer.append(node);
+      return { figure, node, position: figure.position };
+    });
+    const currentFigure = () =>
+      constellations.figures.find((figure) => picker.value === `constellation:${figure.id}`);
+    on(constellationButton, "click", () => {
+      constellations.group.visible = !constellations.group.visible;
+      constellationButton.setAttribute("aria-pressed", String(constellations.group.visible));
+      dirty = true;
+    });
     const guideGeometry = geometry(
       new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
     );
@@ -205,13 +255,18 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     let selected;
     let solarDetail = false;
     function describeDistance() {
+      if (currentFigure()) {
+        distance.textContent = "Sky pattern · view from the solar system";
+        return;
+      }
       distance.textContent =
         solarDetail && selected[0] === 0
           ? "Earth–Sun ≈ 1 AU"
           : `${starDistance(selected).toFixed(2)} light-years from Earth`;
     }
     function selectStar(fly = false) {
-      selected = landmarks.find((star) => String(star[0]) === picker.value);
+      selected = landmarks.find((star) => String(star[0]) === picker.value) ?? landmarks[0];
+      guide.visible = marker.visible = !currentFigure();
       describeDistance();
       const position = new THREE.Vector3(...starPosition(selected));
       guideGeometry.setFromPoints([new THREE.Vector3(), position]);
@@ -234,33 +289,44 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       flight = null;
       stage.dataset.flight = "interrupted";
       controls.enableDamping = !reducedMotion.matches;
-      controls.autoRotate = !paused;
+      controls.autoRotate = !paused && !currentFigure();
       dirty = true;
     }
     controls.addEventListener("start", interruptFlight);
     dispose(() => controls.removeEventListener("start", interruptFlight));
     function finishFlight() {
       sampleFlight(flight, 1, camera.position, controls.target);
+      camera.fov = flight.endFov;
       flight = null;
       stage.dataset.flight = "idle";
       stage.dataset.focus = flightFocus;
       controls.enableDamping = !reducedMotion.matches;
-      controls.autoRotate = !paused;
+      controls.autoRotate = !paused && !currentFigure();
       dirty = true;
     }
     function focusSelected() {
       controls.autoRotate = false;
       controls.enableDamping = false;
       controls.update(0);
-      const destination = new THREE.Vector3(...starPosition(selected));
-      const offset = inwardOffset(
-        destination,
-        neighborhoodCenter,
-        selected[0] === 0 ? 20 * lightYearsPerAU : 0.8,
-        seed,
-      );
+      const figure = currentFigure();
+      const view = figure ? constellationView(figure, camera.aspect, seed) : null;
+      const destination = view?.target ?? new THREE.Vector3(...starPosition(selected));
+      const offset =
+        view?.offset ??
+        inwardOffset(
+          destination,
+          neighborhoodCenter,
+          selected[0] === 0 ? 20 * lightYearsPerAU : 0.8,
+          seed,
+        );
+      if (figure) {
+        constellations.group.visible = true;
+        constellationButton.setAttribute("aria-pressed", "true");
+      }
       flight = cameraFlight(camera.position, controls.target, destination, offset);
-      flightFocus = String(selected[0]);
+      flight.startFov = camera.fov;
+      flight.endFov = view?.fov ?? 55;
+      flightFocus = figure ? `constellation:${figure.id}` : String(selected[0]);
       stage.dataset.flight = "flying";
       if (reducedMotion.matches) {
         finishFlight();
@@ -287,7 +353,7 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       }
     }
     function updatePause() {
-      controls.autoRotate = !paused && !flight;
+      controls.autoRotate = !paused && !flight && !currentFigure();
       pauseButton.textContent = paused ? "Resume" : "Pause";
       pauseButton.setAttribute("aria-pressed", String(paused));
       dirty = true;
@@ -296,24 +362,32 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       const width = stage.clientWidth,
         height = stage.clientHeight;
       const occupied = [];
-      for (const label of [...solarLabels, ...labels]) label.node.hidden = true;
+      for (const label of [...solarLabels, ...labels, ...constellationLabels])
+        label.node.hidden = true;
       if (solarDetail)
         for (const label of solarLabels) label.body.mesh.getWorldPosition(label.position);
-      const activeLabels = solarDetail
-        ? [...solarLabels, ...labels.filter((label) => label.star[0] !== 0)]
-        : labels;
+      const activeLabels = [
+        ...(solarDetail
+          ? [...solarLabels, ...labels.filter((label) => label.star[0] !== 0)]
+          : labels),
+        ...(constellations.group.visible ? constellationLabels : []),
+      ];
       const priority = (label) =>
-        label.body
-          ? label.body.name === "Sun"
-            ? 3
-            : label.body.name === "Earth"
-              ? 2
-              : 0
-          : label.star === selected
-            ? 4
-            : label.star[0] === 0
-              ? 2
-              : 0;
+        label.figure
+          ? label.figure === currentFigure()
+            ? 5
+            : 1
+          : label.body
+            ? label.body.name === "Sun"
+              ? 3
+              : label.body.name === "Earth"
+                ? 2
+                : 0
+            : label.star === selected
+              ? 4
+              : label.star[0] === 0
+                ? 2
+                : 0;
       const ordered = [...activeLabels].sort((a, b) => priority(b) - priority(a));
       const limit = width < 700 ? 5 : 9;
       for (const label of ordered) {
@@ -353,7 +427,7 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
         label.node.hidden = hidden;
         label.node.toggleAttribute(
           "data-selected",
-          label.body ? label.body.name === "Sun" : label.star === selected,
+          label.figure ? false : label.body ? label.body.name === "Sun" : label.star === selected,
         );
         if (hidden) continue;
         label.node.style.transform = `translate3d(${placement.left}px,${placement.top}px,0)`;
@@ -367,6 +441,11 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       if (flight) {
         flight.elapsed += elapsed;
         sampleFlight(flight, flight.elapsed / flightSeconds, camera.position, controls.target);
+        camera.fov = THREE.MathUtils.lerp(
+          flight.startFov,
+          flight.endFov,
+          flightEase(flight.elapsed / flightSeconds),
+        );
         if (flight.elapsed >= flightSeconds) finishFlight();
         dirty = true;
       }
@@ -381,19 +460,22 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
       }
       if (!dirty) return;
       const range = camera.position.distanceTo(controls.target);
-      camera.near = Math.max(1e-11, Math.min(0.1, range * 0.002));
+      camera.near = Math.max(1e-11, Math.min(0.1, range * 0.002, camera.position.length() * 0.002));
       camera.updateProjectionMatrix();
       solar.update(orbitDays, camera, stage.clientHeight);
-      solarDetail = camera.position.length() / lightYearsPerAU < 400;
+      const figure = currentFigure();
+      solarDetail = camera.position.length() / lightYearsPerAU < 400 && !figure;
       const scale = solarDetail ? "solar" : "stellar";
-      if (stage.dataset.scale !== scale) {
+      if (stage.dataset.scale !== scale || stage.dataset.constellation !== (figure?.id ?? "")) {
         stage.dataset.scale = scale;
-        document.querySelector(".cosmos-heading > p").textContent = solarDetail
-          ? "Our solar system"
-          : "Our stellar neighborhood";
-        document.querySelector(".cosmos-scale").textContent = solarDetail
-          ? "Planetary orbits · astronomical units"
-          : "100 light-year radius · linear positions";
+        stage.dataset.constellation = figure?.id ?? "";
+        document.querySelector(".cosmos-heading > p").textContent =
+          figure?.name ?? (solarDetail ? "Our solar system" : "Our stellar neighborhood");
+        document.querySelector(".cosmos-scale").textContent = figure
+          ? "Sky pattern · view from the solar system"
+          : solarDetail
+            ? "Planetary orbits · astronomical units"
+            : "100 light-year radius · linear positions";
         describeDistance();
       }
       orbitClock.hidden = !solarDetail;
@@ -424,6 +506,12 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     resize = new ResizeObserver(() => {
       if (disposed || !stage.clientWidth || !stage.clientHeight) return;
       camera.aspect = stage.clientWidth / stage.clientHeight;
+      const figure = currentFigure();
+      if (figure) {
+        const fov = constellationView(figure, camera.aspect, seed).fov;
+        if (flight) flight.endFov = fov;
+        else camera.fov = fov;
+      }
       camera.updateProjectionMatrix();
       renderer.setSize(stage.clientWidth, stage.clientHeight, false);
       if (!viewSized && stage.dataset.focus === "neighborhood" && !flight) viewpoint(seed, false);
@@ -488,7 +576,8 @@ onPage("[data-cosmos-stage]", async (stage, { on, dispose, signal }) => {
     updatePause();
     stage.dataset.stars = String(catalog.stars.length);
     stage.dataset.ready = "";
-    status.textContent = `${catalog.stars.length.toLocaleString("en-US")} catalogued stars · 100 ly radius`;
+    stage.dataset.constellationStars = String(allStars.length - catalog.stars.length);
+    status.textContent = `${catalog.stars.length.toLocaleString("en-US")} catalogued stars · 100 ly radius${figureData ? ` + ${allStars.length - catalog.stars.length} constellation stars` : " · constellation guides unavailable"}`;
     document.querySelector("[data-cosmos-controls]").hidden = false;
     syncLoop();
   } catch {

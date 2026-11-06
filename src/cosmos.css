@@ -239,6 +239,13 @@ body.cosmos-page {
   border-radius: 0;
   text-shadow: inherit;
 }
+.cosmos-constellation-label {
+  color: #b4c7db;
+  letter-spacing: 0.08em;
+}
+.cosmos-buttons button[data-cosmos-constellations][aria-pressed="true"] {
+  border-color: var(--accent);
+}
 .cosmos-buttons button:hover {
   color: var(--accent);
   border-color: var(--accent);
@@ -301,6 +308,18 @@ body.cosmos-page {
   .cosmos-status,
   .cosmos-source {
     font-size: 9px;
+  }
+}
+@media (max-width: 700px) and (min-height: 501px) {
+  .cosmos-stage[data-constellation]:not([data-constellation=""]) ~ .cosmos-reference {
+    left: auto;
+    right: var(--cosmos-gutter);
+    width: 190px;
+  }
+  .cosmos-stage[data-constellation]:not([data-constellation=""])
+    ~ .cosmos-reference
+    .cosmos-distance {
+    display: none;
   }
 }
 @media (max-height: 500px) {
