@@ -324,6 +324,7 @@ export async function generateSite() {
       "demolition-physics.js",
       "demolition-history.js",
       "link-sigil.js",
+      "logo-weave.js",
       "hover-target.js",
       "page-lifecycle.js",
       "fragment-history.js",
