@@ -1,5 +1,66 @@
 import { test, expect } from "@playwright/test";
 
+async function placeLogoAheadOf(page, link) {
+  // Move the real wordmark into a known growing tip's path without changing the link's layout.
+  await page.locator(".brand").evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    element.style.width = `${box.width}px`;
+    element.style.height = `${box.height}px`;
+  });
+  const box = await link.boundingBox();
+  await page.locator(".brand-mark").evaluate((element, box) => {
+    Object.assign(element.style, {
+      position: "fixed",
+      left: `${box.x + box.width}px`,
+      top: `${box.y + box.height / 2 - 58}px`,
+      fontSize: "96px",
+      lineHeight: "1",
+      letterSpacing: "-0.08em",
+    });
+  }, box);
+}
+
+test("growth from another link responds only to real logo encounters and reuses the ink cache", async ({
+  page,
+}, testInfo) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "devth:hover-preferences:v1",
+      JSON.stringify({ structure: "tendril", generation: true }),
+    );
+    Math.random = () => 7 / 0x100000000;
+    const read = CanvasRenderingContext2D.prototype.getImageData;
+    window.__glyphReads = 0;
+    CanvasRenderingContext2D.prototype.getImageData = function (...args) {
+      if (this.canvas.width === 160 && this.canvas.height === 160) window.__glyphReads++;
+      return read.apply(this, args);
+    };
+  });
+  await page.clock.install({ time: new Date("2026-11-01T12:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-11-01T12:00:01Z"));
+  await page.goto("/");
+  const link = page
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "about", exact: true });
+  await placeLogoAheadOf(page, link);
+  await link.focus();
+  const front = page.locator(".link-sigil:not([data-retiring])");
+  await expect(front).toBeVisible();
+  await page.clock.runFor(2500);
+  const contacts = await front.getAttribute("data-growth-contacts");
+  expect(Number(contacts)).toBeGreaterThan(0);
+  const reads = await page.evaluate(() => window.__glyphReads);
+  expect(reads).toBeGreaterThan(0);
+  expect(reads).toBeLessThanOrEqual(6);
+  await page.screenshot({ path: testInfo.outputPath("controlled-ink-encounter.png") });
+  await page.locator(".brand-mark").evaluate((element) => {
+    element.style.left = "10000px";
+  });
+  await page.clock.runFor(3000);
+  await expect(front).toHaveAttribute("data-growth-contacts", contacts);
+  expect(await page.evaluate(() => window.__glyphReads)).toBe(reads);
+});
+
 for (const pathname of ["/", "/about"]) {
   test(`growth weaves around actual logo and title glyphs on ${pathname}`, async ({
     page,
@@ -29,12 +90,10 @@ for (const pathname of ["/", "/about"]) {
     const key = await front.getAttribute("data-sigil-key");
     const rear = page.locator(`.sigil-rear[data-sigil-key="${key}"]`);
     await expect(rear).toBeVisible();
-    await expect(front).toHaveAttribute("data-logo-glyphs", "5");
-    await expect(rear).toHaveAttribute("data-logo-glyphs", "5");
-    const reads = await page.evaluate(() => window.__glyphReads);
-    expect(reads).toBe(5);
+    await expect(front).not.toHaveAttribute("data-logo-glyphs");
+    await expect(rear).not.toHaveAttribute("data-logo-glyphs");
     await page.clock.runFor(10000);
-    expect(await page.evaluate(() => window.__glyphReads)).toBe(reads);
+    expect(await page.evaluate(() => window.__glyphReads)).toBeLessThanOrEqual(6);
     const both = page.locator(`svg[data-sigil-key="${key}"]`);
     await expect(both).toHaveCount(2);
     await expect(both.locator("path")).toHaveCount(6);
@@ -80,28 +139,45 @@ for (const pathname of ["/", "/about"]) {
 for (const failure of ["unavailable", "restricted"]) {
   test(`logo ink sampling falls back when canvas is ${failure}`, async ({ page }) => {
     await page.addInitScript((failure) => {
+      localStorage.setItem(
+        "devth:hover-preferences:v1",
+        JSON.stringify({ structure: "tendril", generation: true }),
+      );
+      Math.random = () => 7 / 0x100000000;
+      window.__glyphAttempts = 0;
       if (failure === "unavailable") {
         const original = HTMLCanvasElement.prototype.getContext;
         HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
-          return kind === "2d" ? null : original.call(this, kind, ...args);
+          if (kind === "2d") {
+            if (this.width === 160 && this.height === 160) window.__glyphAttempts++;
+            return null;
+          }
+          return original.call(this, kind, ...args);
         };
       } else {
         CanvasRenderingContext2D.prototype.getImageData = () => {
+          window.__glyphAttempts++;
           throw new Error("Canvas readback restricted");
         };
       }
     }, failure);
     await page.goto("/");
-    await page.locator(".brand").hover();
+    const link = page
+      .getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link", { name: "about", exact: true });
+    await placeLogoAheadOf(page, link);
+    await link.focus();
     const front = page.locator(".link-sigil:not([data-retiring])");
     await expect(front).toBeVisible();
-    await expect(front).toHaveAttribute("data-logo-glyphs", "0");
+    await expect(front).not.toHaveAttribute("data-logo-glyphs");
+    await expect(front).toHaveAttribute("data-growth-contacts", "0");
+    expect(await page.evaluate(() => window.__glyphAttempts)).toBeGreaterThan(0);
     await expect(front.locator("path")).toHaveCount(4);
     await expect(page.getByRole("link", { name: "devth home" })).toHaveAttribute("href", "/");
   });
 }
 
-test("logo relief keeps the live brand and finite glyph weaving through navigation", async ({
+test("logo relief keeps the live brand and finite growth through navigation", async ({
   page,
 }, testInfo) => {
   const errors = [];
@@ -135,10 +211,8 @@ test("logo relief keeps the live brand and finite glyph weaving through navigati
     window.__liveBrand = element;
   });
   await brand.hover();
-  await expect(page.locator(".link-sigil:not([data-retiring])")).toHaveAttribute(
-    "data-logo-glyphs",
-    "5",
-  );
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
+  await expect(page.locator(".link-sigil[data-logo-glyphs]")).toHaveCount(0);
   await brand.click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.locator("html")).toHaveAttribute("data-logo-transition", "ready");
@@ -146,10 +220,8 @@ test("logo relief keeps the live brand and finite glyph weaving through navigati
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   expect(await brand.evaluate((element) => element === window.__liveBrand)).toBe(true);
-  await expect(page.locator(".link-sigil:not([data-retiring])")).toHaveAttribute(
-    "data-logo-glyphs",
-    "5",
-  );
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
+  await expect(page.locator(".link-sigil[data-logo-glyphs]")).toHaveCount(0);
   const relief = await page.evaluate(() => window.__logoRelief);
   expect(relief).toHaveLength(1);
   expect(relief[0].duration).toBe(280);
@@ -183,4 +255,34 @@ test("reduced motion and forced colors keep the wordmark ordinary", async ({ pag
   await expect(page.locator(".link-sigil[data-logo-glyphs]")).toHaveCount(0);
   await expect(page.locator(".brand-mark")).toHaveCSS("view-transition-name", "none");
   await expect(brand).toHaveAccessibleName("devth home");
+});
+
+test("logo hover does not add prearranged wraps before growth encounters a letter", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      "devth:hover-preferences:v1",
+      JSON.stringify({ structure: "tendril", generation: true }),
+    );
+    Math.random = () => 0.37;
+  });
+  await page.clock.install({ time: new Date("2026-11-01T12:00:00Z") });
+  await page.clock.pauseAt(new Date("2026-11-01T12:00:01Z"));
+  await page.goto("/");
+  await page.locator(".brand").hover();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
+  await page.clock.runFor(1000);
+  const boxes = await page
+    .locator(
+      ".link-sigil:not([data-retiring]) > g:first-of-type, .sigil-rear:not([data-retiring]) > g:first-of-type",
+    )
+    .evaluateAll((groups) =>
+      groups.map((group) => ({ width: group.getBBox().width, height: group.getBBox().height })),
+    );
+  expect(boxes).toHaveLength(2);
+  for (const box of boxes) {
+    expect(box.width).toBeLessThan(300);
+    expect(box.height).toBeLessThan(300);
+  }
 });

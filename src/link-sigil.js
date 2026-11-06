@@ -2,7 +2,7 @@ import { hoverTarget, hoverRegion } from "./hover-target.js";
 import { onPage } from "./page-lifecycle.js";
 import { studyFrame, studyDrawDuration } from "./hover-studies.js";
 import { createGrowth } from "./organic-growth.js";
-import { glyphContours, weaveFrame } from "./logo-weave.js";
+import { guideLogo } from "./logo-weave.js";
 import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
 
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -50,8 +50,7 @@ function createEffect({ className, follow, finished }) {
   let range;
   let bounds;
   let generating = false;
-  let logo, logoLayout, logoOrigin;
-  let glyphs = [];
+  let anchor = [0, 0];
   let unwind,
     run,
     timerAction,
@@ -82,13 +81,8 @@ function createEffect({ className, follow, finished }) {
     pausedAt = null;
     original.style.opacity = rearOriginal.style.opacity = "";
     activeLink?.classList.remove("link-distortion");
-    activeLink = range = logo = null;
-    logoLayout = null;
-    glyphs = [];
-    for (const surface of surfaces) {
-      surface.classList.remove("is-visible");
-      delete surface.dataset.logoGlyphs;
-    }
+    activeLink = range = null;
+    for (const surface of surfaces) surface.classList.remove("is-visible");
     if (fade && !motion.matches) schedule(finish, 180);
     else finish();
   }
@@ -97,17 +91,7 @@ function createEffect({ className, follow, finished }) {
     if (!link.isConnected || rect.bottom <= 0 || rect.top >= innerHeight) return false;
     const x = Math.min(innerWidth - 36, Math.max(36, follow ? rect.right + 42 : rect.right - 6));
     const y = Math.min(innerHeight - 36, Math.max(36, rect.top + rect.height / 2));
-    if (logo) {
-      logo = link.querySelector(".brand-mark");
-      const box = logo.getBoundingClientRect();
-      const layout = `${box.width}:${box.height}`;
-      if (layout !== logoLayout) {
-        glyphs = glyphContours(logo);
-        logoLayout = layout;
-        for (const surface of surfaces) surface.dataset.logoGlyphs = String(glyphs.length);
-      }
-      logoOrigin = [box.left - x, box.top - y];
-    }
+    anchor = [x, y];
     for (const surface of surfaces) {
       surface.setAttribute(
         "viewBox",
@@ -146,7 +130,6 @@ function createEffect({ className, follow, finished }) {
       return;
     const preferences = getHoverPreferences();
     generating = preferences.generation;
-    logo = generating && !contrast.matches ? link.querySelector(".brand-mark") : null;
     (generating ? rearOriginal : original).prepend(paths[0][0]);
     const id = chooseStructure(preferences.structure);
     for (const surface of surfaces) {
@@ -165,20 +148,14 @@ function createEffect({ className, follow, finished }) {
     activeLink = link;
     liveEffects.add(api);
     link.classList.add("link-distortion");
-    const growth = generating ? createGrowth(id, Math.floor(Math.random() * 0x100000000)) : null;
+    const growth = generating
+      ? createGrowth(id, Math.floor(Math.random() * 0x100000000), (point, angle) =>
+          contrast.matches ? angle : guideLogo(point, angle, anchor, unit),
+        )
+      : null;
     delete sigil.dataset.growthRoots;
+    delete sigil.dataset.growthContacts;
     const phase = Math.random() * 20;
-    function seedFrame(time, progress) {
-      const drawing = { ...studyFrame(id, time, progress) };
-      if (glyphs.length) {
-        const weave = weaveFrame(glyphs, progress, phase + time * 0.16, ([x, y]) => [
-          (x + logoOrigin[0]) / unit,
-          (y + logoOrigin[1]) / unit,
-        ]);
-        for (const layer of layers) drawing[layer] += weave[layer];
-      }
-      return drawing;
-    }
     let age = 0;
     let last = performance.now();
     let painted = -Infinity;
@@ -205,7 +182,7 @@ function createEffect({ className, follow, finished }) {
       age += Math.max(0, Math.min(0.05, (now - last) / 1000));
       last = now;
       if (now - painted >= 1000 / 30) {
-        paint(paths[0], seedFrame(phase + age, Math.min(1, age / studyDrawDuration)));
+        paint(paths[0], studyFrame(id, phase + age, Math.min(1, age / studyDrawDuration)));
         if (generating) {
           const growthAge = Math.max(0, age - studyDrawDuration);
           growth.advance(growthAge - grown, bounds);
@@ -213,6 +190,7 @@ function createEffect({ className, follow, finished }) {
           const drawing = growth.frame();
           paint(paths[1], drawing);
           sigil.dataset.growthRoots = drawing.roots;
+          sigil.dataset.growthContacts = drawing.contacts;
         }
         painted = now;
       }
@@ -255,7 +233,8 @@ function createEffect({ className, follow, finished }) {
           if (growth) paint(paths[1], growth.frame(remaining));
           paint(
             paths[0],
-            seedFrame(
+            studyFrame(
+              id,
               phase + age - Math.min(age, 0.8) * (1 - remaining),
               Math.min(1, age / studyDrawDuration) * remaining,
             ),
