@@ -10,6 +10,12 @@ for (const pathname of ["/", "/about"]) {
         JSON.stringify({ structure: "tendril", generation: true }),
       );
       Math.random = () => 0.37;
+      const read = CanvasRenderingContext2D.prototype.getImageData;
+      window.__glyphReads = 0;
+      CanvasRenderingContext2D.prototype.getImageData = function (...args) {
+        if (this.canvas.width === 160 && this.canvas.height === 160) window.__glyphReads++;
+        return read.apply(this, args);
+      };
     });
     await page.clock.install({ time: new Date("2026-11-01T12:00:00Z") });
     await page.clock.pauseAt(new Date("2026-11-01T12:00:01Z"));
@@ -23,7 +29,12 @@ for (const pathname of ["/", "/about"]) {
     const key = await front.getAttribute("data-sigil-key");
     const rear = page.locator(`.sigil-rear[data-sigil-key="${key}"]`);
     await expect(rear).toBeVisible();
+    await expect(front).toHaveAttribute("data-logo-glyphs", "5");
+    await expect(rear).toHaveAttribute("data-logo-glyphs", "5");
+    const reads = await page.evaluate(() => window.__glyphReads);
+    expect(reads).toBe(5);
     await page.clock.runFor(10000);
+    expect(await page.evaluate(() => window.__glyphReads)).toBe(reads);
     const both = page.locator(`svg[data-sigil-key="${key}"]`);
     await expect(both).toHaveCount(2);
     await expect(both.locator("path")).toHaveCount(6);
@@ -65,3 +76,111 @@ for (const pathname of ["/", "/about"]) {
     await expect(page.locator(".sigil-rear:visible")).toHaveCount(0);
   });
 }
+
+for (const failure of ["unavailable", "restricted"]) {
+  test(`logo ink sampling falls back when canvas is ${failure}`, async ({ page }) => {
+    await page.addInitScript((failure) => {
+      if (failure === "unavailable") {
+        const original = HTMLCanvasElement.prototype.getContext;
+        HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
+          return kind === "2d" ? null : original.call(this, kind, ...args);
+        };
+      } else {
+        CanvasRenderingContext2D.prototype.getImageData = () => {
+          throw new Error("Canvas readback restricted");
+        };
+      }
+    }, failure);
+    await page.goto("/");
+    await page.locator(".brand").hover();
+    const front = page.locator(".link-sigil:not([data-retiring])");
+    await expect(front).toBeVisible();
+    await expect(front).toHaveAttribute("data-logo-glyphs", "0");
+    await expect(front.locator("path")).toHaveCount(4);
+    await expect(page.getByRole("link", { name: "devth home" })).toHaveAttribute("href", "/");
+  });
+}
+
+test("logo relief keeps the live brand and finite glyph weaving through navigation", async ({
+  page,
+}, testInfo) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.addInitScript(() => {
+    document.addEventListener("site:navigation", (event) => {
+      event.detail?.viewTransition?.ready
+        .then(() => {
+          const animations = document.getAnimations();
+          window.__logoRelief = animations
+            .filter((animation) => animation.animationName === "logo-relief")
+            .map((animation) => ({
+              duration: animation.effect.getTiming().duration,
+              frames: animation.effect.getKeyframes(),
+            }));
+          for (const animation of animations) {
+            animation.pause();
+            animation.currentTime = 80;
+          }
+          document.documentElement.dataset.logoTransition = "ready";
+        })
+        .catch(() => {});
+    });
+  });
+  await page.goto("/about");
+  const brand = page.getByRole("link", { name: "devth home" });
+  await brand.evaluate((element) => {
+    window.__liveBrand = element;
+  });
+  await brand.hover();
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toHaveAttribute(
+    "data-logo-glyphs",
+    "5",
+  );
+  await brand.click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.locator("html")).toHaveAttribute("data-logo-transition", "ready");
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  expect(await brand.evaluate((element) => element === window.__liveBrand)).toBe(true);
+  await expect(page.locator(".link-sigil:not([data-retiring])")).toHaveAttribute(
+    "data-logo-glyphs",
+    "5",
+  );
+  const relief = await page.evaluate(() => window.__logoRelief);
+  expect(relief).toHaveLength(1);
+  expect(relief[0].duration).toBe(280);
+  expect(relief[0].frames[0].transform).toContain("rotateX(2deg)");
+  expect(relief[0].frames.at(-1).transform).toBe("none");
+  expect(
+    await page
+      .locator(".link-sigil path, .sigil-rear path")
+      .evaluateAll((paths) =>
+        paths.every((path) => !/NaN|Infinity/.test(path.getAttribute("d") || "")),
+      ),
+  ).toBe(true);
+  expect(errors).toEqual([]);
+  await page.screenshot({ path: testInfo.outputPath("logo-relief.png") });
+  await page.evaluate(() => {
+    for (const animation of document.getAnimations()) animation.finish();
+  });
+  await expect(page.locator("html")).not.toHaveAttribute("data-soft-navigation");
+});
+
+test("reduced motion and forced colors keep the wordmark ordinary", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const brand = page.getByRole("link", { name: "devth home" });
+  await brand.hover();
+  await expect(page.locator(".link-sigil")).toBeHidden();
+  await expect(page.locator(".brand-mark")).toHaveCSS("view-transition-name", "none");
+  await page.emulateMedia({ reducedMotion: "no-preference", forcedColors: "active" });
+  await page.mouse.move(1, 1);
+  await brand.hover();
+  await expect(page.locator(".link-sigil[data-logo-glyphs]")).toHaveCount(0);
+  await expect(page.locator(".brand-mark")).toHaveCSS("view-transition-name", "none");
+  await expect(brand).toHaveAccessibleName("devth home");
+});
