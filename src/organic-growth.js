@@ -143,15 +143,18 @@ export function organicCurves(id, ageSeconds, seed = 0) {
  * old offscreen tips are replenished from existing branch nodes, not magnified.
  * Advance is capped for suspended frames; callers own pause/resume and rendering.
  */
-export function createGrowth(id, seed = 0, steer) {
+export function createGrowth(id, seed = 0, intercept) {
   const profile = profiles[id];
   if (!profile) throw new RangeError(`Unknown growth study: ${id}`);
   const random = randomSource(id, seed, "live-roots");
   const grammar = createGrowthGrammar(id, random);
   const completeLimit = maxSegments - 24;
   const core = 96;
-  const maxTips = Math.min(24, Math.floor((completeLimit - core) / grammar.maxUnitCurves));
+  const maxUnitCurves = Math.max(11, grammar.maxUnitCurves);
+  const maxTips = Math.min(24, Math.floor((completeLimit - core) / maxUnitCurves));
   const fixedStep = 1 / 60;
+  const straight = ["sigil", "lattice", "geodesic", "storm"].includes(id);
+  const strandCount = id === "double" ? 2 : ["triple", "braid"].includes(id) ? 3 : 1;
   const origin = [0, 0, 0];
   let segments = [];
   const units = new Set();
@@ -195,16 +198,62 @@ export function createGrowth(id, seed = 0, steer) {
   }
   function nextCurve(tip, bounds = defaultBounds) {
     if (!tip.plan || tip.planIndex === tip.plan.curves.length) {
-      const heading = steer?.(tip.point, tip.angle) ?? tip.angle;
-      if (heading !== tip.angle) contacts++;
-      tip.angle = heading;
-      tip.plan = grammar.unit(tip, (point) => {
-        for (let attempt = 0; attempt < 12 && segments.length; attempt++) {
-          const candidate = segments[Math.floor(random() * segments.length)].end;
-          const distance = Math.hypot(...candidate.map((v, axis) => v - point[axis]));
-          if (distance > 16 && distance < 70 && inside(candidate, bounds)) return candidate;
-        }
-      });
+      const wrap = intercept?.(tip.point, tip.angle, Math.floor(maxUnitCurves / strandCount));
+      tip.wrapping = Boolean(wrap);
+      if (wrap) {
+        contacts++;
+        if (strandCount > 1) {
+          const paths = Array.from({ length: strandCount }, (_, strand) => {
+            const offset = (strand - (strandCount - 1) / 2) * 3;
+            const shift = (point) => [
+              point[0] - Math.sin(tip.angle) * offset,
+              point[1] + Math.cos(tip.angle) * offset,
+              point[2],
+            ];
+            return wrap.curves.map((curve, index) => {
+              const start = index ? shift(curve.start) : tip.strands?.[strand] || tip.point;
+              const end = shift(curve.end);
+              return {
+                ...curve,
+                start,
+                end,
+                control: index
+                  ? shift(curve.control)
+                  : start.map((value, axis) => (value + end[axis]) / 2),
+              };
+            });
+          });
+          wrap.curves = paths[0].flatMap((_, index) => {
+            const curves = paths.map((path) => path[index]);
+            if (id !== "braid" && index > 0 && index % 3 === 0)
+              for (let strand = 0; strand < strandCount - 1; strand++) {
+                const start = paths[strand][index].end,
+                  end = paths[strand + 1][index].end;
+                curves.push({
+                  start,
+                  end,
+                  control: start.map((value, axis) => (value + end[axis]) / 2),
+                  accent: false,
+                });
+              }
+            return curves;
+          });
+          tip.strands = paths.map((path) => path.at(-1).end);
+          wrap.exit = tip.strands[0];
+        } else delete tip.strands;
+        if (straight)
+          for (const curve of wrap.curves)
+            curve.control = curve.start.map((value, axis) => (value + curve.end[axis]) / 2);
+      }
+      tip.plan =
+        wrap ||
+        grammar.unit(tip, (point) => {
+          for (let attempt = 0; attempt < 12 && segments.length; attempt++) {
+            const candidate = segments[Math.floor(random() * segments.length)].end;
+            const distance = Math.hypot(...candidate.map((v, axis) => v - point[axis]));
+            if (distance > 16 && distance < 70 && inside(candidate, bounds)) return candidate;
+          }
+        });
       tip.planIndex = 0;
       tip.unit = { count: 0, complete: false, fixed: false };
       units.add(tip.unit);
@@ -276,7 +325,8 @@ export function createGrowth(id, seed = 0, steer) {
         const complete = tip.planIndex === tip.plan.curves.length;
         if (complete) {
           tip.point = tip.plan.exit;
-          for (const ornament of grammar.decorate(tip)) {
+          if (tip.wrapping) tip.angle = tip.plan.angle;
+          for (const ornament of tip.wrapping ? [] : grammar.decorate(tip)) {
             append(ornament, tip.unit);
           }
           finish(tip.unit);

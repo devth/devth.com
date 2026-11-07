@@ -41,23 +41,78 @@ export function inkField(alpha, width, height) {
   };
 }
 
-export function steerInk(point, angle, sample, reach = 18, padding = 3) {
-  if (point[2] < 0 || point[2] > 8) return angle;
+const tau = Math.PI * 2;
+
+/** Marches a tip's next stretch into real ink and measures the stroke it meets. */
+export function findStroke(point, angle, sample, reach = 28, through = 160) {
   const dx = Math.cos(angle),
     dy = Math.sin(angle);
-  for (let step = 0; step <= 6; step++) {
-    const hit = sample(point[0] + (dx * reach * step) / 6, point[1] + (dy * reach * step) / 6);
-    if (!hit || hit.distance >= padding) continue;
-    const length = Math.hypot(hit.nx, hit.ny);
-    const nx = length ? hit.nx / length : -dx,
-      ny = length ? hit.ny / length : -dy;
-    if (hit.distance >= 0 && dx * nx + dy * ny >= 0) continue;
-    const side = dx * -ny + dy * nx >= 0 ? 1 : -1;
-    const heading = Math.atan2(side * nx + ny * 0.3, -side * ny + nx * 0.3);
-    const turn = Math.atan2(Math.sin(heading - angle), Math.cos(heading - angle));
-    return angle + Math.max(-1.2, Math.min(1.2, turn));
+  let normal, deepest;
+  for (let travelled = 0; travelled <= reach + through; travelled += 2) {
+    const x = point[0] + dx * travelled,
+      y = point[1] + dy * travelled;
+    const hit = sample(x, y);
+    if (!normal) {
+      if (travelled > reach) return null;
+      if (!hit || hit.distance >= 0) continue;
+      const length = Math.hypot(hit.nx, hit.ny);
+      if (!length || (dx * hit.nx + dy * hit.ny) / length >= 0) return null;
+      normal = [hit.nx / length, hit.ny / length];
+    }
+    if (!hit || hit.distance >= 0) break;
+    if (!deepest || hit.distance < deepest.distance)
+      deepest = { center: [x, y], distance: hit.distance };
   }
-  return angle;
+  return deepest ? { center: deepest.center, halfWidth: -deepest.distance, normal } : null;
+}
+
+/** A vine unit that coils around the met stroke: front quarter-turns cross over
+ * the letter, rear ones pass behind it, and it leaves on the far side. */
+export function wrapPlan(point, angle, { center, halfWidth, normal }, maxCurves = 24) {
+  const radius = halfWidth + 6;
+  let tangent = [-normal[1], normal[0]];
+  if (tangent[0] * Math.cos(angle) + tangent[1] * Math.sin(angle) < 0)
+    tangent = tangent.map((value) => -value);
+  const pitch = Math.min(60, Math.max(14, radius * 0.8));
+  const depth = point[2] < 0 ? -1 : 1;
+  let quarters = radius < 40 ? 10 : 6;
+  while (quarters + 1 > maxCurves && quarters > 6) quarters -= 4;
+  if (quarters + 1 > maxCurves) return null;
+  const at = (cosine, sine, theta) => [
+    center[0] +
+      normal[0] * radius * cosine +
+      tangent[0] * ((pitch * theta) / tau + radius * 0.22 * sine),
+    center[1] +
+      normal[1] * radius * cosine +
+      tangent[1] * ((pitch * theta) / tau + radius * 0.22 * sine),
+    depth * radius * sine,
+  ];
+  const position = (theta) => at(Math.cos(theta), Math.sin(theta), theta);
+  const first = position(0);
+  const curves = [
+    {
+      start: point,
+      control: point.map((value, axis) => (value + first[axis]) / 2),
+      end: first,
+      accent: false,
+    },
+  ];
+  for (let quarter = 0; quarter < quarters; quarter++) {
+    const a = (quarter * Math.PI) / 2,
+      b = a + Math.PI / 2;
+    curves.push({
+      start: position(a),
+      control: at(Math.cos(a) + Math.cos(b), Math.sin(a) + Math.sin(b), (a + b) / 2),
+      end: position(b),
+      accent: false,
+    });
+  }
+  const last = curves.at(-1);
+  return {
+    curves,
+    exit: last.end,
+    angle: Math.atan2(last.end[1] - last.control[1], last.end[0] - last.control[0]),
+  };
 }
 
 function rasterize(mark, box) {
@@ -126,25 +181,25 @@ function rasterize(mark, box) {
 }
 
 let cache;
-export function guideLogo(point, angle, origin, unit) {
-  if (point[2] < 0 || point[2] > 8) return angle;
+export function wrapLogo(point, angle, maxCurves, origin, unit) {
+  if (Math.abs(point[2]) > 48) return null;
   const mark = cache?.mark.isConnected ? cache.mark : document.querySelector(".brand-mark");
-  if (!mark) return angle;
+  if (!mark) return null;
   const box = mark.getBoundingClientRect();
   const x = point[0] * unit + origin[0],
     y = point[1] * unit + origin[1];
-  const margin = 24;
+  const margin = 32;
   if (
     x < box.left - margin ||
     x > box.right + margin ||
     y < box.top - margin ||
     y > box.bottom + margin
   )
-    return angle;
+    return null;
   const layout = `${box.width}:${box.height}`;
   if (cache?.mark !== mark || cache.layout !== layout)
     cache = { mark, layout, glyphs: rasterize(mark, box) };
-  return steerInk([x - box.left, y - box.top, point[2]], angle, (px, py) => {
+  const stroke = findStroke([x - box.left, y - box.top], angle, (px, py) => {
     let closest = null;
     for (const glyph of cache.glyphs) {
       const hit = glyph.sample((px - glyph.left) / glyph.scale, (py - glyph.top) / glyph.scale);
@@ -155,4 +210,18 @@ export function guideLogo(point, angle, origin, unit) {
     }
     return closest;
   });
+  if (!stroke) return null;
+  return wrapPlan(
+    point,
+    angle,
+    {
+      center: [
+        (stroke.center[0] + box.left - origin[0]) / unit,
+        (stroke.center[1] + box.top - origin[1]) / unit,
+      ],
+      halfWidth: stroke.halfWidth / unit,
+      normal: stroke.normal,
+    },
+    maxCurves,
+  );
 }
