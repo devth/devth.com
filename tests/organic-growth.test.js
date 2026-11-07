@@ -129,6 +129,40 @@ it("unwinds newest growth first without storing history or mutating the live gar
   expect(growth.frame()).toEqual(full);
 });
 
+it("keeps completed hover strokes at their original coordinates while new growth exceeds the old window", () => {
+  for (const { id } of studies) {
+    const growth = createGrowth(id, 7, undefined, { retain: true });
+    advance(growth, 3);
+    const early = growth.geometry();
+    expect(early.curves.length).toBeGreaterThan(0);
+    advance(growth, 15);
+    const late = growth.geometry();
+    expect(late.count).toBeGreaterThan(680);
+    expect(late.curves.slice(0, early.count)).toEqual(early.curves);
+    expect(late.tips).toBeLessThanOrEqual(24);
+    expect(growth.geometry(early.count).curves).toEqual(late.curves.slice(early.count));
+    const snapshot = growth.frame();
+    expect(growth.frame(0).segments).toBe(0);
+    expect(growth.frame()).toEqual(snapshot);
+  }
+});
+
+it("does not remove visible partial units when a retained garden reaches its tip limit", () => {
+  const growth = createGrowth("mycelium", 13, undefined, { retain: true });
+  let count = 0;
+  for (let tick = 0; tick < 1800; tick++) {
+    growth.advance(1 / 60);
+    const snapshot = growth.geometry(count);
+    expect(snapshot.count).toBeGreaterThanOrEqual(count);
+    expect(
+      snapshot.live.every((curve) =>
+        [curve.start, curve.control, curve.end].flat().every(Number.isFinite),
+      ),
+    ).toBe(true);
+    count = snapshot.count;
+  }
+});
+
 it("preserves the static study generator's smooth rolling generation boundaries", () => {
   for (const { id } of studies) {
     const before = organicCurves(id, 6 - 0.00001, 23);

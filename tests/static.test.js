@@ -298,7 +298,7 @@ describe("static publishing contract", () => {
     }
   });
 
-  it("isolates the 3D experiment and keeps its runtime off normal pages", () => {
+  it("isolates the Cosmos catalog while loading the shared solid logo lazily", () => {
     const home = documentFor("index.html");
     const lab = documentFor("cosmos/index.html");
     expect(lab.querySelector("canvas")).not.toBeNull();
@@ -311,7 +311,10 @@ describe("static publishing contract", () => {
       .src.slice(1);
     const homeScript = home.querySelector("script[src]").src.slice(1);
     expect(labScript).not.toBe(homeScript);
-    expect(Buffer.byteLength(read(labScript))).toBeGreaterThan(100_000);
+    expect(read(labScript)).toContain("nearby-stars.json");
+    expect(read(homeScript)).not.toContain("nearby-stars.json");
+    expect(read(homeScript)).not.toContain("WebGLRenderer");
+    expect(read(homeScript)).toMatch(/import\(["'`][^"'`]*logo-depth-/);
     expect(Buffer.byteLength(read(homeScript))).toBeLessThan(10_000);
     expect(home.querySelector('link[rel="modulepreload"]')).toBeNull();
     expect(home.querySelector('nav[aria-label="Main navigation"]').textContent).not.toContain(

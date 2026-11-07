@@ -70,6 +70,7 @@ function createEffect({ className, follow, finished }) {
     liveEffects.delete(api);
     run = timerAction = null;
     for (const surface of surfaces) surface.setAttribute("hidden", "");
+    for (const set of paths) paint(set, { back: "", front: "", accent: "" });
     finished(api);
   }
   function clear(fade = false) {
@@ -157,8 +158,12 @@ function createEffect({ className, follow, finished }) {
     liveEffects.add(api);
     link.classList.add("link-distortion");
     const growth = generating
-      ? createGrowth(id, Math.floor(Math.random() * 0x100000000), (point, angle, maxCurves) =>
-          contrast.matches ? null : wrapLogo(point, angle, maxCurves, anchor, unit),
+      ? createGrowth(
+          id,
+          Math.floor(Math.random() * 0x100000000),
+          (point, angle, maxCurves) =>
+            contrast.matches ? null : wrapLogo(point, angle, maxCurves, anchor, unit),
+          { retain: true },
         )
       : null;
     delete sigil.dataset.growthRoots;

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { studies } from "../../src/hover-studies.js";
 
 for (const { id } of studies) {
-  test(`${id} generates its own bounded drawing without replacing the source geometry`, async ({
+  test(`${id} retains its growing drawing without replacing the source geometry`, async ({
     page,
   }) => {
     const errors = [];
@@ -47,7 +47,16 @@ for (const { id } of studies) {
         paths.flatMap((path) => path.getAttribute("d").match(/M[^M]+/g) || []),
       );
     expect(curves.length).toBeGreaterThan(10);
-    expect(curves.length).toBeLessThanOrEqual(680);
+    await page.clock.runFor(1000);
+    const later = await surfaces
+      .locator("g:nth-child(2) path")
+      .evaluateAll((paths) =>
+        paths.flatMap((path) => path.getAttribute("d").match(/M[^M]+/g) || []),
+      );
+    expect(later.length).toBeGreaterThan(curves.length);
+    expect(curves.filter((curve) => later.includes(curve)).length).toBeGreaterThanOrEqual(
+      curves.length - 24,
+    );
     if (["sigil", "lattice", "geodesic", "storm"].includes(id))
       for (const curve of curves) {
         const [x, y, cx, cy, ex, ey] = curve.match(/-?\d+(?:\.\d+)?/g).map(Number);
@@ -60,6 +69,11 @@ for (const { id } of studies) {
     expect(await sigil.evaluate((element) => getComputedStyle(element).pointerEvents)).toBe("none");
     await page.keyboard.press("Escape");
     await expect(sigil).toBeHidden();
+    expect(
+      await surfaces
+        .locator("path")
+        .evaluateAll((paths) => paths.every((path) => path.getAttribute("d") === "")),
+    ).toBe(true);
     expect(errors).toEqual([]);
   });
 }
