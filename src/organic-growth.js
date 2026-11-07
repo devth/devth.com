@@ -143,7 +143,7 @@ export function organicCurves(id, ageSeconds, seed = 0) {
  * old offscreen tips are replenished from existing branch nodes, not magnified.
  * Advance is capped for suspended frames; callers own pause/resume and rendering.
  */
-export function createGrowth(id, seed = 0, intercept) {
+export function createGrowth(id, seed = 0, intercept, { retain = false } = {}) {
   const profile = profiles[id];
   if (!profile) throw new RangeError(`Unknown growth study: ${id}`);
   const random = randomSource(id, seed, "live-roots");
@@ -159,6 +159,8 @@ export function createGrowth(id, seed = 0, intercept) {
   let segments = [];
   const units = new Set();
   const tips = [];
+  let cached = { back: "", front: "", accent: "", extent: 0, segments: 0 },
+    cachedCount = 0;
   let coreSize = 0;
   let roots = 0;
   let contacts = 0;
@@ -178,14 +180,14 @@ export function createGrowth(id, seed = 0, intercept) {
   }
   function finish(unit) {
     unit.complete = true;
-    if (!unit.count) units.delete(unit);
+    if (retain || !unit.count) units.delete(unit);
     else if (coreSize + unit.count <= core) {
       unit.fixed = true;
       coreSize += unit.count;
     }
   }
   function append(curve, unit) {
-    if (segments.length === completeLimit) {
+    if (!retain && segments.length === completeLimit) {
       // Reserve a complete unit per live tip; retire whole old cages/coils,
       // never random struts that would turn their source grammar into debris.
       const oldest = [...units].find((candidate) => candidate.complete && !candidate.fixed);
@@ -263,6 +265,7 @@ export function createGrowth(id, seed = 0, intercept) {
     tip.progress = 0;
   }
   function spawn(point, angle) {
+    if (retain && tips.length === maxTips) return;
     roots++;
     const tip = { point, angle, speed: grammar.speed() };
     nextCurve(tip);
@@ -331,7 +334,7 @@ export function createGrowth(id, seed = 0, intercept) {
           }
           finish(tip.unit);
         }
-        if (!inside(curve.end, bounds, 160)) {
+        if (!inside(curve.end, bounds, 160) && (!retain || complete)) {
           if (!complete) abandon(tip.unit);
           tips.splice(index, 1);
           continue;
@@ -343,21 +346,19 @@ export function createGrowth(id, seed = 0, intercept) {
     }
   }
   function frame(retention = 1) {
+    const fullHistory = retain && retention === 1;
     const drawing = {
-      back: "",
-      front: "",
-      accent: "",
-      extent: 0,
-      segments: 0,
+      ...(fullHistory ? cached : { back: "", front: "", accent: "", extent: 0, segments: 0 }),
       roots,
       contacts,
       tips: tips.length,
     };
     const coordinate = ([x, y]) => `${x.toFixed(2)} ${y.toFixed(2)}`;
     const live = tips.filter((tip) => tip.progress > 0);
-    let remaining =
-      (segments.length + live.length) *
-      Math.max(0, Math.min(1, Number.isFinite(retention) ? retention : 0));
+    let remaining = fullHistory
+      ? Infinity
+      : (segments.length + live.length) *
+        Math.max(0, Math.min(1, Number.isFinite(retention) ? retention : 0));
     function draw({ start, control, end, accent }, progress = 1) {
       if (remaining <= 0) return;
       const p = Math.min(1, remaining) * progress;
@@ -376,9 +377,40 @@ export function createGrowth(id, seed = 0, intercept) {
       );
       drawing.segments++;
     }
-    for (const curve of segments) draw(curve);
+    if (fullHistory) {
+      for (; cachedCount < segments.length; cachedCount++) draw(segments[cachedCount]);
+      cached = { ...drawing };
+      remaining = live.length;
+    } else for (const curve of segments) draw(curve);
     for (const { curve, progress } of live) draw(curve, Math.min(1, progress));
     return drawing;
   }
-  return { advance, frame };
+  // Append-only cursor for shared-depth rendering: completed curves never move,
+  // and only the bounded live tips need uploading again on the next frame.
+  function geometry(from = 0) {
+    const curveOnly = ({ start, control, end, accent }) => ({ start, control, end, accent });
+    const live = tips
+      .filter((tip) => tip.progress > 0)
+      .map((tip) => {
+        const curve = tip.curve,
+          p = Math.min(1, tip.progress);
+        const mix = (a, b) => a.map((value, axis) => value + (b[axis] - value) * p);
+        const control = mix(curve.start, curve.control);
+        return {
+          start: curve.start,
+          control,
+          end: mix(control, mix(curve.control, curve.end)),
+          accent: curve.accent,
+        };
+      });
+    return {
+      curves: segments.slice(Math.max(0, from)).map(curveOnly),
+      live,
+      count: segments.length,
+      roots,
+      contacts,
+      tips: tips.length,
+    };
+  }
+  return { advance, frame, geometry };
 }

@@ -20,7 +20,7 @@ async function placeLogoAheadOf(page, link) {
   }, box);
 }
 
-test("growth from another link responds only to real logo encounters and reuses the ink cache", async ({
+test("SVG fallback growth responds only to real logo encounters and reuses the ink cache", async ({
   page,
 }, testInfo) => {
   await page.addInitScript(() => {
@@ -29,6 +29,10 @@ test("growth from another link responds only to real logo encounters and reuses 
       JSON.stringify({ structure: "tendril", generation: true }),
     );
     Math.random = () => 7 / 0x100000000;
+    const context = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      return type.startsWith("webgl") ? null : context.call(this, type, ...args);
+    };
     const read = CanvasRenderingContext2D.prototype.getImageData;
     window.__glyphReads = 0;
     CanvasRenderingContext2D.prototype.getImageData = function (...args) {
@@ -98,7 +102,7 @@ test("growth from another link responds only to real logo encounters and reuses 
 });
 
 for (const pathname of ["/", "/about"]) {
-  test(`growth weaves around actual logo and title glyphs on ${pathname}`, async ({
+  test(`native growth shares the actual solid wordmark scene on ${pathname}`, async ({
     page,
   }, testInfo) => {
     await page.addInitScript(() => {
@@ -107,85 +111,29 @@ for (const pathname of ["/", "/about"]) {
         JSON.stringify({ structure: "tendril", generation: true }),
       );
       Math.random = () => 0.37;
-      const read = CanvasRenderingContext2D.prototype.getImageData;
-      window.__glyphReads = 0;
-      CanvasRenderingContext2D.prototype.getImageData = function (...args) {
-        if (this.canvas.width === 160 && this.canvas.height === 160) window.__glyphReads++;
-        return read.apply(this, args);
-      };
     });
-    await page.clock.install({ time: new Date("2026-11-01T12:00:00Z") });
-    await page.clock.pauseAt(new Date("2026-11-01T12:00:01Z"));
+    await page.clock.install();
     await page.goto(pathname);
-    const brand = page.locator(".site-header .brand");
-    const heading = page.locator("h1").first();
-    const before = await heading.boundingBox();
-    await brand.hover();
-    const front = page.locator(".link-sigil:not([data-retiring])");
-    await expect(front).toBeVisible();
-    const attachment = await front
-      .locator("g")
-      .first()
-      .evaluate((group) => {
-        const mark = document.querySelector(".brand-mark"),
-          box = mark.getBoundingClientRect();
-        const edge = mark.querySelector('[aria-hidden="true"]').getBoundingClientRect().left;
-        const matrix = group.getScreenCTM();
-        return {
-          x: matrix.e,
-          y: matrix.f,
-          expectedX: Math.min(innerWidth - 36, Math.max(36, edge - 6)),
-          expectedY: Math.min(innerHeight - 36, Math.max(36, box.top + box.height / 2)),
-        };
-      });
-    expect(attachment.x).toBeCloseTo(attachment.expectedX, 1);
-    expect(attachment.y).toBeCloseTo(attachment.expectedY, 1);
-    const key = await front.getAttribute("data-sigil-key");
-    const rear = page.locator(`.sigil-rear[data-sigil-key="${key}"]`);
-    await expect(rear).toBeVisible();
-    await expect(front).not.toHaveAttribute("data-logo-glyphs");
-    await expect(rear).not.toHaveAttribute("data-logo-glyphs");
-    await page.clock.runFor(10000);
-    expect(await page.evaluate(() => window.__glyphReads)).toBeLessThanOrEqual(6);
-    const both = page.locator(`svg[data-sigil-key="${key}"]`);
-    await expect(both).toHaveCount(2);
-    await expect(both.locator("path")).toHaveCount(6);
-    expect(
-      await rear
-        .locator("path")
-        .evaluateAll((paths) => paths.some((path) => (path.getAttribute("d") || "").length > 100)),
-    ).toBe(true);
-    expect(
-      await front
-        .locator("path")
-        .evaluateAll((paths) => paths.some((path) => (path.getAttribute("d") || "").length > 100)),
-    ).toBe(true);
-    await expect(front).toHaveCSS("z-index", "4");
-    await expect(rear).toHaveCSS("z-index", "-1");
-    for (const layer of [front, rear]) {
-      await expect(layer).toHaveCSS("pointer-events", "none");
-      await expect(layer).toHaveAttribute("aria-hidden", "true");
-    }
+    const canvas = page.locator("canvas[data-logo-depth]");
+    await expect(canvas).toBeVisible();
+    const heading = page.locator("h1").first(),
+      before = await heading.boundingBox();
+    await page.locator(".brand").hover();
+    await page.clock.runFor(4000);
+    expect(Number(await canvas.getAttribute("data-growth-curves"))).toBeGreaterThan(0);
+    await expect(canvas).toHaveAttribute("data-structure", "tendril");
+    await expect(canvas).toHaveCSS("pointer-events", "none");
+    await expect(canvas).toHaveAttribute("aria-hidden", "true");
     expect(await heading.boundingBox()).toEqual(before);
-    expect(await rear.getAttribute("viewBox")).toBe(await front.getAttribute("viewBox"));
-    expect(await rear.locator("g").first().getAttribute("transform")).toBe(
-      await front.locator("g").first().getAttribute("transform"),
-    );
     await page.screenshot({ path: testInfo.outputPath("weave-light.png") });
     await page.emulateMedia({ colorScheme: "dark" });
+    await page.clock.runFor(100);
     await page.screenshot({ path: testInfo.outputPath("weave-dark.png") });
     await page.mouse.move(1, 1);
-    await page.clock.runFor(400);
-    await expect(front).toBeVisible();
-    await expect(rear).toBeVisible();
-    await page.clock.runFor(450);
-    await expect(front).toBeHidden();
-    await expect(rear).toBeHidden();
-    await expect(both).toHaveCount(2);
-    await brand.hover();
-    await expect(page.locator(".sigil-rear:not([data-retiring])")).toBeVisible();
-    await page.keyboard.press("Escape");
-    await expect(page.locator(".sigil-rear:visible")).toHaveCount(0);
+    await page.clock.runFor(900);
+    await expect(canvas).toBeVisible();
+    await expect(canvas).toHaveAttribute("data-growth-curves", "0");
+    await expect(canvas).toHaveAttribute("data-reveal", "0.0000");
   });
 }
 
@@ -230,7 +178,7 @@ for (const failure of ["unavailable", "restricted"]) {
   });
 }
 
-test("logo relief keeps the live brand and finite growth through navigation", async ({
+test("logo relief keeps the live brand through navigation before resuming solid depth", async ({
   page,
 }, testInfo) => {
   const errors = [];
@@ -263,8 +211,8 @@ test("logo relief keeps the live brand and finite growth through navigation", as
   await brand.evaluate((element) => {
     window.__liveBrand = element;
   });
+  await expect(page.locator("canvas[data-logo-depth]")).toBeVisible();
   await brand.hover();
-  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
   await expect(page.locator(".link-sigil[data-logo-glyphs]")).toHaveCount(0);
   await brand.click();
   await expect(page).toHaveURL(/\/$/);
@@ -273,8 +221,7 @@ test("logo relief keeps the live brand and finite growth through navigation", as
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   expect(await brand.evaluate((element) => element === window.__liveBrand)).toBe(true);
-  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
-  await expect(page.locator(".link-sigil[data-logo-glyphs]")).toHaveCount(0);
+  await expect(page.locator("canvas[data-logo-depth]")).toHaveCount(0);
   const relief = await page.evaluate(() => window.__logoRelief);
   expect(relief).toHaveLength(1);
   expect(relief[0].duration).toBe(280);
@@ -293,6 +240,7 @@ test("logo relief keeps the live brand and finite growth through navigation", as
     for (const animation of document.getAnimations()) animation.finish();
   });
   await expect(page.locator("html")).not.toHaveAttribute("data-soft-navigation");
+  await expect(page.locator("canvas[data-logo-depth]")).toBeVisible();
 });
 
 test("reduced motion and forced colors keep the wordmark ordinary", async ({ page }) => {
@@ -310,32 +258,19 @@ test("reduced motion and forced colors keep the wordmark ordinary", async ({ pag
   await expect(brand).toHaveAccessibleName("devth home");
 });
 
-test("logo hover does not add prearranged wraps before growth encounters a letter", async ({
+test("default solid logo has no garden until hover and draws the native seed before growth", async ({
   page,
 }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem(
-      "devth:hover-preferences:v1",
-      JSON.stringify({ structure: "tendril", generation: true }),
-    );
-    Math.random = () => 0.37;
-  });
-  await page.clock.install({ time: new Date("2026-11-01T12:00:00Z") });
-  await page.clock.pauseAt(new Date("2026-11-01T12:00:01Z"));
+  await page.clock.install();
   await page.goto("/");
-  await page.locator(".brand").hover();
-  await expect(page.locator(".link-sigil:not([data-retiring])")).toBeVisible();
+  const canvas = page.locator("canvas[data-logo-depth]");
+  await expect(canvas).toBeVisible();
   await page.clock.runFor(1000);
-  const boxes = await page
-    .locator(
-      ".link-sigil:not([data-retiring]) > g:first-of-type, .sigil-rear:not([data-retiring]) > g:first-of-type",
-    )
-    .evaluateAll((groups) =>
-      groups.map((group) => ({ width: group.getBBox().width, height: group.getBBox().height })),
-    );
-  expect(boxes).toHaveLength(2);
-  for (const box of boxes) {
-    expect(box.width).toBeLessThan(300);
-    expect(box.height).toBeLessThan(300);
-  }
+  await expect(canvas).toHaveAttribute("data-growth-curves", "0");
+  await expect(canvas).toHaveAttribute("data-reveal", "0.0000");
+  await page.locator(".brand").hover();
+  await page.clock.runFor(200);
+  expect(Number(await canvas.getAttribute("data-reveal"))).toBeGreaterThan(0);
+  expect(Number(await canvas.getAttribute("data-reveal"))).toBeLessThan(1);
+  await expect(canvas).toHaveAttribute("data-growth-curves", "0");
 });
