@@ -52,6 +52,42 @@ test("growth from another link responds only to real logo encounters and reuses 
   const reads = await page.evaluate(() => window.__glyphReads);
   expect(reads).toBeGreaterThan(0);
   expect(reads).toBeLessThanOrEqual(6);
+  const crossings = await page.evaluate(() => {
+    const mark = document.querySelector(".brand-mark");
+    const walker = document.createTreeWalker(mark, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    range.setStart(walker.nextNode(), 0);
+    range.setEnd(walker.currentNode, 1);
+    const rect = range.getBoundingClientRect(),
+      style = getComputedStyle(mark);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 512;
+    const context = canvas.getContext("2d");
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const ascent = context.measureText("d").fontBoundingBoxAscent;
+    context.fillText("d", 32, 112);
+    const pixels = context.getImageData(0, 0, 512, 512).data;
+    return [".link-sigil", ".sigil-rear"].map((selector) => {
+      let ink = 0;
+      for (const path of document.querySelectorAll(
+        `${selector}:not([data-retiring]) > g:nth-of-type(2) path`,
+      )) {
+        const matrix = path.getScreenCTM(),
+          length = path.getTotalLength();
+        if (!length) continue;
+        for (let sample = 0; sample <= 400; sample++) {
+          const point = path.getPointAtLength((length * sample) / 400);
+          const screen = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+          const x = Math.round(screen.x - rect.left + 32),
+            y = Math.round(screen.y - rect.top + 112 - ascent);
+          if (x >= 0 && x < 512 && y >= 0 && y < 512 && pixels[(y * 512 + x) * 4 + 3] >= 128) ink++;
+        }
+      }
+      return ink;
+    });
+  });
+  expect(crossings[0], "front half-turns cross the actual d ink").toBeGreaterThan(0);
+  expect(crossings[1], "rear half-turns cross behind the same actual d ink").toBeGreaterThan(0);
   await page.screenshot({ path: testInfo.outputPath("controlled-ink-encounter.png") });
   await page.locator(".brand-mark").evaluate((element) => {
     element.style.left = "10000px";
@@ -87,6 +123,23 @@ for (const pathname of ["/", "/about"]) {
     await brand.hover();
     const front = page.locator(".link-sigil:not([data-retiring])");
     await expect(front).toBeVisible();
+    const attachment = await front
+      .locator("g")
+      .first()
+      .evaluate((group) => {
+        const mark = document.querySelector(".brand-mark"),
+          box = mark.getBoundingClientRect();
+        const edge = mark.querySelector('[aria-hidden="true"]').getBoundingClientRect().left;
+        const matrix = group.getScreenCTM();
+        return {
+          x: matrix.e,
+          y: matrix.f,
+          expectedX: Math.min(innerWidth - 36, Math.max(36, edge - 6)),
+          expectedY: Math.min(innerHeight - 36, Math.max(36, box.top + box.height / 2)),
+        };
+      });
+    expect(attachment.x).toBeCloseTo(attachment.expectedX, 1);
+    expect(attachment.y).toBeCloseTo(attachment.expectedY, 1);
     const key = await front.getAttribute("data-sigil-key");
     const rear = page.locator(`.sigil-rear[data-sigil-key="${key}"]`);
     await expect(rear).toBeVisible();
