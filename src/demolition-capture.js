@@ -30,7 +30,6 @@ const loading = new Set([
  * Bitmaps are only drawn, never exported/read, so cross-origin images stay safe.
  */
 export function capturePage() {
-  document.dispatchEvent(new Event("site:before-capture"));
   const bitmaps = [];
   const proxies = new WeakMap();
   const scrolls = new WeakMap();

@@ -204,7 +204,7 @@ const organicGeometries = Object.fromEntries(
   studies.slice(9).map(({ id }) => [id, organicCurves(id, 2)]),
 );
 
-function organicStudyFrame(curves, time, progress, collect) {
+function organicStudyFrame(curves, time, progress) {
   const radius = Math.max(
     ...curves.flatMap(({ start, control, end }) =>
       [start, control, end].map((point) => Math.hypot(...point)),
@@ -236,20 +236,13 @@ function organicStudyFrame(curves, time, progress, collect) {
       end = mix(nextControl, mix(control, end, amount), amount);
       control = nextControl;
     }
-    collect?.({
-      start: [start.x, start.y, start.z],
-      control: [control.x, control.y, control.z],
-      end: [end.x, end.y, end.z],
-      accent: layer === "accent",
-    });
     frame[layer] += `M${coordinate(start)}Q${coordinate(control)} ${coordinate(end)}`;
   }
   return frame;
 }
 
-export function studyFrame(id, time = 0, progress = 1, collect) {
-  if (organicGeometries[id])
-    return organicStudyFrame(organicGeometries[id], time, progress, collect);
+export function studyFrame(id, time = 0, progress = 1) {
+  if (organicGeometries[id]) return organicStudyFrame(organicGeometries[id], time, progress);
   const source =
     id === "spring" ? helix(1, 4, 22, 78 + Math.sin(time * 1.2) * 14, false) : geometries[id];
   const radius = Math.max(...source.vertices.map((point) => Math.hypot(...point)));
@@ -279,14 +272,6 @@ export function studyFrame(id, time = 0, progress = 1, collect) {
         : points[a].z + points[b].z < 0
           ? "back"
           : "front";
-    const start = [points[a].x, points[a].y, points[a].z],
-      finish = [end.x, end.y, end.z];
-    collect?.({
-      start,
-      control: start.map((v, axis) => (v + finish[axis]) / 2),
-      end: finish,
-      accent: key === "accent",
-    });
     frame[key] +=
       `M${points[a].x.toFixed(2)} ${points[a].y.toFixed(2)}L${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
   });

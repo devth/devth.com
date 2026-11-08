@@ -16,9 +16,6 @@ footerTop?.addEventListener("click", (event) => {
 let sigils;
 let loadingSigils;
 let pendingSigil;
-import("./logo-depth.js")
-  .then((module) => module.watchLogoDepth({ beforeEnter: clearSigil }))
-  .catch((error) => console.warn("3D logo unavailable; using native wordmark", error));
 function clearSigil() {
   pendingSigil = null;
   sigils?.clearSigil();

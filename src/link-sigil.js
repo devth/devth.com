@@ -2,7 +2,6 @@ import { hoverTarget, hoverRegion } from "./hover-target.js";
 import { onPage } from "./page-lifecycle.js";
 import { studyFrame, studyDrawDuration } from "./hover-studies.js";
 import { createGrowth } from "./organic-growth.js";
-import { wrapLogo } from "./logo-weave.js";
 import { chooseStructure, getHoverPreferences } from "./hover-preferences.js";
 
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -88,16 +87,9 @@ function createEffect({ className, follow, finished }) {
     else finish();
   }
   function position(link) {
-    const mark = generating ? link.querySelector(".brand-mark") : null;
-    const rect = (
-      mark ||
-      range ||
-      link.querySelector(".entry-title") ||
-      link
-    ).getBoundingClientRect();
+    const rect = (range || link.querySelector(".entry-title") || link).getBoundingClientRect();
     if (!link.isConnected || rect.bottom <= 0 || rect.top >= innerHeight) return false;
-    const right =
-      mark?.querySelector('[aria-hidden="true"]')?.getBoundingClientRect().left ?? rect.right;
+    const right = rect.right;
     const x = Math.min(innerWidth - 36, Math.max(36, follow ? right + 42 : right - 6));
     const y = Math.min(innerHeight - 36, Math.max(36, rect.top + rect.height / 2));
     anchor = [x, y];
@@ -130,6 +122,7 @@ function createEffect({ className, follow, finished }) {
     clear();
     if (
       motion.matches ||
+      link.matches(".brand") ||
       !pageFocused ||
       document.hidden ||
       link.classList.contains("skip-link") ||
@@ -158,13 +151,7 @@ function createEffect({ className, follow, finished }) {
     liveEffects.add(api);
     link.classList.add("link-distortion");
     const growth = generating
-      ? createGrowth(
-          id,
-          Math.floor(Math.random() * 0x100000000),
-          (point, angle, maxCurves) =>
-            contrast.matches ? null : wrapLogo(point, angle, maxCurves, anchor, unit),
-          { retain: true },
-        )
+      ? createGrowth(id, Math.floor(Math.random() * 0x100000000), undefined, { retain: true })
       : null;
     delete sigil.dataset.growthRoots;
     delete sigil.dataset.growthContacts;
