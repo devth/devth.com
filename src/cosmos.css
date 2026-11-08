@@ -34,7 +34,7 @@ body.cosmos-page {
 .cosmos-page .site-header {
   position: fixed;
   inset: env(safe-area-inset-top) 0 auto;
-  z-index: 3;
+  z-index: 6;
   min-height: 80px;
   padding: 18px var(--cosmos-gutter);
   border: 0;
