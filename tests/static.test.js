@@ -298,7 +298,7 @@ describe("static publishing contract", () => {
     }
   });
 
-  it("isolates the Cosmos catalog while loading the shared solid logo lazily", () => {
+  it("isolates the Cosmos catalog and keeps the normal text logo free of a renderer", () => {
     const home = documentFor("index.html");
     const lab = documentFor("cosmos/index.html");
     expect(lab.querySelector("canvas")).not.toBeNull();
@@ -314,7 +314,11 @@ describe("static publishing contract", () => {
     expect(read(labScript)).toContain("nearby-stars.json");
     expect(read(homeScript)).not.toContain("nearby-stars.json");
     expect(read(homeScript)).not.toContain("WebGLRenderer");
-    expect(read(homeScript)).toMatch(/import\(["'`][^"'`]*logo-depth-/);
+    expect(read(homeScript)).not.toMatch(/logo-depth|logo-weave|growth-depth/);
+    const styles = [...home.querySelectorAll('link[rel="stylesheet"]')]
+      .map((link) => read(link.getAttribute("href").slice(1)))
+      .join("\n");
+    expect(styles).not.toContain("logo-relief");
     expect(Buffer.byteLength(read(homeScript))).toBeLessThan(10_000);
     expect(home.querySelector('link[rel="modulepreload"]')).toBeNull();
     expect(home.querySelector('nav[aria-label="Main navigation"]').textContent).not.toContain(
