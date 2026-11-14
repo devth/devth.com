@@ -13,7 +13,7 @@
     "test:browser": "playwright test",
     "test:production": "playwright test --config playwright.production.config.js",
     "deploy:counter": "wrangler deploy --config wrangler.counter.jsonc",
-    "deploy": "npm run deploy:counter && wrangler deploy",
+    "deploy": "bun run deploy:counter && wrangler deploy",
     "deploy:production": "wrangler deploy --config wrangler.www.jsonc && wrangler deploy --config wrangler.production.jsonc"
   },
   "dependencies": {
@@ -38,5 +38,5 @@
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
-  "packageManager": "npm@11.20.0"
+  "packageManager": "bun@1.4.3"
 }

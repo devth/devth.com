@@ -4,26 +4,26 @@ Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Work
 
 ## Develop
 
-Use Node 22.18+, 24.11+, or 26+ (see `engines` in `package.json`).
+Use Bun 1.4+ for installs and scripts, with Node 22.18+, 24.11+, or 26+ as the runtime for Vite+ and Wrangler (see `engines` in `package.json`).
 
 ```sh
-npm ci
-npm run dev
+bun install
+bun run dev
 ```
 
 Vite+ is a pinned project dependency; no global `vp` installation is required. Changes to content and `src/` regenerate the site and reload the browser.
 
 ```sh
-npm run check        # Vite+ format and lint checks
-npm run build        # Generate HTML, then bundle assets with Vite+
-npm test             # Validate the built site, all posts, links, images, feed
-npm run test:browser # Desktop/mobile, accessibility, filtering, no-JS, redirects
-npm run test:production # Local production Workers: indexing, counters, www redirects
-npm run build:production # Indexable production HTML with first-party counters
-npm run preview      # Vite's static build preview
+bun run check        # Vite+ format and lint checks
+bun run build        # Generate HTML, then bundle assets with Vite+
+bun run test         # Validate the built site, all posts, links, images, feed
+bun run test:browser # Desktop/mobile, accessibility, filtering, no-JS, redirects
+bun run test:production # Local production Workers: indexing, counters, www redirects
+bun run build:production # Indexable production HTML with first-party counters
+bun run preview      # Vite's static build preview
 ```
 
-Browser tests run against local Wrangler so routing, redirects, and true HTTP 404 responses match Cloudflare. Install the matching Chromium build on a new machine with `npx playwright install chromium`. Set `BASE_URL` to test an existing deployment without starting a local server. Local tests start both the static site and counter service. Screenshots are written to `test-results/`. CI runs build/checks and browser/counter tests in parallel jobs, caches lockfile-matched dependencies and the exact Chromium version, and uploads failure artifacts for seven days. Each build writes its measured end-to-end time to the GitHub job summary. Only PRs and pushes to `master` run automatically, avoiding duplicate feature-branch runs. Newer PR runs cancel stale checks; master runs serialize without interrupting an in-flight release. Only the build/checks job gates the production deployment; browser and counter tests still run on every push and PR but never block a release. PRs never deploy or receive the Production environment secret.
+Browser tests run against local Wrangler so routing, redirects, and true HTTP 404 responses match Cloudflare. Install the matching Chromium build on a new machine with `bunx playwright install chromium`. Set `BASE_URL` to test an existing deployment without starting a local server. Local tests start both the static site and counter service. Screenshots are written to `test-results/`. CI runs build/checks and browser/counter tests in parallel jobs, caches lockfile-matched dependencies and the exact Chromium version, and uploads failure artifacts for seven days. Each build writes its measured end-to-end time to the GitHub job summary. Only PRs and pushes to `master` run automatically, avoiding duplicate feature-branch runs. Newer PR runs cancel stale checks; master runs serialize without interrupting an in-flight release. Production deploys immediately on every push to master; build checks and browser/counter tests run alongside but never block a release. PRs never deploy or receive the Production environment secret.
 
 ## Content
 
@@ -71,20 +71,20 @@ Preview: <https://preview.devth.com>
 
 `wrangler.jsonc` names a separate `devth-com-preview` deployment in the **Trevor Hartman** Cloudflare account, which owns the `devth.com` zone. Its only custom domain is **`preview.devth.com`**; it has no production routes, `workers.dev` hostname, or version-preview URLs. Deploying it cannot move `devth.com` away from the existing Vercel site.
 
-The counter Worker remains in the original **devth** account (`wrangler.counter.jsonc`), preserving its Durable Object namespace and existing counts. Both configs pin their account IDs; the deploying login needs access to both accounts when running `npm run deploy`. The original `devth-com-preview.devth.workers.dev` deployment is left intact as a fallback.
+The counter Worker remains in the original **devth** account (`wrangler.counter.jsonc`), preserving its Durable Object namespace and existing counts. Both configs pin their account IDs; the deploying login needs access to both accounts when running `bun run deploy`. The original `devth-com-preview.devth.workers.dev` deployment is left intact as a fallback.
 
 ```sh
-npx wrangler login
-npm run deploy
+bunx wrangler login
+bun run deploy
 ```
 
-`npm run deploy` publishes the small counter Worker first, then Wrangler runs `npm run build` and uploads `dist/` directly. `npm run deploy:counter` updates only the counter service. Use `npx wrangler deploy` for a site-only update that leaves the counter Worker untouched. Missing URLs use `404.html`; post URLs have no trailing slash. `_redirects` retains both forms of the old year-prefixed URLs. The default build generates `X-Robots-Tag: noindex` in `_headers`; canonical URLs, RSS links, and sitemap URLs continue to identify `https://devth.com`.
+`bun run deploy` publishes the small counter Worker first, then Wrangler runs `bun run build` and uploads `dist/` directly. `bun run deploy:counter` updates only the counter service. Use `bunx wrangler deploy` for a site-only update that leaves the counter Worker untouched. Missing URLs use `404.html`; post URLs have no trailing slash. `_redirects` retains both forms of the old year-prefixed URLs. The default build generates `X-Robots-Tag: noindex` in `_headers`; canonical URLs, RSS links, and sitemap URLs continue to identify `https://devth.com`.
 
 ## Production and automatic deployments
 
 Production: <https://devth.com>
 
-On each push to `master`, GitHub Actions publishes through the pinned Wrangler dependency as soon as format/lint, unit tests, and the production build verification pass. Browser, production routing, and counter integration tests run alongside without blocking the release. A manual workflow dispatch on `master` follows the same checks. Other branches and PRs cannot publish.
+On each push to `master`, GitHub Actions installs with Bun and publishes immediately through the pinned Wrangler dependency, deploying the www redirect and main site in parallel. Checks and browser tests run alongside without blocking the release. A manual workflow dispatch on `master` follows the same checks. Other branches and PRs cannot publish.
 
 The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_API_TOKEN` secret. Limit that environment to the `master` branch. The token is scoped to the **Trevor Hartman** account and **devth.com** zone: Account → Workers Scripts Edit and Account Settings Read; Zone → Workers Routes Edit, Zone Read and DNS Read. DNS Read is for backing up and auditing the old origin records; deployments do not need broad DNS-edit access. Do not use a global API key or a personal Wrangler OAuth token in CI.
 
@@ -92,8 +92,8 @@ The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_AP
 - `/counter.svg` is first-party. Only this path and `/mcp` run Worker code before assets; ordinary pages remain direct static asset responses.
 - `wrangler.www.jsonc` deploys **devth-com-www** on **www.devth.com/\***, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
 - Both production configs pin the Trevor Hartman account and devth.com zone, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched. Root and www DNS must remain Cloudflare-proxied for these routes to run.
-- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 25 HTML pages before publishing. Cosmos, Hover Lab, Vessels, and the 404 retain their own noindex metadata.
-- `npm run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
+- `bun run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 25 HTML pages before publishing. Cosmos, Hover Lab, Vessels, and the 404 retain their own noindex metadata.
+- `bun run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
 
 Nameservers and email records are unchanged. The existing Vercel project is retained for rollback, not used by the new deployment workflow; its legacy GitHub integration is separate from the passing Cloudflare checks.
 
@@ -190,7 +190,7 @@ The official MCP SDK handles initialization, protocol errors and JSON responses.
 
 Native/server-side clients can connect without an Origin header. Browser clients must send the endpoint's exact Origin; same-origin OPTIONS preflight is supported, but arbitrary cross-origin browser embeds are not. Local testing permits localhost-class hosts. Adding another browser client origin requires an explicit allowlist change, not wildcard CORS. Existing Cloudflare protections still apply; anonymous access is not an unlimited-use guarantee.
 
-`tests/production/mcp.spec.js` connects the official SDK client to the built Worker under local Wrangler and checks resource discovery, full-text search, original Markdown reads, live hit-count reads without increments, and HTTP protections. Run it with `npm run test:production`.
+`tests/production/mcp.spec.js` connects the official SDK client to the built Worker under local Wrangler and checks resource discovery, full-text search, original Markdown reads, live hit-count reads without increments, and HTTP protections. Run it with `bun run test:production`.
 
 ### Hit counters
 
