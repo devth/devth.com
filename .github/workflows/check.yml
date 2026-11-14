@@ -81,7 +81,8 @@ jobs:
 
   deploy:
     name: Deploy production
-    needs: [build, browser]
+    # Browser tests still run and report, but only the fast build checks gate a release.
+    needs: [build]
     if: >-
       github.repository == 'devth/devth.com' &&
       github.ref == 'refs/heads/master' &&

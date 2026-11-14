@@ -23,7 +23,7 @@ npm run build:production # Indexable production HTML with first-party counters
 npm run preview      # Vite's static build preview
 ```
 
-Browser tests run against local Wrangler so routing, redirects, and true HTTP 404 responses match Cloudflare. Install the matching Chromium build on a new machine with `npx playwright install chromium`. Set `BASE_URL` to test an existing deployment without starting a local server. Local tests start both the static site and counter service. Screenshots are written to `test-results/`. CI runs build/checks and browser/counter tests in parallel jobs, caches lockfile-matched dependencies and the exact Chromium version, and uploads failure artifacts for seven days. Each build writes its measured end-to-end time to the GitHub job summary. Only PRs and pushes to `master` run automatically, avoiding duplicate feature-branch runs. Newer PR runs cancel stale checks; master runs serialize without interrupting an in-flight release. Both jobs must pass before the production deployment job runs. PRs never deploy or receive the Production environment secret.
+Browser tests run against local Wrangler so routing, redirects, and true HTTP 404 responses match Cloudflare. Install the matching Chromium build on a new machine with `npx playwright install chromium`. Set `BASE_URL` to test an existing deployment without starting a local server. Local tests start both the static site and counter service. Screenshots are written to `test-results/`. CI runs build/checks and browser/counter tests in parallel jobs, caches lockfile-matched dependencies and the exact Chromium version, and uploads failure artifacts for seven days. Each build writes its measured end-to-end time to the GitHub job summary. Only PRs and pushes to `master` run automatically, avoiding duplicate feature-branch runs. Newer PR runs cancel stale checks; master runs serialize without interrupting an in-flight release. Only the build/checks job gates the production deployment; browser and counter tests still run on every push and PR but never block a release. PRs never deploy or receive the Production environment secret.
 
 ## Content
 
@@ -84,7 +84,7 @@ npm run deploy
 
 Production: <https://devth.com>
 
-On each push to `master`, GitHub Actions runs both validation jobs, including production routing/indexing/counter integration tests, then publishes through the pinned Wrangler dependency. A manual workflow dispatch on `master` follows the same checks. Other branches and PRs cannot publish.
+On each push to `master`, GitHub Actions publishes through the pinned Wrangler dependency as soon as format/lint, unit tests, and the production build verification pass. Browser, production routing, and counter integration tests run alongside without blocking the release. A manual workflow dispatch on `master` follows the same checks. Other branches and PRs cannot publish.
 
 The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_API_TOKEN` secret. Limit that environment to the `master` branch. The token is scoped to the **Trevor Hartman** account and **devth.com** zone: Account → Workers Scripts Edit and Account Settings Read; Zone → Workers Routes Edit, Zone Read and DNS Read. DNS Read is for backing up and auditing the old origin records; deployments do not need broad DNS-edit access. Do not use a global API key or a personal Wrangler OAuth token in CI.
 
