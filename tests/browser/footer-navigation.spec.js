@@ -18,6 +18,7 @@ test("footer labels are plain except ↑ Top, with URLs and social targets prese
     "Soli Deo Gloria",
     "Cosmos",
     "Hover Lab",
+    "Vessels",
     "RSS",
     "view source",
     "",
@@ -27,6 +28,7 @@ test("footer labels are plain except ↑ Top, with URLs and social targets prese
   for (const [name, href] of [
     ["Cosmos", "/cosmos"],
     ["Hover Lab", "/hover-lab"],
+    ["Vessels", "/vessels"],
     ["RSS", "/feed.xml"],
     ["view source", "https://github.com/devth/devth.com"],
     ["X profile", "https://x.com/devth"],

@@ -106,6 +106,7 @@ onPage("main", () => {
   else if (document.querySelector(".prose :is(h2, h3, h4, h5, h6)")) import("./heading-hover.js");
   if (document.querySelector("[data-hover-board]")) import("./hover-lab.js");
   if (document.querySelector("[data-cosmos-stage]")) import("./cosmos.js");
+  if (document.querySelector("[data-vessels]")) import("./vessels.js");
 });
 
 onPage("section.writing", (_, { on }) => {
