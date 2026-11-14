@@ -8,6 +8,7 @@ const routes = [
   "/glossary",
   "/cosmos",
   "/hover-lab",
+  "/vessels",
   "/iteration-and-play",
   "/compiled-queries-in-scala",
 ];

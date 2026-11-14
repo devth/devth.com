@@ -339,6 +339,30 @@ describe("static publishing contract", () => {
     expect(JSON.parse(read("search.json")).some((page) => page.path === "/hover-lab")).toBe(true);
   });
 
+  it("keeps the vessels explainer footer-only, noindex and readable without JavaScript", () => {
+    const vessels = documentFor("vessels/index.html");
+    expect(vessels.querySelector("h1").textContent).toBe("Vessels");
+    expect(vessels.querySelector("meta[name=robots]").content).toContain("noindex");
+    expect(vessels.querySelectorAll("[data-vx-figure]")).toHaveLength(8);
+    expect(vessels.querySelectorAll("[data-vx-figure] [data-vx-plot] > svg")).toHaveLength(8);
+    for (const controls of vessels.querySelectorAll("[data-vx-controls]"))
+      expect(controls.hasAttribute("hidden")).toBe(true);
+    for (const readout of vessels.querySelectorAll("[data-vx-readout]"))
+      expect(readout.textContent.trim().length).toBeGreaterThan(20);
+    expect(vessels.querySelector("[data-toc]")).not.toBeNull();
+    expect(vessels.querySelector('a[href$="docs/vessels-ledger.md"]')).not.toBeNull();
+    expect(vessels.body.innerHTML).not.toMatch(/NaN|undefined/);
+    const home = documentFor("index.html");
+    expect(home.querySelector('.site-footer a[href="/vessels"]').textContent).toBe("Vessels");
+    expect(home.querySelector('.site-header a[href="/vessels"]')).toBeNull();
+    expect(home.querySelector('main a[href="/vessels"]')).toBeNull();
+    expect(read("sitemap.xml")).not.toContain("/vessels");
+    expect(read("feed.xml")).not.toContain("/vessels");
+    expect(JSON.parse(read("search.json")).some((page) => page.path === "/vessels")).toBe(false);
+    const homeScript = home.querySelector("script[src]").src.slice(1);
+    expect(read(homeScript)).not.toContain("relativeViscosity");
+  });
+
   it("deploys only the preview hostname and preserves the counter account", () => {
     const config = (path) => JSON.parse(readFileSync(path, "utf8").replace(/,(\s*[}\]])/g, "$1"));
     const site = config("wrangler.jsonc");

@@ -1,6 +1,6 @@
 # devth.com
 
-Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page, and `/hover-lab` is a separate SVG hover-study board. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
+Trevor Hartman’s writing, built with **Vite+** and hosted as **Cloudflare Workers Static Assets**. Every page is pre-rendered HTML: no React, hydration, SSR, or third-party fonts. Reading and navigation work without JavaScript. Small scripts enhance archive/category filtering, keyboard search, scroll-tracking contents, geometric link hovers, and the scroll-driven background; the isolated `/cosmos` experiment loads Three.js only on that page, `/hover-lab` is a separate SVG hover-study board, and `/vessels` is an animated, interactive explainer of blood vessels and blood counts. Durable Object storage backs the retro per-page hit-counter images: a first-party endpoint in production, and a separate Worker for preview.
 
 ## Develop
 
@@ -39,6 +39,7 @@ Browser tests run against local Wrangler so routing, redirects, and true HTTP 40
 - `src/search.js` — lazily loaded Cmd+K/Ctrl+K dialog; searches a generated static index using original titles, excerpts and categories.
 - `src/toc.js` — sticky heading-derived contents with a stepped SVG scroll-progress rail; native fragment links work without JavaScript.
 - `src/cosmos.js`, `src/cosmos.css` — the isolated 3D stellar-neighborhood experiment.
+- `src/vessels-models.js`, `src/vessels-figures.js`, `src/vessels.js`, `src/vessels.css`, `scripts/vessels-page.js` — the `/vessels` explainer: tested physiology models, pure SVG figure renderers shared by the build and the page, and its claims ledger in `docs/vessels-ledger.md`.
 - `counter/worker.js` — per-page hit counters, independent of static asset serving.
 - `scripts/content.js` — shared allowlist and loader for published posts and authored pages.
 - `scripts/site.js` — Markdown renderer, layouts, archive, RSS, sitemap, and legacy redirects.
@@ -91,7 +92,7 @@ The deployment uses the GitHub **Production** environment and its `CLOUDFLARE_AP
 - `/counter.svg` is first-party. Only this path and `/mcp` run Worker code before assets; ordinary pages remain direct static asset responses.
 - `wrangler.www.jsonc` deploys **devth-com-www** on **www.devth.com/\***, preserving the existing **308** redirect to the HTTPS apex, including paths and query strings. It has no assets or counter storage.
 - Both production configs pin the Trevor Hartman account and devth.com zone, disable `workers.dev` and version-preview URLs, and leave the preview site and original preview counter account untouched. Root and www DNS must remain Cloudflare-proxied for these routes to run.
-- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 24 HTML pages before publishing. Cosmos, Hover Lab, and the 404 retain their own noindex metadata.
+- `npm run build:production` generates the counter allowlist, omits preview-only noindex headers, and verifies all 25 HTML pages before publishing. Cosmos, Hover Lab, Vessels, and the 404 retain their own noindex metadata.
 - `npm run deploy:production` updates the www redirect first, then builds and publishes the main site. It never calls the preview deployment scripts.
 
 Nameservers and email records are unchanged. The existing Vercel project is retained for rollback, not used by the new deployment workflow; its legacy GitHub integration is separate from the passing Cloudflare checks.
@@ -117,6 +118,21 @@ The Sun, all eight planets, elliptical orbital paths, Saturn’s rings, and cata
 Reduced-motion users start with drift paused. The scene stops rendering offscreen or in background tabs. There is no loading diagram or substitute sculpture: the background stays dark while the renderer loads or JavaScript is unavailable. A WebGL failure shows a short status; header navigation remains usable. The header never requests Three.js; Cosmos loads its renderer on this experiment page, and destruction loads its renderer only when explicitly triggered; search code and its static index load only when the dialog is first opened, and the contents tracker loads only on pages with a ToC.
 
 The **devth\_** wordmark is ordinary native HTML text and the real accessible home link. It has no WebGL overlay, idle motion, pointer parallax, hover garden or letter-wrapping logic. Other link and heading hovers remain independent SVG art; hovering or focusing the logo never activates them. Navigation retains the normal large-to-compact text transition, without a 3D relief transform.
+
+### Vessels
+
+Open [/vessels](https://preview.devth.com/vessels), linked from the footer only. It is not in the header, archive, quick navigation, sitemap, feed or MCP catalog, and it is noindex. The page explains how blood moves oxygen through vessels and what a blood count measures, in seven sections. Each section has a live figure, eight in all:
+
+1. **The circuit**: lanes for the aorta through the venae cavae move at mean speeds to scale. The speeds come from Guyton and Hall's total cross-sectional areas with the same flow at every level. Choosing a level shows its wall layers.
+2. **Arteriole radius**: per-cell parabolic flow, with flow ∝ r⁴ (Poiseuille).
+3. **Hematocrit tube**: the tube settles into plasma, buffy coat and red cells. RBC, MCV and MCH sliders compute hematocrit, hemoglobin and MCHC against MedlinePlus reference ranges.
+4. **Dissociation curve**: Severinghaus's 1979 equation, plotted over his published standard-curve data. It has draggable PO₂, an illustrative right shift, and one red cell's binding sites.
+5. **Oxygen content**: 1.34 × Hb × SO₂ + 0.003 × PO₂ for arterial and venous blood. Anemia keeps saturation unchanged while content falls.
+6. **Viscosity**: the Pries et al. (1992) glass-tube law. Hematocrit ÷ viscosity shows the oxygen-transport optimum, and a diameter chart shows the Fåhræus–Lindqvist effect.
+7. **Capillary**: single-file cells unload oxygen along the saturation curve. Wall arrows and a chart show classic Starling filtration, with a note on the revised Starling principle.
+8. **Guards and patches**: one microliter at reference proportions, plus a looping hemostasis and white-cell exit scene.
+
+Every figure computes what it shows from `src/vessels-models.js`, which `tests/vessels-models.test.js` checks against published values. Each figure is a pure SVG renderer in `src/vessels-figures.js`. The build pre-renders it with its default state and readout, so prose and figures remain readable without JavaScript. In the browser, the same renderers redraw at the figure's real width. Animation frames replace only a figure's motion layer. One 30fps loop runs only for visible figures in a visible tab, and reduced motion shows settled, paused states. Every control is a native range input, radio, checkbox or button, and pointer dragging on charts maps to the same values. Every checkable claim has an entry in `docs/vessels-ledger.md`, which the page links. Copy was drafted for the author's review. Illustrative choices are labeled on the page.
 
 ### Native cursors
 
@@ -166,7 +182,7 @@ Connect an MCP client using **Streamable HTTP** to **`https://devth.com/mcp`**. 
 - **`list_content`** — list titles, canonical URLs, dates, categories, and excerpts without full article bodies.
 - **`search_content`** — pass `query` and optionally `limit` (1–20, default 10). Searches titles, categories, excerpts and full bodies using case-insensitive literal terms; every term must match. Returns metadata and passages from matching articles, in archive order.
 - **`read_content`** — pass `identifier`, an exact canonical URL or path from the other tools, such as `https://devth.com/beautiful-constraint` or `/beautiful-constraint`. Returns metadata and the complete original Markdown body. Relative links resolve against the returned canonical URL.
-- **`get_hit_count`** — pass the same exact canonical URL or path as `read_content`, for example `{ "identifier": "/about" }`. Returns `{ "path": "/about", "url": "https://devth.com/about", "hitCount": 123 }` (illustrative count). Reads the existing production counter directly without incrementing it. These are counter-image requests, not unique visitors. Only published posts and the three authored pages are accepted, not the homepage, Cosmos, Hover Lab or arbitrary URLs. Storage failures return a tool error, not a misleading zero.
+- **`get_hit_count`** — pass the same exact canonical URL or path as `read_content`, for example `{ "identifier": "/about" }`. Returns `{ "path": "/about", "url": "https://devth.com/about", "hitCount": 123 }` (illustrative count). Reads the existing production counter directly without incrementing it. These are counter-image requests, not unique visitors. Only published posts and the three authored pages are accepted, not the homepage, Cosmos, Hover Lab, Vessels or arbitrary URLs. Storage failures return a tool error, not a misleading zero.
 
 Both the website and MCP catalog use `scripts/content.js`. Each site build writes `production/.generated-content.json`, an ignored build input bundled into the Worker, not a new public asset. Only `posts/` and the three explicit authored pages are loaded. Drafts, unpublished non-posts, the homepage's generated archive, Cosmos/Hover Lab application source and error pages are not MCP documents. Frontmatter is allowlisted into public metadata rather than returned wholesale. Content reads never fetch user-supplied URLs or access the filesystem at runtime, and do not increment hit counters. `get_hit_count` uses the existing `COUNTERS` Durable Object binding with `visit(false)`; it does not request the SVG or create another counter namespace.
 
